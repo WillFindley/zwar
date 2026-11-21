@@ -19,18 +19,18 @@ Repository: <https://github.com/WillFindley/zwar>
 | `zwar/01_verify_arithmetic.py` | Recomputes every derived number from the paper's own inputs (including the α = 0.2 thresholds and seasons-vs-events factors of Section 3) |
 | `zwar/02_verify_inputs.py` | Checks every paper input (WAR, PA, IP, BF, season checkpoints, 2026 values) against Baseball-Reference |
 | `zwar/03_spw_check.py` | Validates the Standardized Peak WAR implementation against Gordon (2023) |
-| `zwar/04_hof_validation.py` | Hall of Fame AUCs (Section 8, Table 9), including the value point α = 0.2; stratified bootstrap CIs (incl. relief pitchers), cross-validated α, SPW benchmark, pitcher scale factor *c* |
-| `zwar/05_alpha_sensitivity.py` | α-sensitivity ranks (Section 7, Table 8) and Spearman correlations |
+| `zwar/04_hof_validation.py` | Hall of Fame AUCs (Section 5.3, Table 4), including the value point α = 0.2; stratified bootstrap CIs (incl. relief pitchers), cross-validated α, SPW benchmark, pitcher scale factor *c* |
+| `zwar/05_alpha_sensitivity.py` | α-sensitivity ranks (Section 6.6, Table 12) and Spearman correlations |
 | `zwar/06_sigma.py` | Role-specific per-event σ from season dispersion; implied *c* = σ_pos/σ_pitch; high-leverage relievers vs low-leverage relievers and vs the common (hitter / SP) σ |
 | `zwar/07_rank_checks.py` | Every Z_1/5 value and every rank (α = 0, 1/5, 1/2) printed in the leaderboard tables of Section 6; pitcher counts in the unified top 25/50/100 |
-| `zwar/08_jaws_check.py` | JAWS, S-JAWS and R-JAWS values and ranks quoted in Tables 3–5 |
-| `zwar/09_fwar_check.py` | FanGraphs fWAR robustness comparison (Section 10) |
-| `zwar/10_checkpoint_prediction.py` | Early-career checkpoint forecasts: Z_α after 3 / 5 seasons vs rest-of-career WAR, rate and Hall of Fame (Section 9.3, Table 12) |
-| `zwar/11_expert_rankings.py` | Agreement of Z_α (two-way records combined by ℓ_γ), WAR and JAWS with two expert top-100 lists; pitcher scale factor *c* (Section 5.3, Table expert) |
-| `zwar/12_season_value.py` | Season-value convexity γ from pennant races (team standings and postseason results); implied α = 1 − 1/γ (Proposition 2, Section 5, Table 2) |
-| `zwar/13_null_baseline.py` | Evidence against a meaningful null: Z_{α,λ} = (WAR − λ(WAR − WAA)) / N^α (λ = 1 league average, λ = 2 ≈ All-Star), Hall of Fame AUC over the (α, λ) grid with bootstrap CIs, effective threshold α_eff, expert lists (Proposition 4, Section 9.4, Table 13) |
-| `zwar/14_season_unit.py` | Seasons versus events as the exposure unit of the value reading: W/S^α vs W/N^α on Hall of Fame pools and expert lists (Proposition 2, Section 9.2, Table 11) |
-| `zwar/15_forecast_benchmarks.py` | Forecasts from 3-/5-season checkpoints and career midpoints of future WAR, All-Star selections, award shares and Hall of Fame; concurrent career honors (Section 5.4) |
+| `zwar/08_jaws_check.py` | JAWS, S-JAWS and R-JAWS values and ranks quoted in Tables 7–9 |
+| `zwar/09_fwar_check.py` | FanGraphs fWAR robustness comparison (Appendix G) |
+| `zwar/10_checkpoint_prediction.py` | Early-career checkpoint forecasts: Z_α after 3 / 5 seasons vs rest-of-career WAR, rate and Hall of Fame (Section 5.5, Table 6) |
+| `zwar/11_expert_rankings.py` | Agreement of Z_α (two-way records combined by ℓ_γ), WAR and JAWS with two expert top-100 lists; pitcher scale factor *c* (Section 5.4, Table 5) |
+| `zwar/12_season_value.py` | Season-value convexity γ from pennant races (team standings and postseason results); implied α = 1 − 1/γ (Proposition 4, Section 4, Table 2) |
+| `zwar/13_null_baseline.py` | Evidence against a meaningful null: Z_{α,λ} = (WAR − λ(WAR − WAA)) / N^α (λ = 1 league average, λ = 2 ≈ All-Star), Hall of Fame AUC over the (α, λ) grid with bootstrap CIs, effective threshold α_eff, expert lists (Proposition 6, Appendix C, Table 14) |
+| `zwar/14_season_unit.py` | Seasons versus events as the exposure unit of the value reading: W/S^α vs W/N^α on Hall of Fame pools and expert lists (Proposition 4, Appendix D, Table 15) |
+| `zwar/15_forecast_benchmarks.py` | Forecasts from 3-/5-season checkpoints and career midpoints of future WAR, All-Star selections, award shares and Hall of Fame; concurrent career honors (Section 5.5) |
 | `zwar/16_alpha_convergence.py` | All 42 benchmarks: α curves, argmax α with bootstrap intervals, Z_1/5 vs Z_1/2 vs WAR, regret by group; Figure 1 |
 | `zwar/17_leaderboards.py` | Leaderboards at α = 1/5 and the LaTeX tables of Section 6 (`outputs/tables/tab_*.tex`) |
 | `zwar/18_implied_alpha.py` | Regression-implied exponents α_reg = −c_N/c_W for every benchmark; exposure (β) and rate (κ) persistence in the forecast designs (Proposition 2) |
@@ -46,12 +46,12 @@ Repository: <https://github.com/WillFindley/zwar>
 | 01 arithmetic | All derived values in the paper reproduce from its inputs |
 | 02 inputs | 266/266 inputs match Baseball-Reference (WAR, PA, IP, BF, season checkpoints, 2026 values for Skenes, Trout, Ohtani, Chapman, Jansen, Kimbrel; small-sample examples Herb Washington and Ron Wotus) |
 | 03 SPW | Pedro Martínez 53.5 (Gordon 53.6), Babe Ruth 61.1 (61.4), Eddie Plank 32.8 (32.3); differences reflect WAR revisions since Dec. 2022 |
-| 04 Hall of Fame | Table 9 reproduced (incl. pooled SP + RP row: Z_0.2 0.938, Z_½ 0.939 vs WAR 0.929, JAWS 0.921); Z_0.2 matches or beats WAR and JAWS in 7 of 8 pools (CIs exclude 0 in the pools with relievers); fixed α = 0.2 ≥ CV-chosen α in all 8 pools; adds SPW, bootstrap CIs (incl. relievers), cross-validated α (median 0.20–0.25 in most pools), pitcher scale factor c up to 59/41 |
-| 05 α-sensitivity | Table 8 ranks (now including α = 0.2) and Spearman correlations reproduce exactly |
+| 04 Hall of Fame | Table 4 reproduced (incl. pooled SP + RP row: Z_0.2 0.938, Z_½ 0.939 vs WAR 0.929, JAWS 0.921); Z_0.2 matches or beats WAR and JAWS in 7 of 8 pools (CIs exclude 0 in the pools with relievers); fixed α = 0.2 ≥ CV-chosen α in all 8 pools; adds SPW, bootstrap CIs (incl. relievers), cross-validated α (median 0.20–0.25 in most pools), pitcher scale factor c up to 59/41 |
+| 05 α-sensitivity | Table 12 ranks (now including α = 0.2) and Spearman correlations reproduce exactly |
 | 06 σ by role | σ_pos 0.062–0.066, σ_pitch 0.064–0.066 WAR/√event; c = 0.98–1.01 (quadratic aging: 0.056–0.057, 0.060–0.061; c = 0.94); high-leverage RP (gmLI ≥ 1.5) 0.068–0.072 vs 0.061 for other RP (ratio 1.12–1.17; group mean gmLI 1.667 vs 1.294 implies 1.162 under full (1+gmLI)/2 scaling), but only 1.07–1.09× the common hitter / SP σ (role-specific scores 7–9% lower) |
 | 07 ranks | 662/662 printed leaderboard values (Z_1/5 scores; ranks at α = 0, 1/5, 1/2) match exactly; 95/95 legacy Z_1/2 and Z_1/5 rank checks pass; ℓ_γ = total WAR at α = 0 and = quadrature at α = 1/2 (asserted); unified top 25/50/100 has 5/11/28 pitchers at α = 1/5 vs 3/5/13 at α = 1/2 |
 | 08 JAWS | 143/143 JAWS, S-JAWS, R-JAWS values and ranks match (ties at 0.1 resolution allowed) |
-| 09 fWAR | Section 10 hitter (n = 953, ρ = 0.936, 10/10 top-10) and pitcher (n = 560, ρ = 0.743) fWAR Z_WAR correlations, scores, and ranks reproduce |
+| 09 fWAR | Appendix G hitter (n = 953, ρ = 0.936, 10/10 top-10) and pitcher (n = 560, ρ = 0.743) fWAR Z_WAR correlations, scores, and ranks reproduce |
 | 10 checkpoints | Hitters: Z_½ ≈ best for future WAR / HOF (tiny margins); pitchers: α = 0 best (Z_½ significantly worse for future WAR); rate / EB best for future rate |
 | 11 expert lists | Sporting News 1998 and ESPN 2022 (two-way records by ℓ_γ): best α 0.30 / 0.30 (TSN order / membership), 0.15 / 0.30 (ESPN); Z_1/5 pitchers in top 100: 22 and 28 (lists 28, 27); Z_½ ≈ WAR ≈ JAWS; old quadrature numbers written to `outputs/expert_rankings_quadrature.csv` |
 | 12 season value | 2,622 AL/NL team-seasons 1901–2025 (all WAR-file team-seasons covered); γ (World Series) 1.25 [1.23, 1.28] context-neutral, 1.30 [1.18, 1.40] actual context → α ≈ 0.20–0.23; pennant 1.17 / 1.29; postseason berth ≈ 1.07–1.10 |
@@ -102,9 +102,9 @@ so a fresh download after 16 October 2026 will differ slightly from the paper.
 ## Definitions used
 
 * **Z_α** = WAR / max(N, 1)^α, where N = PA for position play and N = BF for pitching. The value point is α = 0.2 (γ = 1.25); Z_WAR is the evidence point α = ½.
-* **Two-coordinate score**: sgn(I)·√|I| with I = Σ_k WAR_k·|WAR_k| / max(N_k, 1)^(2α) (α = ½ in Equation 12 of the paper).
-* **Meaningful null** (Proposition 4): Z_{α,λ} = (WAR − λ·D) / N^α with D = WAR − WAA (B-Ref's replacement-to-average credit). Extra playing time raises the score iff its rate exceeds (1 − α)·r0 + α·r̄, r0 = λD/N; effective exponent α_eff = α + (1 − α)·λD/WAR.
-* **Season-value convexity** (Proposition 2): if a season worth s WAR is worth s^γ, constant-rate careers with a common season length rank as WAR / N^(1 − 1/γ); with unequal season lengths the value reading ranks by WAR / S^(1 − 1/γ), S = seasons (compared with events in step 14). γ is the log-log slope over s ∈ [2, 10] of the gain in pennant / World Series / postseason probability from s extra wins (logistic win–probability curves by postseason format).
+* **Two-coordinate score** (Definition 1 / Equation 8 of the paper): sgn(I)·|I|^(1/γ) with I = Σ_k sgn(WAR_k)·|WAR_k|^γ / max(N_k, 1)^(γ−1) and γ = 1/(1 − α) (reducing to total WAR at α = 0 and signed quadrature sgn(I)·√|I| at α = ½).
+* **Meaningful null** (Proposition 6): Z_{α,λ} = (WAR − λ·D) / N^α with D = WAR − WAA (B-Ref's replacement-to-average credit). Extra playing time raises the score iff its rate exceeds (1 − α)·r0 + α·r̄, r0 = λD/N; effective exponent α_eff = α + (1 − α)·λD/WAR.
+* **Season-value convexity** (Proposition 4): if a season worth s WAR is worth s^γ, constant-rate careers with a common season length rank as WAR / N^(1 − 1/γ); with unequal season lengths the value reading ranks by WAR / S^(1 − 1/γ), S = seasons (compared with events in step 14). γ is the log-log slope over s ∈ [2, 10] of the gain in pennant / World Series / postseason probability from s extra wins (logistic win–probability curves by postseason format).
 * **SPW** (Gordon, *BRJ* 52(1), 2023): rank seasons by WAR per 650 PA (hitters) or per 1,000 BF
   (pitchers), cumulate WAR to 3,250 PA / 5,000 BF and interpolate within the crossing season.
   Careers below the threshold get their career WAR.

@@ -16,3 +16,7 @@
 
 # macOS Finder metadata
 .DS_Store
+
+# Lean / Lake build artifacts
+.lake/
+lean/.lake/

@@ -72,7 +72,7 @@ chk("Uhle Z2D (45.0 pitch WAR)", z2d(10.6,1514,45.0,13597), 0.472, 0.0006)
 chk("Uhle Z2D (45.1 pitch footer)", z2d(10.6,1514,45.1,13597), 0.473, 0.0006)
 
 print("== Unified / negative secondary")
-U = [("Cobb",149.8,13103,0.1,20,1.309),("Speaker",136.1,12021,-0.1,4,1.240),("Clemens",0.5,213,138.7,20240,0.976),
+U = [("Cobb",149.8,13103,0.1,20,1.309),("Speaker",136.1,12021,-0.1,4,1.240),("Clemens",0.6,213,138.7,20240,0.976),
      ("Young",-2.2,3107,165.9,29565,0.964),("Grove",-6.5,1580,113.2,16622,0.863),("Stearnes",55.2,4378,-0.4,37,0.832),
      ("Nichols",-0.8,2265,119.0,21099,0.819),("Alexander",3.0,1982,116.9,20893,0.812),("Pedro",-2.2,518,86.1,11394,0.801),
      ("Gibson",41.1,2683,-0.2,10,0.791),("Rivera",0.0,4,56.3,5103,0.788),("RJohnson",-2.5,691,103.5,17067,0.787),
@@ -153,7 +153,7 @@ for name, wp, pa, wq, bf, exp_2s, exp_1s in [
 print("== Value point alpha = 0.2 and seasons vs events (Sections 3.2-3.4, 5, 11)")
 chk("10-WAR season in 5-WAR seasons, gamma=1.25", 2 ** 1.25, 2.4, 0.05)
 chk("10-WAR season in 5-WAR seasons, gamma=4/3", 2 ** (4 / 3), 2.5, 0.05)
-chk("10-WAR / 5-WAR WS gain ratio (10.5/4.1)", 10.5 / 4.1, 2.6, 0.05)
+chk("10-WAR / 5-WAR WS gain ratio (0.1047/0.0413)", 0.1047 / 0.0413, 2.5, 0.05)
 chk("alpha = 1 - 1/gamma at gamma 1.17", 1 - 1 / 1.17, 0.14, 0.006)
 chk("alpha = 1 - 1/gamma at gamma 1.30", 1 - 1 / 1.30, 0.23, 0.006)
 chk("alpha=0.2 threshold, Pujols (0.2 x 7.33)", 0.2 * 91.4 / 8103 * 650, 1.5, 0.06)
@@ -171,6 +171,24 @@ chk("SD(Z_0.2) at 2,000 events (sigma=0.065)", 0.065 * 2000 ** 0.3, 0.64, 0.006)
 chk("SD(Z_0.2) at 20,000 events (sigma=0.065)", 0.065 * 20000 ** 0.3, 1.27, 0.006)
 chk("above-average valuation: 8/3", 8 / 3, 2.7, 0.04)
 chk("above-average valuation: gamma_eff = log2(8/3)", math.log2(8 / 3), 1.4, 0.02)
+
+def z2d_lgamma(wp, pa, wq, bf, a):
+    g = 1.0 / (1.0 - a)
+    I = math.copysign(abs(wp) ** g / max(pa, 1) ** (g - 1), wp) + math.copysign(abs(wq) ** g / max(bf, 1) ** (g - 1), wq)
+    return math.copysign(abs(I) ** (1.0 / g), I)
+
+for name, wb, nb, wp, np_, e02, e05 in [
+    ("Grove", -6.5, 1580, 113.2, 16622, -4.1, -1.7),
+    ("R.Johnson", -2.5, 691, 103.5, 17067, -1.7, -0.7),
+    ("Pedro", -2.2, 518, 86.1, 11394, -1.8, -0.7),
+]:
+    chk(f"{name} neg batting drop a=0.2 (%)", 100 * (z2d_lgamma(wb, nb, wp, np_, 0.2) / (wp / np_ ** 0.2) - 1), e02, 0.05)
+    chk(f"{name} neg batting drop a=0.5 (%)", 100 * (z2d_lgamma(wb, nb, wp, np_, 0.5) / (wp / np_ ** 0.5) - 1), e05, 0.05)
+
+chk("Z0.2 tolerance N=5,000 (0.005*N^0.3)", 0.005 * 5000 ** 0.3, 0.06, 0.005)
+chk("Z0.2 tolerance N=30,000 (0.005*N^0.3)", 0.005 * 30000 ** 0.3, 0.11, 0.005)
+chk("Z0.2 pair rounding bound N=5,000", 0.10 / 5000 ** 0.2, 0.018, 0.0005)
+chk("Z0.2 pair rounding bound N=30,000", 0.10 / 30000 ** 0.2, 0.013, 0.0005)
 
 print()
 print("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} MISMATCHES: {FAILS}")

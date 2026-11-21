@@ -62,7 +62,7 @@ TWO_WAY = [
 
 # Secondary-coordinate values used in the unified table / text: (name, pos WAR, PA)
 PITCHER_BATTING = [
-    ("Roger Clemens", 0.5, 213), ("Cy Young", -2.2, 3107), ("Lefty Grove", -6.5, 1580),
+    ("Roger Clemens", 0.6, 213), ("Cy Young", -2.2, 3107), ("Lefty Grove", -6.5, 1580),
     ("Kid Nichols", -0.8, 2265), ("Pete Alexander", 3.0, 1982), ("Pedro Martinez", -2.2, 518),
     ("Mariano Rivera", 0.0, 4), ("Randy Johnson", -2.5, 691), ("Tom Seaver", 3.9, 1552),
     ("Christy Mathewson", 6.6, 1900), ("Clayton Kershaw", 2.8, 847), ("Greg Maddux", 1.8, 1812),

@@ -7,6 +7,7 @@ Paper and reproduction code for *From Total WAR to WAR Rate: The α-Family and t
 - `zwar_paper.pdf` / `zwar_paper.tex` — full manuscript
 - `figures/fig_alpha_curves.pdf` — Figure 1 used by the paper
 - `repro/` — offline reproduction and validation pipeline (see [`repro/README.md`](repro/README.md) for setup, data sources, and step-by-step details)
+- `lean/` — Lean 4 / Mathlib formal proofs verifying all propositions, identities, and inequalities in the paper (see [`lean/README.md`](lean/README.md))
 
 ## Data & IP Policy
 

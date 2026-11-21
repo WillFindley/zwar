@@ -336,13 +336,8 @@ def bootstrap_auc_ci(s, labels, n_boot=2000, seed=12345):
 
 
 def spearman(a, b):
-    def rank(v):
-        v = np.asarray(v, float)
-        o = np.argsort(v, kind="mergesort")
-        r = np.empty(len(v))
-        r[o] = np.arange(len(v))
-        return r
-    ra, rb = rank(a), rank(b)
+    ra = rankdata(np.asarray(a, float))
+    rb = rankdata(np.asarray(b, float))
     return float(np.corrcoef(ra, rb)[0, 1])
 
 
