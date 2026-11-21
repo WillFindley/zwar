@@ -1,0 +1,7 @@
+# Third-party raw downloads, third-party expert lists, and derived outputs
+# (including full-player leaderboards) are kept locally and NOT committed:
+# Sports Reference's and third-party publishers' terms restrict redistribution.
+data/
+outputs/
+__pycache__/
+*.pyc
