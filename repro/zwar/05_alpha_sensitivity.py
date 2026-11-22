@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproduce the alpha-sensitivity ranks (paper Section 7, Table 8) and Spearman
+"""Reproduce the alpha-sensitivity ranks (paper Section 6.6, Table 12) and Spearman
 correlations within the Baseball-Reference JAWS-page pools.
 
 Hitters: all players on the eight hitter JAWS pages, position-player WAR / PA.
@@ -17,7 +17,7 @@ from pools import hitters, pitchers  # noqa: E402
 
 ALPHAS = [0.0, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0]
 
-PAPER = {  # name: ranks at ALPHAS as printed in the paper (Table 8)
+PAPER = {  # name: ranks at ALPHAS as printed in the paper (Table 12)
     "Babe Ruth": [2, 1, 1, 1, 1, 1, 1, 1, 2], "Barry Bonds": [1, 2, 2, 2, 2, 2, 2, 2, 6],
     "Willie Mays": [3, 3, 3, 3, 3, 3, 3, 3, 10], "Ted Williams": [11, 10, 9, 9, 9, 7, 6, 6, 11],
     "Henry Aaron": [5, 5, 5, 5, 7, 9, 9, 10, 37], "Mike Trout": [30, 21, 21, 20, 18, 18, 15, 12, 18],

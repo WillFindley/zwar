@@ -2,9 +2,9 @@
 """Check every raw input reported in the paper against Baseball-Reference.
 
 Reference values, in priority order (all cached by fetch_data.py):
-  * Published career rows: JAWS position pages, the career-WAR leaderboard,
-    and the 'N Yrs' footer of player pages (PA, IP, BF, WAR).
-  * B-Ref season files war_daily_bat / war_daily_pitch (unrounded season WAR).
+  * Published career rows: JAWS position pages, the 'N Yrs' footer of
+    player pages (PA, IP, BF, WAR), war_daily season sums, and finally
+    the career-WAR leaderboard fallback.
 
 Status codes:
   OK        exact (counts) or within 0.05 (WAR)
@@ -29,6 +29,9 @@ ALIASES = {
     "Goose Gossage": ["Rich Gossage"],
     "Hank Aaron": ["Henry Aaron"],
 }
+
+# Pre-BF pitchers in Table 10 whose BF is estimated as round(4.2 * IP)
+ESTIMATED_BF = {"Elmer Smith", "Cy Seymour"}
 
 
 def norm(s):
@@ -81,13 +84,13 @@ def published(pid, kind, field):
     jf = {"BF": "BF", "PA": "PA_page", "IPouts": "IPouts"}.get(field)
     if jf and j.get(jf):
         return j[jf], "jaws page"
+    c = career(kind, pid)
+    if c and field in c:
+        return c[field], "war_daily (season sum)"
     lb = leaderboard().get(pid)
     if lb and field in ("PA", "IPouts") and lb.get(field):
         if (kind == "bat" and field == "PA") or (kind == "pitch" and field == "IPouts"):
             return lb[field], "WAR leaderboard"
-    c = career(kind, pid)
-    if c and field in c:
-        return c[field], "war_daily (season sum)"
     return None, "missing"
 
 
@@ -134,7 +137,13 @@ def main():
         check(name, "pitchWAR", wp, *published_war(pid, "pitch"), True)
         check(name, "IP(outs)", ip_to_outs(ip), *published(pid, "pitch", "IPouts"), False)
         check(name, "PA", pa, *published(pid, "bat", "PA"), False)
-        check(name, "BF", bf, *published(pid, "pitch", "BF"), False)
+        bref_bf, bf_src = published(pid, "pitch", "BF")
+        if bref_bf is None and name in ESTIMATED_BF:
+            outs, outs_src = published(pid, "pitch", "IPouts")
+            if outs is not None:
+                bref_bf = round(outs * 4.2 / 3)
+                bf_src = f"{outs_src} (4.2 * IP)"
+        check(name, "BF", bf, bref_bf, bf_src, False)
 
     for name, w, pa in PV.PITCHER_BATTING:
         pid = resolve(name, "pitch")
@@ -164,6 +173,8 @@ def main():
     print(f"{len(rows)} rows: {counts} -> {path}")
     for p in problems:
         print("  " + p)
+    if problems:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

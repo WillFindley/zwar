@@ -14,12 +14,12 @@ STEPS = [
     "02_verify_inputs.py",       # paper inputs vs Baseball-Reference
     "03_spw_check.py",           # SPW implementation vs Gordon (2023)
     "04_hof_validation.py",      # Hall of Fame AUCs, CIs, CV alpha, SPW, c grid
-    "05_alpha_sensitivity.py",   # Table 8 ranks and Spearman correlations
+    "05_alpha_sensitivity.py",   # Table 12 ranks and Spearman correlations
     "06_sigma.py",               # role-specific sigma and implied c
     "17_leaderboards.py",        # alpha = 1/5 leaderboard tables (07 checks the printed values)
     "07_rank_checks.py",         # all-time ranks and Z_1/5 values printed in the leaderboard tables
     "08_jaws_check.py",          # JAWS / S-JAWS / R-JAWS values and ranks
-    "09_fwar_check.py",          # Section 10 FanGraphs fWAR robustness checks
+    "09_fwar_check.py",          # Appendix G FanGraphs fWAR robustness checks
     "10_checkpoint_prediction.py",  # early-career checkpoint forecasts
     "11_expert_rankings.py",     # agreement with expert top-100 lists
     "12_season_value.py",        # season-value convexity gamma from pennant races

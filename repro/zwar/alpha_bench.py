@@ -161,7 +161,7 @@ def fmt_row(r, cv=True):
         if isinstance(v, (bool, np.bool_)):
             return int(v)
         if isinstance(v, float):
-            return round(v, 4)
+            return round(v, 6)
         return v
     return [f(k) for k in SUMMARY_FIELDS + (CV_FIELDS if cv else [])]
 

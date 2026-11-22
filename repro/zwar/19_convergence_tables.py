@@ -158,7 +158,7 @@ lines = [r"\begin{table}[htbp]", r"\centering",
          r"on $\log r$, players with positive $\WAR$ in both periods) and the Spearman correlation $\rho_r$ between early "
          r"and future rates. If future rate and exposure were independent, Proposition~\ref{prop:target} would put the "
          r"optimum for a cumulative target at $\alpha = 0$ whenever $\beta \ge \kappa$; this matches the pitcher and "
-         r"midpoint designs but not the hitter checkpoints (Section~\ref{sec:forecast}). Future $\WAR$ at checkpoints uses careers ending by 2023; all other outcomes careers ending by 2016 "
+         r"midpoint designs but not the hitter checkpoints (Section~\ref{sec:forecast}). Future $\WAR$ at checkpoints uses careers ending by 2023; all other outcomes use careers ending by 2016 "
          r"(Hall of Fame: by 2010).}",
          r"\label{tab:forecast}", r"\footnotesize", r"\resizebox{\textwidth}{!}{%",
          r"\begin{tabular}{@{}lccccccc@{}}", r"\toprule",
@@ -224,10 +224,6 @@ for cat, title in sections:
     body.append(r"\multicolumn{8}{@{}l}{\emph{%s}} \\" % title)
     for r in rs:
         body.append(f"{short(r['benchmark'])} & {int(float(r['n'])):,} & {f3(r['m(0)'])} & {f3(r['m(0.2)'])} & "
-                    f"{f3(r['m(0.5)'])} & {f3(r['m(1)'])} & {fa(r['argmax_alpha'])} "
-                    f"{interval(r['boot_lo'], r['boot_hi'])} & {ireg(r)} \\\\".replace(",", "{,}", 1)
-                    if False else
-                    f"{short(r['benchmark'])} & {int(float(r['n']))} & {f3(r['m(0)'])} & {f3(r['m(0.2)'])} & "
                     f"{f3(r['m(0.5)'])} & {f3(r['m(1)'])} & {fa(r['argmax_alpha'])} "
                     f"{interval(r['boot_lo'], r['boot_hi'])} & {ireg(r)} \\\\")
     body.append(r"\midrule")

@@ -206,9 +206,9 @@ def main():
         res[s["benchmark"]] = dict(argmax=r["argmax"], lo=r["boot_lo"], hi=r["boot_hi"], a_star=a_star, ci=ci_r)
         rows.append([s["benchmark"], s["category"], "logit" if kind == "auc" else "OLS rank-normal",
                      len(y), n_reg, r["argmax"], r["boot_lo"], r["boot_hi"],
-                     round(a_star, 4), round(ci_r[0], 4), round(ci_r[1], 4), round(cW, 4), round(cN, 4),
-                     int(inside), round(a_log, 4) if do_log else "", n_log if do_log else "",
-                     round(ci_l[0], 4) if do_log else "", round(ci_l[1], 4) if do_log else "", s["duplicate"]])
+                     round(a_star, 6), round(ci_r[0], 6), round(ci_r[1], 6), round(cW, 6), round(cN, 6),
+                     int(inside), round(a_log, 6) if do_log else "", n_log if do_log else "",
+                     round(ci_l[0], 6) if do_log else "", round(ci_l[1], 6) if do_log else "", s["duplicate"]])
         logc = f"{a_log:5.2f} [{ci_l[0]:5.2f},{ci_l[1]:5.2f}] n={n_log}" if do_log else ""
         log(f"{s['benchmark'][:84]:84s} {len(y):5d} {r['argmax']:5.2f} [{r['boot_lo']:.2f},{r['boot_hi']:.2f}]  "
             f"{a_star:6.2f} [{ci_r[0]:6.2f},{ci_r[1]:6.2f}] n={n_reg:<5d}  {logc}"
@@ -256,14 +256,14 @@ def main():
         m = fN >= min_n
         rho = float(spearmanr(W[m] / N[m], fW[m] / fN[m])[0])
         obs = res.get(bname, {})
-        drows.append([label, design, cut, len(P), st["n_beta"], round(st["beta"], 4), round(ci["beta"][0], 4),
-                      round(ci["beta"][1], 4), st["n_pos"], round(st["kappa"], 4), round(ci["kappa"][0], 4),
-                      round(ci["kappa"][1], 4), int(m.sum()), round(rho, 4), round(st["pred"], 4),
-                      round(clip01(st["pred"]), 4), round(ci["pred"][0], 4), round(ci["pred"][1], 4),
-                      round(st["full"], 4), round(ci["full"][0], 4), round(ci["full"][1], 4),
-                      round(st["k_r"], 4), round(st["k_N"], 4), round(st["n_r"], 4), round(st["n_N"], 4),
+        drows.append([label, design, cut, len(P), st["n_beta"], round(st["beta"], 6), round(ci["beta"][0], 6),
+                      round(ci["beta"][1], 6), st["n_pos"], round(st["kappa"], 6), round(ci["kappa"][0], 6),
+                      round(ci["kappa"][1], 6), int(m.sum()), round(rho, 6), round(st["pred"], 6),
+                      round(clip01(st["pred"]), 6), round(ci["pred"][0], 6), round(ci["pred"][1], 6),
+                      round(st["full"], 6), round(ci["full"][0], 6), round(ci["full"][1], 6),
+                      round(st["k_r"], 6), round(st["k_N"], 6), round(st["n_r"], 6), round(st["n_N"], 6),
                       obs.get("argmax", ""), obs.get("lo", ""), obs.get("hi", ""),
-                      round(obs.get("a_star", np.nan), 4), bname])
+                      round(obs.get("a_star", np.nan), 6), bname])
         log(f"  {label:8s} {design:15s} (to {cut}) n={len(P):4d}  beta {st['beta']:.3f} [{ci['beta'][0]:.3f},"
             f"{ci['beta'][1]:.3f}]  kappa {st['kappa']:.3f} [{ci['kappa'][0]:.3f},{ci['kappa'][1]:.3f}]  "
             f"rate rho {rho:.3f}  -> predicted 1-beta/kappa {st['pred']:+.2f} [{ci['pred'][0]:+.2f},"

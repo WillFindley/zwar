@@ -4,7 +4,7 @@
 Universe and conventions are those of 07_rank_checks.py (zwar/universe.py):
 every player in B-Ref's season WAR files; WAR rounded to 0.1 as published;
 PA from player pages / JAWS pages / summed seasons; BF from JAWS pages /
-player pages / Table 7 secondary BF, else IPouts x 4.2/3; floor max(N, 1);
+player pages / Table 11 secondary BF, else IPouts x 4.2/3; floor max(N, 1);
 ties broken by player ID.
 
 Scores, for every player:
@@ -356,21 +356,21 @@ def main():
                      bold(f"{f2(zuni[A][p])} ({pct(zuni[A][p], base)})")])
     approx_names = [nm(p) for p in sel if p in u["approx"]]
     cap = ("Two-coordinate valuation at $\\alpha = \\tfrac15$ for all $n = 18$ players with $\\ge 10\\,\\WAR$ in both "
-           "coordinates \\cite{bbref2026}, sorted by the $\\ell_\\gamma$ combination $\\Ztwoway = "
-           "\\sgn(\\Ical_\\gamma)|\\Ical_\\gamma|^{1/\\gamma}$, $\\Ical_\\gamma = \\sum_k \\sgn(\\WAR_k)"
+           "coordinates \\cite{bbref2026}, sorted by the $\\ell_\\gamma$ combination $Z_{1/5,\\mathrm{2D}} = "
+           "\\sgn(\\Ical_{1/5})|\\Ical_{1/5}|^{1/\\gamma}$, $\\Ical_{1/5} = \\sum_k \\sgn(\\WAR_k)"
            "|\\WAR_k|^{\\gamma}/N_k^{\\gamma-1}$, with $\\gamma = 1/(1-\\alpha) = \\tfrac54$ at "
-           "$\\alpha = \\tfrac15$. $\\Zpos$ and $\\Zpitch$ are the single-coordinate $Z_{1/5}$ scores and "
-           "$\\Zpool = (\\WAR_{\\mathrm{pos}} + \\WAR_{\\mathrm{pitch}})/(\\PA + \\BF)^{1/5}$; percentage changes "
-           "are relative to $\\max(\\Zpos, \\Zpitch)$. Column 1 gives the rank among the 18 with the all-time "
+           "$\\alpha = \\tfrac15$. $Z_{1/5,\\mathrm{pos}}$ and $Z_{1/5,\\mathrm{pitch}}$ are the single-coordinate $Z_{1/5}$ scores and "
+           "$Z_{1/5,\\mathrm{pool}} = (\\WAR_{\\mathrm{pos}} + \\WAR_{\\mathrm{pitch}})/(\\PA + \\BF)^{1/5}$; percentage changes "
+           "are relative to $\\max(Z_{1/5,\\mathrm{pos}}, Z_{1/5,\\mathrm{pitch}})$. Column 1 gives the rank among the 18 with the all-time "
            "unified rank in parentheses; $Z_{1/2}$ \\textbf{Rk} is the rank among the 18 under "
            "Equation~\\eqref{eq:universal_zwar} ($\\gamma = 2$). Total $\\WAR$ is the sum of the rounded components "
            "(Baseball-Reference lists Ruth's total as $182.6$ and Ruffing's as $68.6$)"
            + (f"; $^{{*}}$$\\BF$ estimated at $4.2$ per inning ({', '.join(approx_names)})" if approx_names else "")
            + ".")
-    hdr = ["& \\textbf{Player} & \\textbf{Pos $\\WAR$} & \\textbf{Pitch $\\WAR$} & \\textbf{Total} & & & $\\Zpool$ & "
-           "$Z_{1/2}$ & $\\Ztwoway$",
+    hdr = ["& \\textbf{Player} & \\textbf{Pos $\\WAR$} & \\textbf{Pitch $\\WAR$} & \\textbf{Total} & & & $Z_{1/5,\\mathrm{pool}}$ & "
+           "$Z_{1/2}$ & $Z_{1/5,\\mathrm{2D}}$",
            "\\textbf{Rk (All)} & \\textbf{(Role Profile)} & \\textbf{($\\PA$)} & \\textbf{($\\BF$ / $\\IP$)} & "
-           "\\textbf{$\\WAR$} & $\\Zpos$ & $\\Zpitch$ & \\textbf{($\\Delta\\%$)} & \\textbf{Rk} & "
+           "\\textbf{$\\WAR$} & $Z_{1/5,\\mathrm{pos}}$ & $Z_{1/5,\\mathrm{pitch}}$ & \\textbf{($\\Delta\\%$)} & \\textbf{Rk} & "
            "\\textbf{($\\Delta\\%$)}"]
     tex = table("tab:twoway", cap, "@{}clcccccccc@{}", hdr, rows, "4pt", None)
     open(os.path.join(TAB, "tab_twoway.tex"), "w").write(tex)
@@ -403,18 +403,20 @@ def main():
                      bold(f2(zt)) if zt > zp else f2(zt), str(runi[0.0][p]), str(runi[0.5][p]),
                      bold(f2(zuni[A][p]))])
     cap = ("Unified all-time leaderboard at $\\alpha = \\tfrac15$ \\cite{bbref2026}, sorted by the $\\ell_\\gamma$ "
-           "two-coordinate score $Z_{1/5} = \\sgn(\\Ical_\\gamma)|\\Ical_\\gamma|^{1/\\gamma}$ with "
-           "$\\gamma = 1/(1-\\alpha) = \\tfrac54$, $\\Ical_\\gamma = \\sgn(\\WAR_{\\mathrm{pos}})"
-           "|\\WAR_{\\mathrm{pos}}|^{\\gamma}/\\max(\\PA, 1)^{\\gamma-1} + \\sgn(\\WAR_{\\mathrm{pitch}})"
-           "|\\WAR_{\\mathrm{pitch}}|^{\\gamma}/\\max(\\BF, 1)^{\\gamma-1}$ "
-           "$= \\sum_k \\sgn(Z_k)|Z_k|^{\\gamma}$, and $1\\,\\PA \\equiv 1\\,\\BF$. $\\Zpos$, $\\Zpitch$ and the "
+           "two-\\hspace{0pt}coordinate score $Z_{1/5} \\equiv Z_{1/5,\\mathrm{2D}} = \\sgn(\\Ical_{1/5})|\\Ical_{1/5}|^{1/\\gamma}$ with "
+           "$\\gamma = 1/(1-\\alpha) = \\tfrac54$, $\\Ical_{1/5} = \\sgn(\\WAR_{\\mathrm{pos}})"
+           "|\\WAR_{\\mathrm{pos}}|^{\\gamma}/\\allowbreak\\max(\\PA, 1)^{\\gamma-1} + \\sgn(\\WAR_{\\mathrm{pitch}})"
+           "|\\WAR_{\\mathrm{pitch}}|^{\\gamma}/\\allowbreak\\max(\\BF, 1)^{\\gamma-1} "
+           "= \\sum_k \\sgn(Z_{1/5,k})|Z_{1/5,k}|^{\\gamma}$, and $1\\,\\PA \\equiv 1\\,\\BF$. "
+           "$Z_{1/5,\\mathrm{pos}}$, $Z_{1/5,\\mathrm{pitch}}$ and the "
            "coordinate ranks in column 3 are single-coordinate $Z_{1/5}$ values and ranks. The same rule gives "
            "total career $\\WAR$ at $\\alpha = 0$ ($\\WAR$ \\textbf{Rk}; tied totals share the better rank) and "
            "Equation~\\eqref{eq:universal_zwar} at $\\alpha = \\tfrac12$ ($Z_{1/2}$ \\textbf{Rk}). Totals are sums "
            "of the rounded components shown and can differ by $0.1$ from Baseball-Reference's published career "
            "totals (e.g., Ruth, Young, Randy Johnson).")
     hdr = ["\\textbf{All-Time Rk} & \\textbf{Player} & \\textbf{Positions (Coord.\\ Rk)} & "
-           "\\textbf{Pos / Pitch $\\WAR$ (Tot)} & \\textbf{Exposure ($\\PA$ / $\\BF$)} & $\\Zpos$ & $\\Zpitch$ & "
+           "\\textbf{Pos / Pitch $\\WAR$ (Tot)} & \\textbf{Exposure ($\\PA$ / $\\BF$)} & "
+           "$Z_{1/5,\\mathrm{pos}}$ & $Z_{1/5,\\mathrm{pitch}}$ & "
            "$\\WAR$ \\textbf{Rk} & $Z_{1/2}$ \\textbf{Rk} & \\textbf{Unified $Z_{1/5}$}"]
     tex = table("tab:unified", cap, "@{}cllccccccc@{}", hdr, rows, "4.8pt", [N_TOP_UNI])
     open(os.path.join(TAB, "tab_unified.tex"), "w").write(tex)

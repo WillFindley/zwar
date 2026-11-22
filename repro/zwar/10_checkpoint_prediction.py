@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Predictive test of early-career checkpoint scores (paper Section 3.7 / Section 9.3,
-"Early-career checkpoints").
+"""Predictive test of early-career checkpoint scores (paper Section 5.5 / Table 6,
+"Forecasts and the scaling of targets").
 
 For every player whose career began in 1901 or later, ended by 2023 and
 includes no Negro Leagues season, take the end of his k-th season in a role

@@ -1,4 +1,4 @@
-"""Raw inputs exactly as reported in zwar_paper.tex (Tables 3-7 and text).
+"""Raw inputs exactly as reported in zwar_paper.tex (Tables 7-11 and text).
 
 These are the values the paper claims; 02_verify_inputs.py compares them with
 the Baseball-Reference snapshot in data/raw/.
@@ -19,7 +19,8 @@ HITTERS = [
     ("Alex Rodriguez", 117.4, 12207), ("Nap Lajoie", 108.7, 10471),
     ("Mel Ott", 110.7, 11347), ("Frank Robinson", 107.2, 11744),
     ("Ken Griffey Jr.", 83.8, 11304), ("Albert Pujols", 101.3, 13041),
-    # Small-sample examples in Sections 3.4 and 6
+    ("Rickey Henderson", 111.2, 13346), ("Joe Morgan", 100.6, 11329),
+    # Small-sample examples in Section 6.6 and Appendix F
     ("Herb Washington", -0.5, 0), ("Ron Wotus", 1.0, 67),
 ]
 
@@ -45,6 +46,10 @@ PITCHERS = [
     ("Craig Kimbrel", 22.7, 3502, "867.2"), ("Bruce Sutter", 24.4, 4251, "1042.0"),
     ("Early Wynn", 51.5, 19408, "4564.0"), ("Jack Morris", 43.6, 16120, "3824.0"),
     ("Paul Skenes", 17.1, 1959, "495.0"),
+    ("Bert Blyleven", 96.1, 20491, "4970.0"), ("Phil Niekro", 97.0, 22677, "5404.0"),
+    ("Gaylord Perry", 93.0, 21953, "5350.0"), ("Warren Spahn", 92.6, 21547, "5243.2"),
+    ("Tom Gordon", 35.0, 9058, "2108.0"), ("Ellis Kinder", 30.9, 6302, "1479.2"),
+    ("Bobby Shantz", 32.1, 8045, "1935.2"),
 ]
 
 # (name, pos WAR, PA, pitch WAR, BF, IP)
@@ -58,6 +63,15 @@ TWO_WAY = [
     ("Bob Caruthers", 14.8, 2906, 44.7, 11842, "2828.2"),
     ("John Ward", 34.3, 8114, 28.1, 10164, "2469.2"),
     ("Martin Dihigo", 12.4, 1673, 10.0, 1702, "401.2"),
+    ("George Uhle", 10.6, 1514, 45.1, 13597, "3119.2"),
+    ("Bob Lemon", 10.7, 1326, 37.5, 12099, "2850.0"),
+    ("George Mullin", 12.8, 1694, 34.3, 15169, "3686.2"),
+    ("Red Lucas", 12.0, 1606, 32.7, 10651, "2542.0"),
+    ("Elmer Smith", 30.1, 5426, 12.5, 5083, "1210.1"),
+    ("Smoky Joe Wood", 10.4, 2274, 30.2, 5653, "1434.1"),
+    ("Cy Seymour", 31.4, 6233, 10.1, 4407, "1049.1"),
+    ("Dave Foutz", 12.8, 4859, 22.7, 8425, "1997.1"),
+    ("Ed Rile", 11.8, 1686, 15.2, 3164, "741.1"),
 ]
 
 # Secondary-coordinate values used in the unified table / text: (name, pos WAR, PA)

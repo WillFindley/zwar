@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Seasons versus events as the exposure unit of the value reading
-(paper Proposition 2 and Section 9.2).
+(paper Proposition 4, Appendix D, Table 15).
 
 Under convex season value s^gamma with equal seasons, total value ranks careers
 by W / S^alpha, where S is the number of seasons and alpha = 1 - 1/gamma. The
@@ -9,10 +9,10 @@ only when every career has the same exposure per season (W/N^alpha =
 E^-alpha W/S^alpha). This script compares the two units on the paper's
 external benchmarks:
 
-  * Hall of Fame AUC in the pools of Table 9 (S = seasons with any exposure in
+  * Hall of Fame AUC in the pools of Table 4 (S = seasons with any exposure in
     the role, and S_100 = seasons with at least 100 PA / BF, minimum 1);
-  * the two expert top-100 lists of Section 9.1 (two-way records combined by
-    the signed quadrature of Equation (12) with S_k in place of N_k).
+  * the two expert top-100 lists of Section 5.4 (two-way records combined by
+    the signed quadrature of Equation (10) with S_k in place of N_k).
 
 Outputs: outputs/season_unit.csv, outputs/season_unit_summary.txt
 """
@@ -126,7 +126,7 @@ def main():
     log(f"SP + RP pooled: ranks of relief Hall of Famers at alpha = {A_VALUE}")
     for u in ("N", "S"):
         s = score(SPRP, u, A_VALUE)
-        order = (-s).argsort().argsort()
+        order = (-s).argsort(kind="mergesort").argsort(kind="mergesort")
         ranks = sorted(int(order[i]) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
         log(f"  {'events' if u == 'N' else 'seasons':8s} {ranks}")
 

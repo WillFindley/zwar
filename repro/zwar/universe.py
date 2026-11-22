@@ -6,7 +6,7 @@ Universe: every player in B-Ref's season WAR files.
     PA from the player page, else the JAWS pages, else summed season PA.
   * Pitching: pitching WAR (same rounding convention); career BF from the JAWS
     pages (1,000 pitchers), a cached player page, a short list of hitters'
-    secondary BF quoted in Table 7, otherwise IPouts x 4.2/3 (an approximation
+    secondary BF quoted in Table 11, otherwise IPouts x 4.2/3 (an approximation
     that only affects low-ranked pitchers).
 Exposure floor max(N, 1) is applied by the scoring functions, and ties are
 broken deterministically by player ID. The unified (two-coordinate) score is
@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (HITTER_POS, PITCHER_POS, load_jaws, load_war_daily, career,  # noqa: E402
                     load_player_career, z2d_lgamma)
 
-# Secondary pitching BF from Table 7 / top-50 hitters without a cached player page
+# Secondary pitching BF from Table 11 / top-50 hitters without a cached player page
 TAB6_BF = {"cobbty01": 20.0, "speaktr01": 4.0, "willite01": 9.0, "wagneho01": 37.0,
            "musiast01": 1.0, "broutda01": 127.0, "ansonca01": 21.0, "pujolal01": 7.0,
            "davisge01": 23.0, "steartu99": 37.0, "gibsojo99": 10.0}

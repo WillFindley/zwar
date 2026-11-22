@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the all-time ranks quoted in the paper (Tables 3-5, Table 7, and Section 3.7).
+"""Check the all-time ranks quoted in the paper (Section 6, Tables 7-11).
 
 Universe: every player in B-Ref's season WAR files.
   * Position play: position-player WAR (rounded to 0.1 as published on B-Ref);
@@ -8,9 +8,9 @@ Universe: every player in B-Ref's season WAR files.
   * Pitching: pitching WAR (rounded to 0.1 as published on B-Ref); career BF
     from the JAWS pages (1,000 pitchers) or a cached player page, otherwise
     IPouts x 4.2/3 (an approximation that only affects low-ranked pitchers).
-  * Unified: the signed two-coordinate statistic, Equation (12); alpha = 0.2 uses the
+  * Unified: the signed two-coordinate statistic, Equation (10); alpha = 0.2 uses the
     value-consistent l_gamma rule (common.z2d_lgamma, gamma = 1/(1 - alpha)), which equals
-    Equation (12) at alpha = 1/2 and total WAR at alpha = 0.
+    Equation (10) at alpha = 1/2 and total WAR at alpha = 0.
 The universe is built by zwar/universe.py (shared with 17_leaderboards.py).
 Also checks every Z_0.2 value and every rank (alpha = 0, 0.2, 0.5) printed in
 the alpha = 1/5 leaderboards drafted by 17_leaderboards.py (TABLES_A02,
@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import load_jaws, load_war_daily, z2d, z2d_lgamma, write_csv  # noqa: E402
 import universe  # noqa: E402
 
-# Value point of the family (gamma = 1.25, Proposition 2 / Section 5)
+# Value point of the family (gamma = 1.25, Proposition 4 / Section 4)
 ALPHA_VALUE = 0.2
 # Ranks under alpha = 0.2 quoted in the paper: {(coordinate, pid): rank}. Unified ranks use the
 # l_gamma two-coordinate rule (common.z2d_lgamma), as in the alpha = 1/5 tables.
@@ -63,7 +63,7 @@ PAPER_A02 = {
 
 # (label, coordinate, paper Z-rank, paper WAR-rank or None, pid)
 CHECKS = [
-    # Table 3 (position play)
+    # Table 7 (position play)
     ("Babe Ruth", "pos", 1, 2, "ruthba01"), ("Barry Bonds", "pos", 2, 1, "bondsba01"),
     ("Willie Mays", "pos", 3, 3, "mayswi01"), ("Ty Cobb", "pos", 4, 4, "cobbty01"),
     ("Rogers Hornsby", "pos", 5, 9, "hornsro01"), ("Tris Speaker", "pos", 6, 6, "speaktr01"),
@@ -74,7 +74,7 @@ CHECKS = [
     ("Joe DiMaggio", "pos", 27, 43, "dimagjo01"), ("Turkey Stearnes", "pos", 39, 166, "steartu99"),
     ("Jackie Robinson", "pos", 40, 106, "robinja02"), ("Josh Gibson", "pos", 50, 345, "gibsojo99"),
     ("Pete Rose", "pos", 143, 41, "rosepe01"),
-    # Table 4 (starting pitchers; ranks among all pitchers)
+    # Table 8 (starting pitchers; ranks among all pitchers)
     ("Walter Johnson", "pitch", 1, 2, "johnswa01"), ("Roger Clemens", "pitch", 2, 3, "clemero02"),
     ("Cy Young", "pitch", 3, 1, "youngcy01"), ("Lefty Grove", "pitch", 4, 6, "grovele01"),
     ("Kid Nichols", "pitch", 5, 4, "nichoki01"), ("Grover Alexander", "pitch", 6, 5, "alexape01"),
@@ -83,7 +83,7 @@ CHECKS = [
     ("Greg Maddux", "pitch", 12, 8, "maddugr01"), ("Christy Mathewson", "pitch", 13, 10, "mathech01"),
     ("Bill Foster", "pitch", 34, 132, "fostebi99"), ("Satchel Paige", "pitch", 39, 112, "paigesa01"),
     ("Nolan Ryan", "pitch", 46, 20, "ryanno01"),
-    # Table 5 (relievers and benchmarks)
+    # Table 9 (relievers and benchmarks)
     ("Mariano Rivera", "pitch", 9, 80, "riverma01"), ("Sandy Koufax", "pitch", 50, 90, "koufasa01"),
     ("Dennis Eckersley", "pitch", 52, 54, "eckerde01"), ("Hoyt Wilhelm", "pitch", 62, 108, "wilheho01"),
     ("Juan Marichal", "pitch", 63, 56, "maricju01"), ("Bob Feller", "pitch", 69, 46, "fellebo01"),
@@ -96,7 +96,7 @@ CHECKS = [
     ("Kenley Jansen", "pitch", 169, 412, "janseke01"), ("Craig Kimbrel", "pitch", 203, 478, "kimbrcr01"),
     ("Bruce Sutter", "pitch", 222, 428, "suttebr01"), ("Early Wynn", "pitch", 226, 96, "wynnea01"),
     ("Jack Morris", "pitch", 264, 150, "morrija02"),
-    # Unified (Table 7)
+    # Unified (Table 11)
     ("Babe Ruth", "unified", 1, None, "ruthba01"), ("Walter Johnson", "unified", 17, None, "johnswa01"),
     ("Mike Trout", "unified", 19, None, "troutmi01"), ("Roger Clemens", "unified", 21, None, "clemero02"),
     ("Cy Young", "unified", 22, None, "youngcy01"), ("Lefty Grove", "unified", 37, None, "grovele01"),
@@ -290,7 +290,7 @@ def main():
     zpos_a = {p: pos_w[p] / max(pos_n[p], 1) ** a for p in zpos}
     zpit_a = {p: pit_w[p] / max(pit_n[p], 1) ** a for p in zpit}
     zuni_a = {p: z2d_lgamma(pos_w[p], pos_n[p], pit_w[p], pit_n[p], a) for p in pids}
-    # The l_gamma rule reproduces Equation (12) at alpha = 1/2 and total WAR at alpha = 0
+    # The l_gamma rule reproduces Equation (10) at alpha = 1/2 and total WAR at alpha = 0
     assert max(abs(z2d_lgamma(pos_w[p], pos_n[p], pit_w[p], pit_n[p], 0.5) - zuni[p]) for p in pids) < 1e-12
     assert max(abs(z2d_lgamma(pos_w[p], pos_n[p], pit_w[p], pit_n[p], 0.0) - pos_w[p] - pit_w[p])
                for p in pids) < 1e-9
@@ -381,6 +381,8 @@ def main():
     print(f"alpha = 1/5 tables: {len(t_rows)} printed values checked, {t_bad} outside tolerance, "
           f"{t_exact} exact")
     write_csv("rank_tables_a02.csv", ["table", "pid", "field", "printed", "ours", "status"], t_rows)
+    if bad or a_bad or t_bad:
+        sys.exit(1)
 
 
 

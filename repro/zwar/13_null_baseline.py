@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evidence against a meaningful null (paper Proposition 4 and Section 9.4).
+"""Evidence against a meaningful null (paper Proposition 6, Appendix C, Table 14).
 
 Z_WAR tests H0: r = 0 (replacement level), a null no player in the paper is
 ever close to. Here the null rate is raised to a level where the evidence
@@ -13,17 +13,17 @@ position-specific average baseline:
 l = 0 is the replacement-level family Z_a of the paper, l = 1 tests against
 league average (Z_{1/2,1} = WAA / sqrt(N)), and l = 2 against a rate twice as
 far above replacement as average (about 4 WAR per 650 PA, an All-Star pace).
-By Proposition 4, Z_{a,l} rises with extra playing time iff the marginal rate
+By Proposition 6, Z_{a,l} rises with extra playing time iff the marginal rate
 exceeds (1 - a) * r0 + a * rbar, where r0 = l * D / N.
 
 Analyses:
   1. Share of Hall of Famers whose z = (W - l D) / (sigma sqrt N) exceeds 1.96
      (is the evidence question open?)
-  2. Hall of Fame AUC over the (a, l) grid in the pools of Section 8; best a for
+  2. Hall of Fame AUC over the (a, l) grid in the pools of Section 5.3; best a for
      each l; bootstrap CI for AUC(Z_{1/2,1}) - AUC(Z_{1/2,0}) and vs WAR
-  3. Effective threshold a_eff = a + (1 - a) * l * D / W (Proposition 4 divided
+  3. Effective threshold a_eff = a + (1 - a) * l * D / W (Proposition 6 divided
      by rbar) for Hall of Famers at the best (a, l) per l
-  4. Expert top-100 lists (Section 9.1) with the coordinate-wise null
+  4. Expert top-100 lists (Section 5.4) with the coordinate-wise null
 Outputs: outputs/null_baseline.csv, outputs/null_baseline_summary.txt
 """
 import importlib.util
@@ -141,7 +141,7 @@ def hof_part():
     # 3. Effective threshold for Hall of Famers along the per-lambda optimum
     log("")
     log("Effective dilution threshold a_eff = a + (1 - a) l D / W for Hall of Famers "
-        "(Proposition 4 / rbar), at the AUC-best a for each l")
+        "(Proposition 6 / rbar), at the AUC-best a for each l")
     for name, ps in [("Hitters (8 positions pooled)", H), ("Starting pitchers", SP)]:
         y = labels(ps)
         hof = [p for p in ps if p["hof"] and p["W"] > 0]

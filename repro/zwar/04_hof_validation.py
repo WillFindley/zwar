@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hall of Fame classification analysis (paper Section 8, Table 9), extended with:
+"""Hall of Fame classification analysis (paper Section 5.3, Table 4, Appendix J), extended with:
 
   * stratified bootstrap 95% CIs for AUC differences, including relief pitchers
   * bootstrap CIs for each relief-pitcher AUC (only ~8 Hall of Famers)
@@ -22,7 +22,7 @@ from common import auc, bootstrap_auc_diff, bootstrap_auc_ci, career, z_alpha, z
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
 ALPHAS = np.round(np.arange(0, 1.0001, 0.05), 2)
-A_VALUE = 0.2   # value point of the family (gamma = 1.25; Proposition 2, Section 5)
+A_VALUE = 0.2   # value point of the family (gamma = 1.25; Proposition 4, Section 4)
 N_BOOT = 2000
 CV_FOLDS, CV_REPEATS = 5, 20
 LOG = []
@@ -220,7 +220,7 @@ def main():
     log("SP + RP pooled: ranks of relief Hall of Famers in the combined pitcher list")
     for k in ["WAR", "JAWS", "Z"]:
         s = metric(SPRP, k)
-        order = (-s).argsort().argsort()
+        order = (-s).argsort(kind="mergesort").argsort(kind="mergesort")
         ranks = sorted(int(order[i]) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
         log(f"  {k:5s} {ranks}")
 

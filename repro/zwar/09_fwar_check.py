@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the FanGraphs fWAR robustness analysis in Section 10 (\\ref{sec:fwar}).
+"""Verify the FanGraphs fWAR robustness analysis in Appendix G (\\ref{app:fwar}).
 
 Reads cached FanGraphs career leaderboards from data/raw/fangraphs_bat.json and
 data/raw/fangraphs_pit.json, matches players to the Baseball-Reference JAWS pools

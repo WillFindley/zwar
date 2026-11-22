@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Estimate the convexity gamma of season value from pennant races (paper
-Proposition 2 and Section 5).
+Proposition 4, Section 4, Table 2).
 
-Proposition 2: if a season worth s WAR is worth s^gamma, a constant-rate career
+Proposition 4: if a season worth s WAR is worth s^gamma, a constant-rate career
 ranks as W / N^alpha with alpha = 1 - 1/gamma. Here gamma is estimated without
 reference to Hall of Fame voting or expert lists, from how much a season of s
 wins raises a team's chance of reaching the postseason, winning the pennant or

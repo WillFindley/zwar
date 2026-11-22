@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Compare the alpha family with two published expert rankings of the 100
-greatest players (paper Section 9.1, "Expert rankings").
+greatest players (paper Section 5.4, Table 5, "Expert rankings").
 
 Lists (data/expert/expert_lists.csv; names as published, mapped to B-Ref IDs):
   * tsn1998  - The Sporting News, "Baseball's 100 Greatest Players" (1998).
@@ -99,7 +99,7 @@ def careers_through(year):
         w_pit = sum(s["WAR"] for s in ps.values())
         bf = 0.0
         if ps:
-            bfs = season_bf(pid, pit[pid]["seasons"]) if abs(w_pit) >= 5 else \
+            bfs = season_bf(pid, pit[pid]["seasons"]) if has_season_bf(pid) else \
                 {y: s["IPouts"] * BF_PER_OUT for y, s in ps.items()}
             bf = sum(v for y, v in bfs.items() if y <= year)
         by_year = defaultdict(float)

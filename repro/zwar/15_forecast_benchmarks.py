@@ -291,7 +291,7 @@ def main():
 
     for r in results:
         for a, m in zip(ab.ALPHAS, r["curve"]):
-            long_rows.append([r["name"], r["design"], r["role"], r["outcome"], r["n"], a, round(float(m), 5)])
+            long_rows.append([r["name"], r["design"], r["role"], r["outcome"], r["n"], a, round(float(m), 6)])
         summ_rows.append([r["name"], r["design"], r["role"], r["outcome"], r["category"],
                           "AUC" if r["kind"] == "auc" else "Spearman"] + ab.fmt_row(r))
 

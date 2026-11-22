@@ -52,6 +52,7 @@ Outputs: outputs/alpha_convergence.csv, outputs/alpha_curves.csv (long:
          outputs/figures/fig_alpha_curves.pdf and .png (matplotlib, optional)
 """
 import csv
+from decimal import Decimal, ROUND_HALF_UP
 import importlib.util
 import os
 import sys
@@ -390,10 +391,14 @@ def groups(head):
             ("forecast-midpoint", fc(design_group="midpoint"))]
 
 
+def _fmt2(x):
+    return str(Decimal(str(round(float(x), 6))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 def count_line(lab, H):
     am = np.array([b["argmax"] for b in H])
-    return (f"  {lab:20s} n={len(H):2d}  median argmax {np.median(am):.2f} (IQR {np.percentile(am, 25):.2f}-"
-            f"{np.percentile(am, 75):.2f}); intervals containing 0.2: {sum(b['has02'] for b in H)}/{len(H)}, "
+    return (f"  {lab:20s} n={len(H):2d}  median argmax {_fmt2(np.median(am))} (IQR {_fmt2(np.percentile(am, 25))}-"
+            f"{_fmt2(np.percentile(am, 75))}); intervals containing 0.2: {sum(b['has02'] for b in H)}/{len(H)}, "
             f"containing 0.5: {sum(b['has05'] for b in H)}/{len(H)}; m(0.2) > m(0.5) in "
             f"{sum(b['d02_05'] > 0 for b in H)}/{len(H)} (CI excludes 0 in favour of 0.2: "
             f"{sum(b['d02_05_lo'] > 0 for b in H)}, of 0.5: {sum(b['d02_05_hi'] < 0 for b in H)}); "
@@ -457,11 +462,11 @@ def main():
         im = implied.get(b["benchmark"], {})
         rows.append([
             b["benchmark"], b["category"], b["source"], b["n"], b["metric"],
-            *(round(b[f"m{x:g}"], 4) if is_curve else "" for x in ab.A_REPORT),
-            round(b["argmax"], 4), b["boot_median"] if not is_curve else round(b["boot_median"], 2),
-            round(b["boot_lo"], 4), round(b["boot_hi"], 4), int(bool(b["has02"])), int(bool(b["has05"])),
-            *((round(b["d02_05"], 4), round(b["d02_05_lo"], 4), round(b["d02_05_hi"], 4),
-               round(b["d02_0"], 4), round(b["d02_0_lo"], 4), round(b["d02_0_hi"], 4)) if is_curve else [""] * 6),
+            *(round(b[f"m{x:g}"], 6) if is_curve else "" for x in ab.A_REPORT),
+            round(b["argmax"], 6), b["boot_median"] if not is_curve else round(b["boot_median"], 2),
+            round(b["boot_lo"], 6), round(b["boot_hi"], 6), int(bool(b["has02"])), int(bool(b["has05"])),
+            *((round(b["d02_05"], 6), round(b["d02_05_lo"], 6), round(b["d02_05_hi"], 6),
+               round(b["d02_0"], 6), round(b["d02_0_lo"], 6), round(b["d02_0_hi"], 6)) if is_curve else [""] * 6),
             im.get("alpha_star", ""), im.get("alpha_star_lo", ""), im.get("alpha_star_hi", ""),
             int(b in head) if is_curve else 0, b.get("duplicate", "")])
     write_csv("alpha_convergence.csv",
@@ -472,7 +477,7 @@ def main():
                "in_headline", "note"], rows)
     write_csv("alpha_curves.csv", ["benchmark", "category", "alpha", "metric"],
               [[b["benchmark"], b["category"] + ("" if not b["duplicate"] else " (not in headline)"),
-                a, round(float(m), 5)] for b in bench for a, m in zip(ab.ALPHAS, b["curve"])])
+                a, round(float(m), 6)] for b in bench for a, m in zip(ab.ALPHAS, b["curve"])])
 
     log()
     log(f"{'benchmark':80s} {'n':>5s} {'m(0)':>6s} {'m(.2)':>6s} {'m(.5)':>6s} {'m(1)':>6s} "
