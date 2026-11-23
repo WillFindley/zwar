@@ -5088,5 +5088,86 @@ theorem delta_method_Z_twoway_half_opp_sign_linear_var (W₁ W₂ : Ω → ℝ) 
 
 end NoiseAndOppSignDelta
 
+/-! ### 15.11 Proposition 1 Discrete Decline-Phase Behavior (`prop:alpha`, Sec. 3.1) -/
+
+/-- Proposition 1 (`prop:alpha`, Sec. 3.1): for `0 < W`, `0 < N`, `0 < ΔN`, `α ∈ (0, 1]`,
+and any non-positive marginal block (`r_marg ≤ 0`), `Z_α` strictly decreases. -/
+theorem prop_alpha_discrete_nonpos_lt {W N ΔN α r_marg : ℝ}
+    (hW : 0 < W) (hN : 0 < N) (hΔN : 0 < ΔN) (hα0 : 0 < α) (hα1 : α ≤ 1) (hr : r_marg ≤ 0) :
+    Z_alpha (W + r_marg * ΔN) (N + ΔN) α < Z_alpha W N α := by
+  have _ : α ≤ 1 := hα1
+  have hN_add : 0 < N + ΔN := by linarith
+  have hpow_pos : 0 < N ^ α := Real.rpow_pos_of_pos hN α
+  have hpow_add_pos : 0 < (N + ΔN) ^ α := Real.rpow_pos_of_pos hN_add α
+  have hpow_lt : N ^ α < (N + ΔN) ^ α :=
+    Real.rpow_lt_rpow hN.le (by linarith) hα0
+  have hnum_le : W + r_marg * ΔN ≤ W := by
+    nlinarith
+  unfold Z_alpha
+  calc (W + r_marg * ΔN) / (N + ΔN) ^ α
+      ≤ W / (N + ΔN) ^ α := div_le_div_of_nonneg_right hnum_le hpow_add_pos.le
+    _ < W / N ^ α := div_lt_div_of_pos_left hW hpow_pos hpow_lt
+
+/-- Proposition 1 (`prop:alpha`, Sec. 3.1): for `α ∈ (0, 1)` and `0 < N`, the discrete
+relative threshold `((1 + ΔN / N) ^ α - 1) / (ΔN / N)` shrinks to `0` as `ΔN → ∞`. -/
+theorem prop_alpha_discrete_threshold_tendsto_zero {N α : ℝ}
+    (hN : 0 < N) (hα0 : 0 < α) (hα1 : α < 1) :
+    Tendsto (fun ΔN => ((1 + ΔN / N) ^ α - 1) / (ΔN / N)) atTop (𝓝 0) := by
+  have hx_tend : Tendsto (fun x : ℝ => ((1 + x) ^ α - 1) / x) atTop (𝓝 0) := by
+    have hnonneg : ∀ᶠ x : ℝ in atTop, 0 ≤ ((1 + x) ^ α - 1) / x := by
+      filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+      have h1x : 1 < 1 + x := by linarith
+      have hpow : 1 < (1 + x) ^ α := Real.one_lt_rpow h1x hα0
+      exact div_nonneg (sub_nonneg.mpr hpow.le) hx.le
+    have hle : ∀ᶠ x : ℝ in atTop, ((1 + x) ^ α - 1) / x ≤ (2 : ℝ) ^ α * x ^ (α - 1) := by
+      filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
+      have hx_pos : 0 < x := lt_of_lt_of_le zero_lt_one hx
+      have h1x_le : 1 + x ≤ 2 * x := by linarith
+      have hpow_le : (1 + x) ^ α ≤ (2 * x) ^ α :=
+        Real.rpow_le_rpow (by linarith) h1x_le hα0.le
+      have hpow_mul : (2 * x) ^ α = (2 : ℝ) ^ α * x ^ α :=
+        Real.mul_rpow (by norm_num) hx_pos.le
+      have hsub_le : (1 + x) ^ α - 1 ≤ (2 : ℝ) ^ α * x ^ α := by linarith
+      calc ((1 + x) ^ α - 1) / x
+          ≤ ((2 : ℝ) ^ α * x ^ α) / x := div_le_div_of_nonneg_right hsub_le hx_pos.le
+        _ = (2 : ℝ) ^ α * (x ^ α / x) := by ring
+        _ = (2 : ℝ) ^ α * x ^ (α - 1) := by rw [Real.rpow_sub hx_pos, Real.rpow_one]
+    have hdom : Tendsto (fun x : ℝ => (2 : ℝ) ^ α * x ^ (α - 1)) atTop (𝓝 0) := by
+      have hexp : 0 < 1 - α := sub_pos.mpr hα1
+      have hpow_atTop : Tendsto (fun x : ℝ => x ^ (1 - α)) atTop atTop :=
+        tendsto_rpow_atTop hexp
+      have hinv : Tendsto (fun x : ℝ => (x ^ (1 - α))⁻¹) atTop (𝓝 0) :=
+        tendsto_inv_atTop_zero.comp hpow_atTop
+      have hneg_pow : Tendsto (fun x : ℝ => x ^ (α - 1)) atTop (𝓝 0) := by
+        refine hinv.congr' ?_
+        filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
+        rw [← Real.rpow_neg hx.le]
+        congr 1
+        ring
+      simpa using hneg_pow.const_mul ((2 : ℝ) ^ α)
+    exact squeeze_zero' hnonneg hle hdom
+  have hdiv : Tendsto (fun ΔN : ℝ => ΔN / N) atTop atTop := by
+    have h : Tendsto (fun ΔN : ℝ => ΔN * N⁻¹) atTop atTop :=
+      tendsto_id.atTop_mul_const (inv_pos.mpr hN)
+    simpa [div_eq_mul_inv] using h
+  exact hx_tend.comp hdiv
+
+/-- Proposition 1 (`prop:alpha`, Sec. 3.1): for `0 < W`, `0 < N`, `α ∈ (0, 1)`, and any fixed
+positive marginal rate `0 < r_marg` (even when `r_marg < α * (W / N)`), a sufficiently long
+block `ΔN` eventually raises `Z_α` above its pre-block value. -/
+theorem prop_alpha_discrete_fixed_pos_eventually_gt {W N α r_marg : ℝ}
+    (hW : 0 < W) (hN : 0 < N) (hα0 : 0 < α) (hα1 : α < 1) (hr : 0 < r_marg) :
+    ∀ᶠ ΔN in atTop, Z_alpha W N α < Z_alpha (W + r_marg * ΔN) (N + ΔN) α := by
+  have hr_bar : 0 < W / N := div_pos hW hN
+  have hev : ∀ᶠ ΔN : ℝ in atTop,
+      ((1 + ΔN / N) ^ α - 1) / (ΔN / N) < r_marg / (W / N) :=
+    (prop_alpha_discrete_threshold_tendsto_zero hN hα0 hα1).eventually
+      (Iio_mem_nhds (div_pos hr hr_bar))
+  filter_upwards [hev, eventually_gt_atTop (0 : ℝ)] with ΔN hlt hΔN
+  have hdiv : (r_marg * ΔN) / ΔN = r_marg := mul_div_cancel_right₀ r_marg hΔN.ne'
+  have hthresh : (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) < r_marg :=
+    (lt_div_iff₀ hr_bar).mp hlt
+  exact (prop_alpha_discrete_iff hN hΔN).mpr (by rw [hdiv]; exact hthresh)
+
 end ZwarProofs
 

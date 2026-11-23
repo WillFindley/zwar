@@ -101,7 +101,7 @@ Three families of compromise are in common use:
     \end{equation}
     $\WAA$ therefore lowers a player's score for any season below average, including seasons above replacement level, a deliberate choice that emphasizes peak value.
 
-    \item \textbf{Shrunken rates.} Adding $N_0$ pseudo-opportunities at a prior rate $r_0$ gives an estimate of true talent \cite{efron1975,tango2007}:
+    \item \textbf{Shrunken rates.} Adding $N_0$ pseudo-opportunities at a prior rate $r_0$ gives an estimate of true talent \cite{efron1975,tango2007,albert2020}:
     \begin{equation}
         \hat{r}_{\mathrm{EB}} = \frac{\WAR + N_0 r_0}{N + N_0}.
     \end{equation}
@@ -142,7 +142,7 @@ Every modeling choice is listed in Table~\ref{tab:choices}.
 
 \paragraph{Statistical analogs.} Outside baseball, $W/\sqrt N$ is the familiar one-sample $t$- or $z$-statistic for a mean, and in finance the same quantity appears as a Sharpe ratio scaled by the square root of the sample length \cite{lo2002}. The statistic itself is therefore not new. This work began from it, and we treat it as a hypothesis about the best exponent rather than as the answer; our contributions are the family built around it, the competing value reading, the cross-role calibration under $\PA \equiv \BF$, and the empirical tests that decide between the two readings.
 
-\paragraph{Era and talent estimation.} Berry, Reese and Larkey \cite{berry1999} model era effects hierarchically. Regression-to-the-mean and empirical Bayes methods \cite{efron1975,tango2007,albert2017} estimate per-event talent rather than accumulated career value. The family $Z_\alpha$ is a career-level statistic and does not model seasons, eras or aging. It should be read as a complement to these approaches, not a replacement.
+\paragraph{Era and talent estimation.} Berry, Reese and Larkey \cite{berry1999} model era effects hierarchically. Regression-to-the-mean and empirical Bayes methods \cite{efron1975,tango2007,albert2017,albert2020} estimate per-event talent rather than accumulated career value. The family $Z_\alpha$ is a career-level statistic and does not model seasons, eras or aging. It should be read as a complement to these approaches, not a replacement.
 
 \section{The \texorpdfstring{$\alpha$}{alpha}-Family}
 \label{sec:theory}
@@ -176,7 +176,7 @@ For a discrete block $\Delta N > 0$ at rate $r_{\mathrm{marg}} = \Delta W/\Delta
 $\frac{dZ_\alpha}{dN} = N^{-\alpha}\left(r_{\mathrm{marg}} - \alpha W/N\right)$, which proves the first claim. For the discrete case, $(W+\Delta W)/(N+\Delta N)^\alpha > W/N^\alpha$ if and only if $1 + \Delta W/W > (1+\Delta N/N)^\alpha$. Substituting $\Delta W = r_{\mathrm{marg}}\Delta N$ and $W = \bar r N$ and expanding gives the second claim.
 \end{proof}
 
-Proposition~\ref{prop:alpha} turns $\alpha$ into an answer to a concrete question: \emph{how good must an extra season be, relative to the player's career rate, to raise his score?} Cumulative $\WAR$ answers ``any positive rate,'' $Z_{1/5}$ ``one-fifth of the career rate'' (about $1.5\,\WAR/650\,\PA$ for an inner-circle hitter at $7$--$8\,\WAR/650$, below a league-average regular), $\ZWAR$ ``half the career rate'' (about $3.5$--$4\,\WAR/650$, an All-Star pace), and a pure rate ``the full career rate.'' Every member except $\alpha = 0$ therefore lets a long enough decline phase lower a career score, and the exponent sets how weak a season must be before it does.
+Proposition~\ref{prop:alpha} turns $\alpha$ into an answer to a concrete question: \emph{how good must an extra season be, relative to the player's career rate, to raise his score?} Cumulative $\WAR$ answers ``any positive rate,'' $Z_{1/5}$ ``one-fifth of the career rate'' (about $1.5\,\WAR/650\,\PA$ for an inner-circle hitter at $7$--$8\,\WAR/650$, below a league-average regular), $\ZWAR$ ``half the career rate'' (about $3.5$--$4\,\WAR/650$, an All-Star pace), and a pure rate ``the full career rate.'' For every member with $\alpha > 0$, the exponent sets how weak a season must be before it lowers a career score: non-positive seasons always lower the score, whereas for $\alpha \in (0, 1)$ a fixed positive rate $0 < r_{\mathrm{marg}} < \alpha\bar r$ lowers it over short blocks before the finite-block threshold of Proposition~\ref{prop:alpha} drops below $r_{\mathrm{marg}}$.
 
 \begin{remark}[Comparison with $\WAA$]
 \label{rem:waa}
@@ -185,7 +185,7 @@ $\WAA$ penalizes any season below the fixed league-average rate ($\approx 2.0\,\
 
 \begin{remark}[Late-career dilution]
 \label{rem:envelope}
-The exponent decides whether a decline phase counts for or against a career. Albert Pujols had $91.4\,\WAR$ in $8{,}103\,\PA$ at the end of 2012 and added $9.9\,\WAR$ in $4{,}938\,\PA$ ($r_{\mathrm{marg}} = 1.30\,\WAR/650$). At $\alpha = \tfrac12$ the finite-block threshold is $0.441\,\bar r \approx 3.23\,\WAR/650$, so the block lowered his score ($\ZWAR$ from $1.015$ to $0.887$). At $\alpha = \tfrac15$ the threshold is $0.164\,\bar r \approx 1.20\,\WAR/650$, so the same block \emph{raised} it slightly ($Z_{1/5}$ from $15.11$ to $15.22$). If monotonicity in playing time is preferred, one may report the running maximum over season-end checkpoints with a minimum exposure $n_{\min}$, $Z_\alpha^* \equiv \max_{s:\,n_s \ge n_{\min}} W(n_s)/n_s^{\alpha}$; unlike $Z_\alpha$, it depends on season order and rewards early peaks. (For $\alpha = \tfrac12$ and a maximum over \emph{every} event, noise dominates: by the law of the iterated logarithm, for a driftless random walk the running maximum of $W(k)/\sqrt{k}$ over $k \le n$ grows like $\sigma\sqrt{2\log\log n}$ almost surely.)
+The exponent decides whether a decline phase counts for or against a career. Albert Pujols had $91.4\,\WAR$ in $8{,}103\,\PA$ at the end of 2012 and added $9.9\,\WAR$ in $4{,}938\,\PA$ ($r_{\mathrm{marg}} = 1.30\,\WAR/650$). At $\alpha = \tfrac12$ the finite-block threshold is $0.441\,\bar r \approx 3.23\,\WAR/650$, so the block lowered his score ($\ZWAR$ from $1.015$ to $0.887$). At $\alpha = \tfrac15$ the threshold is $0.164\,\bar r \approx 1.20\,\WAR/650$, so the same block \emph{raised} it slightly ($Z_{1/5}$ from $15.11$ to $15.22$). If monotonicity in playing time is preferred, one may report the running maximum over season-end checkpoints with a minimum exposure $n_{\min}$, $Z_\alpha^* \equiv \max_{s:\,n_s \ge n_{\min}} W(n_s)/n_s^{\alpha}$; unlike $Z_\alpha$, it depends on season order and rewards early peaks. (For $\alpha = \tfrac12$ and a maximum over \emph{every} event, noise dominates: by the law of the iterated logarithm, for a driftless random walk with i.i.d.\ finite-variance steps (variance $\sigma^2 > 0$) the running maximum of $W(k)/\sqrt{k}$ over $k \le n$ grows like $\sigma\sqrt{2\log\log n}$ almost surely.)
 \end{remark}
 
 \subsection{Which exponent? Target scaling}
@@ -291,7 +291,7 @@ Let $\gamma = 1/(1-\alpha)$ for $\alpha \in [0,1)$, with floored exposures $N_{\
 \end{equation}
 \end{definition}
 
-Equation~\eqref{eq:universal_zwar} reduces to $Z_\alpha$ for single-role players and is continuous on $\R^2$. At $\alpha = 0$ ($\gamma = 1$) it is total $\WAR$, $\WAR_{\mathrm{pos}} + \WAR_{\mathrm{pitch}}$, so the combined family keeps career $\WAR$ as its endpoint. At $\alpha = \tfrac15$ ($\gamma = 1.25$) it is an $\ell_{1.25}$ norm of the coordinate scores. At $\alpha = \tfrac12$ ($\gamma = 2$) it is the signed Euclidean norm $\sgn(\Ical_{1/2})\sqrt{\bigl|\,|\Zpos|\Zpos + |\Zpitch|\Zpitch\,\bigr|}$, whose magnitude for non-negative coordinates is the square root of a $\chi^2_2$-type omnibus statistic. A negative coordinate is subtracted, so below-replacement play always lowers the score. For positive exposures ($\PA, \BF > 0$) and non-negative coordinates, Radon's inequality gives $Z_{\alpha,\mathrm{2D}} \ge (\WAR_{\mathrm{pos}} + \WAR_{\mathrm{pitch}})/(\PA + \BF)^{\alpha}$, with equality for $\alpha > 0$ if and only if the two per-event rates coincide. The combination therefore never scores a player below the pooled-exposure alternative, and never penalizes positive value added in a second role. Appendix~\ref{app:twoway} gives the Lagrange identity behind this inequality at $\alpha = \tfrac12$, the rule's partition dependence and its null calibration.
+Equation~\eqref{eq:universal_zwar} reduces to $Z_\alpha$ for single-role players and is continuous on $\R^2$. At $\alpha = 0$ ($\gamma = 1$) it is total $\WAR$, $\WAR_{\mathrm{pos}} + \WAR_{\mathrm{pitch}}$, so the combined family keeps career $\WAR$ as its endpoint. At $\alpha = \tfrac15$ ($\gamma = 1.25$) it is a signed $\ell_{1.25}$ rule (the $\ell_{1.25}$ norm when both coordinates are non-negative). At $\alpha = \tfrac12$ ($\gamma = 2$) it is the signed Euclidean norm $\sgn(\Ical_{1/2})\sqrt{\bigl|\,|\Zpos|\Zpos + |\Zpitch|\Zpitch\,\bigr|}$, whose magnitude for non-negative coordinates is the square root of a $\chi^2_2$-type omnibus statistic. A negative coordinate is subtracted, so below-replacement play always lowers the score. For positive exposures ($\PA, \BF > 0$) and non-negative coordinates, Radon's inequality gives $Z_{\alpha,\mathrm{2D}} \ge (\WAR_{\mathrm{pos}} + \WAR_{\mathrm{pitch}})/(\PA + \BF)^{\alpha}$, with equality for $\alpha > 0$ if and only if the two per-event rates coincide. The combination therefore never scores a player below the pooled-exposure alternative, and never penalizes positive value added in a second role. Appendix~\ref{app:twoway} gives the Lagrange identity behind this inequality at $\alpha = \tfrac12$, the rule's partition dependence and its null calibration.
 
 \subsection{Summary of modeling choices}
 
@@ -413,7 +413,7 @@ Four patterns stand out.
 \subsection{Hall of Fame}
 \label{sec:hof}
 
-We use all players on Baseball-Reference's JAWS position pages whose final season was 2010 or earlier, so that BBWAA eligibility has run its course. The main specification excludes players whose outcomes were driven by bans or PED controversy (Rose, Joe Jackson, Bonds, Clemens, McGwire, Sosa, Palmeiro, Sheffield); including them changes AUCs by at most $0.003$. Hitters are scored with position-player $\WAR$ and $\PA$, pitchers with pitching $\WAR$ and $\BF$; published pitcher $\JAWS$ includes batting value while our pitcher scores do not, which matters little (scoring starters by the two-coordinate score raises their $Z_{1/2}$ AUC from $0.904$ to $0.910$). $\WAA$ is Baseball-Reference's published Wins Above Average. The Hall of Fame flag includes committee selections (including Negro Leagues electees) and players elected primarily in other roles. Table~\ref{tab:hof} reports the AUC for classifying Hall of Famers.
+We use all players on Baseball-Reference's JAWS position pages whose final season was 2010 or earlier, so that BBWAA eligibility has run its course. The main specification excludes eight high-profile players whose outcomes were driven by bans or PED controversy (Rose, Joe Jackson, Bonds, Clemens, McGwire, Sosa, Palmeiro, Sheffield); across the five unrestricted pools, including them changes $Z_\alpha$ AUCs ($\alpha \in \{0, \tfrac15, \tfrac12\}$, as well as the main-pool benchmark AUCs) by at most $0.003$ (up to $0.023$ in the contested pools, where all eight qualify above $40\,\WAR$), while also excluding the $17$ earlier permanently banned players in the pool (such as Eddie Cicotte and other 1919 Black Sox) changes $Z_\alpha$ AUCs by at most $0.002$ across all eight pools ($0.001$ in the unrestricted pools). Hitters are scored with position-player $\WAR$ and $\PA$, pitchers with pitching $\WAR$ and $\BF$; published pitcher $\JAWS$ includes batting value while our pitcher scores do not, which matters little (scoring starters by the two-coordinate score raises their $Z_{1/2}$ AUC from $0.904$ to $0.910$). $\WAA$ is Baseball-Reference's published Wins Above Average. The Hall of Fame flag includes committee selections (including Negro Leagues electees) and players elected primarily in other roles. Table~\ref{tab:hof} reports the AUC for classifying Hall of Famers.
 
 \begin{table}[htbp]
 \centering
@@ -577,7 +577,7 @@ $Z_{1/5}$ \textbf{Rk} & \textbf{Player} & \textbf{Pos $\WAR$} & \textbf{Career $
     \item \textbf{The top of the list is stable.} The $Z_{1/5}$ top fifteen are the career-$\WAR$ top sixteen without Rickey Henderson (\#18 under $Z_{1/5}$), reordered by at most two places, and Ruth leads Bonds clearly ($25.41$ vs.\ $24.63$). Ruth used $1{,}978$ fewer plate appearances for nearly the same position-player $\WAR$; Bonds leads in career $\WAR$ ($162.8$ vs.\ $162.3$), Ruth under every exponent above $0.02$.
     \item \textbf{What $\tfrac15$ changes relative to $\tfrac12$.} Long careers at high rates rise: Aaron (\#9 under $Z_{1/2}$ to \#5), Musial (\#11 to \#9), Alex Rodriguez and Mel Ott enter the top fifteen. Careers shortened by war service or illness keep only part of the lift $Z_{1/2}$ gave them: Ted Williams is \#10 (\#11 in $\WAR$, \#7 under $Z_{1/2}$), Gehrig \#12, DiMaggio \#39 (\#43, \#27). Crediting Williams with $2{,}000$ hypothetical extra $\PA$ at his career rate would raise his $\WAR$ by $20\%$, his $Z_{1/5}$ by $16\%$ and his $Z_{1/2}$ by $10\%$.
     \item \textbf{Peak versus volume.} Rose ($79.6\,\WAR$ in $15{,}890\,\PA$) and DiMaggio ($78.9$ in $7{,}672$) have nearly equal $\WAR$. $Z_{1/2}$ separates them by $116$ places (\#27 and \#143); at $\alpha = \tfrac15$ DiMaggio is still clearly ahead ($13.19$ vs.\ $11.50$), but by $22$ places (\#39 and \#61), because a threshold of one-fifth of the career rate counts most of Rose's long run of solid seasons in his favor.
-    \item \textbf{Negro Leagues and color-barrier careers.} Turkey Stearnes (\#109), Jackie Robinson (MLB debut at 28; \#70) and Josh Gibson ($41.1\,\WAR$ in $2{,}683\,\PA$; \#197) all rank well above their career-$\WAR$ places (\#166, \#106, \#345) but far below their $Z_{1/2}$ places (\#39, \#40, \#50). Baseball-Reference's Negro Leagues statistics cover only documented games; event-based scores handle short \emph{schedules} better than season-window metrics, but they cannot correct for \emph{missing} records, so these placements carry extra uncertainty and depend strongly on the exponent.
+    \item \textbf{Negro Leagues and color-barrier careers.} Turkey Stearnes (\#109), Jackie Robinson (MLB debut at 28; $64.1\,\WAR$ including his 1945 Negro American League season; \#70) and Josh Gibson ($41.1\,\WAR$ in $2{,}683\,\PA$; \#197) all rank well above their career-$\WAR$ places (\#166, \#106, \#345) but far below their $Z_{1/2}$ places (\#39, \#40, \#50). Baseball-Reference's Negro Leagues statistics cover only documented games; event-based scores handle short \emph{schedules} better than season-window metrics, but they cannot correct for \emph{missing} records, so these placements carry extra uncertainty and depend strongly on the exponent.
 \end{enumerate}
 
 \subsection{Starting pitchers}
@@ -1133,10 +1133,10 @@ $\ZWAR$ thus places a historic two- to five-year start on par with high-volume, 
 \section{Choice of \texorpdfstring{$\WAR$}{WAR} input: bWAR versus fWAR}
 \label{app:fwar}
 
-Because the family specifies only the denominator and the two-coordinate rule, it is independent of how $\WAR$ is constructed. We report the comparison at $\alpha = \tfrac12$; because the source changes only the numerator, the differences between the two pitcher lists carry over to every exponent. Recomputing $\ZWAR$ with FanGraphs $\WAR$ ($\mathrm{fWAR}$) \cite{fangraphs2026} (matching FanGraphs' top-$1{,}000$ hitter and top-$1{,}000$ pitcher career $\WAR$ leaderboards to the JAWS pools by name and debut year, and keeping Baseball-Reference $\BF$ as early FanGraphs $\BF$ is incomplete) gives:
+Because the family specifies only the denominator and the two-coordinate rule, it is independent of how $\WAR$ is constructed. We report the comparison at $\alpha = \tfrac12$; because the source changes only the numerator, the differences between the two pitcher lists carry over to every exponent. Recomputing $\ZWAR$ with FanGraphs $\WAR$ ($\mathrm{fWAR}$) \cite{fangraphs2026} (matching FanGraphs' top-$1{,}000$ hitter and top-$1{,}000$ pitcher career $\WAR$ leaderboards to the JAWS pools by MLBAM player identifier with a normalized name-and-debut-year fallback, and keeping Baseball-Reference $\BF$ as early FanGraphs $\BF$ is incomplete) gives:
 \begin{itemize}
-    \item \emph{Hitters} ($n = 953$ matched with $\ge 3{,}000\,\PA$): Spearman correlation $0.936$ between bWAR- and fWAR-based $\Zpos$, with all 10 of the top 10 in common. Ruth ($1.621$) and Bonds ($1.465$) remain \#1 and \#2.
-    \item \emph{Pitchers} ($n = 560$ matched with $\ge 2{,}500\,\BF$): Spearman correlation $0.743$. The fWAR-based top five are Clemens ($0.940$), Randy Johnson ($0.845$), Maddux ($0.816$), Mart\'{i}nez ($0.791$) and Cy Young ($0.765$). Walter Johnson falls to sixth ($0.761$). Rivera moves from \#9 to \#35 ($39.1\,\mathrm{fWAR}$, $\Zpitch = 0.547$) but remains the top reliever, ahead of Eckersley ($0.531$). Nolan Ryan rises from \#46 (\#45 among starters) to \#9, and Maddux passes Kershaw.
+    \item \emph{Hitters} ($n = 979$ matched with $\ge 3{,}000\,\PA$): Spearman correlation $0.934$ between bWAR- and fWAR-based $\Zpos$, with all 10 of the top 10 in common. Ruth ($1.621$) and Bonds ($1.465$) remain \#1 and \#2.
+    \item \emph{Pitchers} ($n = 580$ matched with $\ge 2{,}500\,\BF$): Spearman correlation $0.740$. The fWAR-based top five are Clemens ($0.940$), Randy Johnson ($0.845$), Maddux ($0.816$), Mart\'{i}nez ($0.791$) and Cy Young ($0.765$). Walter Johnson falls to sixth ($0.761$). Rivera moves from \#9 to \#35 ($39.1\,\mathrm{fWAR}$, $\Zpitch = 0.547$) but remains the top reliever, ahead of Eckersley ($0.531$). Nolan Ryan rises from \#46 (\#45 among starters) to \#9, and Maddux passes Kershaw.
 \end{itemize}
 With $\BF$ fixed, differences between the two pitcher lists come from the numerator ($\mathrm{RA9}$-based bWAR vs.\ $\mathrm{FIP}$-based fWAR) and affect cumulative $\WAR$ and $\JAWS$ in the same way. The $\sqrt{\BF}$ compression (lifting high-rate, shorter-workload pitchers such as Mart\'{i}nez and making Rivera \#1 among relievers) holds under both sources; specific placements (Walter Johnson at \#1, Rivera in the top 10, Kershaw vs.\ Maddux, Ryan's rank) reflect the chosen pitching $\WAR$. The source also changes the cross-role convention of Remark~\ref{rem:mvp}: FanGraphs' $57/43$ split gives pitchers a larger share of league $\WAR$ than Baseball-Reference's $59/41$, so the hitter/pitcher gap at the top of a unified $\mathrm{fWAR}$ list is somewhat smaller.
 
@@ -1175,6 +1175,11 @@ J.~Albert.
 \newblock \emph{Teaching Statistics Using Baseball}.
 \newblock Mathematical Association of America, Washington, DC, 2nd edition, 2017.
 
+\bibitem{albert2020}
+J.~Albert and J.~Hu.
+\newblock \emph{Probability and Bayesian Modeling}.
+\newblock Chapman \& Hall/CRC, Boca Raton, FL, 2020.
+
 \bibitem{bbref2026}
 {Baseball-Reference.com}.
 \newblock Career leaders and records for Wins Above Replacement; JAWS position leaderboards (including $\SJAWS$ and $\RJAWS$).
@@ -1212,7 +1217,7 @@ D.~Cameron.
 
 \bibitem{hallofstats}
 A.~Darowski.
-\newblock Hall of Stats (\url{http://www.hallofstats.com}), accessed 16 October 2026.
+\newblock Hall of Stats (\url{http://www.hallofstats.com}), accessed 16 October 2026; site closed December 2023.
 
 \bibitem{efron1975}
 B.~Efron and C.~Morris.

@@ -18,7 +18,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import auc, bootstrap_auc_diff, bootstrap_auc_ci, career, z_alpha, z2d, write_csv, OUT  # noqa: E402
+from common import auc, bootstrap_auc_diff, bootstrap_auc_ci, career, load_war_daily, z_alpha, z2d, write_csv, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
 ALPHAS = np.round(np.arange(0, 1.0001, 0.05), 2)
@@ -26,6 +26,20 @@ A_VALUE = 0.2   # value point of the family (gamma = 1.25; Proposition 4, Sectio
 N_BOOT = 2000
 CV_FOLDS, CV_REPEATS = 5, 20
 LOG = []
+
+# Earlier permanently banned / blacklisted players (verified against war_daily_*.txt;
+# 17 appear in <= 2010 JAWS pools: 14 hitters, 3 SP, 0 RP; only cicoted01 has WAR >= 40).
+EARLY_BANNED = {
+    # Remaining 1919 Black Sox (willile01 not in JAWS)
+    "cicoted01", "willile01", "gandich01", "weavebu01",
+    "felscha01", "risbesw01", "mcmulfr01",
+    # 1920s permanently ineligible / blacklisted (douglph01, gedeojo01, o'conji01 not in JAWS)
+    "chaseha01", "zimmehe01", "kauffbe01", "douglph01",
+    "mageele01", "gedeojo01", "paulege01", "o'conji01",
+    "dolanco02", "bortoba01", "hendrcl01",
+    # 1877 Louisville Grays (nichoal01 not in JAWS)
+    "devliji01", "hallge01", "cravebi01", "nichoal01",
+}
 
 
 def log(msg=""):
@@ -103,16 +117,19 @@ def main():
     def contested(ps):
         return [p for p in ps if p["W"] >= 40]
 
-    pools = [
-        ("Hitters (8 positions pooled)", H, "JAWS"),
-        ("Starting pitchers", SP, "S_JAWS"),
-        ("Relief pitchers", RP, "R_JAWS"),
-        ("Hitters + SP pooled", HSP, "S_JAWS"),
-        ("SP + RP pooled", SP + RP, "SR_JAWS"),
-        ("Contested hitters", contested(H), "JAWS"),
-        ("Contested SP", contested(SP), "S_JAWS"),
-        ("Contested hitters + SP", contested(H) + contested(SP), "S_JAWS"),
-    ]
+    def make_pools(h, sp, rp):
+        return [
+            ("Hitters (8 positions pooled)", h, "JAWS"),
+            ("Starting pitchers", sp, "S_JAWS"),
+            ("Relief pitchers", rp, "R_JAWS"),
+            ("Hitters + SP pooled", h + sp, "S_JAWS"),
+            ("SP + RP pooled", sp + rp, "SR_JAWS"),
+            ("Contested hitters", contested(h), "JAWS"),
+            ("Contested SP", contested(sp), "S_JAWS"),
+            ("Contested hitters + SP", contested(h) + contested(sp), "S_JAWS"),
+        ]
+
+    pools = make_pools(H, SP, RP)
 
     auc_rows, boot_rows, cv_rows = [], [], []
     log("Hall of Fame AUC (final season <= 2010; banned/PED excluded)")
@@ -234,6 +251,41 @@ def main():
             max_change = max(max_change, d)
     log(f"Including banned/PED players changes AUCs by at most {max_change:.4f} "
         f"(main pools; WAR, WAR7, JAWS, WAA, SPW, Z)")
+
+    def max_z_delta(alt_pools):
+        best_main = (0.0, None, None)
+        best_all = (0.0, None, None)
+        for idx_p, ((name, ps1, _), (_, ps2, _)) in enumerate(zip(pools, alt_pools)):
+            y1, y2 = labels(ps1), labels(ps2)
+            for alpha in (0.0, A_VALUE, 0.5):
+                d = abs(auc(metric(ps1, "Z", alpha), y1) - auc(metric(ps2, "Z", alpha), y2))
+                if idx_p < 5 and d > best_main[0]:
+                    best_main = (d, name, alpha)
+                if d > best_all[0]:
+                    best_all = (d, name, alpha)
+        return best_main, best_all
+
+    # (a) Including the 8 HOF_EXCLUDE players across main vs all 8 pools and alpha in {0, 0.2, 0.5}
+    (da_main, pa_main, aa_main), (da_all, pa_all, aa_all) = max_z_delta(make_pools(Hi, SPi, RPi))
+    log(f"  Sensitivity (a) including 8 HOF_EXCLUDE, alpha in {{0,0.2,0.5}}: "
+        f"5 main pools max |dAUC|={da_main:.4f} ({pa_main}, a={aa_main}); "
+        f"all 8 pools max |dAUC|={da_all:.4f} ({pa_all}, a={aa_all})")
+    assert da_main <= 0.003, f"Unexpected main-pool sensitivity: {da_main}"
+    assert da_all <= 0.024, f"Unexpected 8-pool sensitivity: {da_all}"
+
+    # (b) Also excluding earlier permanently banned players in <= 2010 JAWS pools
+    valid_pids = set(load_war_daily("bat")) | set(load_war_daily("pitch"))
+    assert EARLY_BANNED <= valid_pids, f"Unknown player_IDs: {EARLY_BANNED - valid_pids}"
+    in_early = [p["pid"] for p in H + SP + RP if p["pid"] in EARLY_BANNED]
+    Hb = [p for p in H if p["pid"] not in EARLY_BANNED]
+    SPb = [p for p in SP if p["pid"] not in EARLY_BANNED]
+    RPb = [p for p in RP if p["pid"] not in EARLY_BANNED]
+    (db_main, pb_main, ab_main), (db_all, pb_all, ab_all) = max_z_delta(make_pools(Hb, SPb, RPb))
+    log(f"  Sensitivity (b) also excluding {len(in_early)} earlier banned players, alpha in {{0,0.2,0.5}}: "
+        f"5 main pools max |dAUC|={db_main:.4f} ({pb_main}, a={ab_main}); "
+        f"all 8 pools max |dAUC|={db_all:.4f} ({pb_all}, a={ab_all})")
+    assert len(in_early) == 17, f"Expected 17 earlier banned in <=2010 JAWS, got {len(in_early)}"
+    assert db_main <= 0.001 and db_all <= 0.002, f"Unexpected early-banned sensitivity: {db_main}, {db_all}"
 
     def sp_z2d(ps):
         out = []
