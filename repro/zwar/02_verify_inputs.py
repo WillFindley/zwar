@@ -13,6 +13,7 @@ Status codes:
 
 Writes outputs/input_check.csv.
 """
+import csv
 import os
 import sys
 import unicodedata
@@ -150,6 +151,16 @@ def main():
         check(name, "batWAR", w, *published_war(pid, "bat"), True)
         check(name, "batPA", pa, *published(pid, "bat", "PA"), False)
 
+    for name, wpos, pa, wp, bf, ip in PV.HITTER_PITCHING:
+        pid = resolve(name, "bat")
+        check(name, "posWAR", wpos, *published_war(pid, "bat"), True)
+        check(name, "PA", pa, *published(pid, "bat", "PA"), False)
+        check(name, "pitchWAR", wp, *published_war(pid, "pitch"), True)
+        if bf is not None:
+            check(name, "BF", bf, *published(pid, "pitch", "BF"), False)
+        if ip is not None:
+            check(name, "IP(outs)", ip_to_outs(ip), *published(pid, "pitch", "IPouts"), False)
+
     # Season checkpoints: compare with (a) the sum of displayed (rounded) season
     # WAR on the player page and (b) the unrounded war_daily sum.
     for name, label, (y0, y1), w, n, kind in PV.CHECKPOINTS:
@@ -165,6 +176,44 @@ def main():
         w_daily = sum(s["WAR"] for y, s in seasons.items() if y0 <= y <= y1)
         rows.append([f"{name} {label}", "WAR(unrounded)", w, round(w_daily, 3),
                      "war_daily (season sum)", "INFO"])
+
+    for name, label, (y0, y1), ip, neg_exp in PV.CHECKPOINT_EXTRA:
+        pid = resolve(name, "pitch")
+        pg = load_player_page(pid)["pitch"]
+        if ip is not None:
+            check(f"{name} {label}", "IP(outs)", ip_to_outs(ip),
+                  sum(s["IPouts"] for y, s in pg.items() if y0 <= y <= y1),
+                  "player page (seasons)", False)
+        if neg_exp is not None:
+            neg_cnt = sum(1 for y, s in pg.items() if y0 <= y <= y1 and s["WAR"] < 0)
+            check(f"{name} {label}", "neg_yrs", neg_exp, neg_cnt, "player page (seasons)", False)
+
+    # Remark 4: 59.0/41.0 position-player vs pitcher bWAR share in every season since 1980
+    yr_np_bat, yr_all_bat, yr_pit = {}, {}, {}
+    with open(os.path.join(RAW, "war_daily_bat.txt"), encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            y = int(r["year_ID"])
+            if y < 1980 or r["WAR"] in ("", "NULL", "NA"):
+                continue
+            wv = float(r["WAR"])
+            yr_all_bat[y] = yr_all_bat.get(y, 0.0) + wv
+            if r.get("pitcher") != "Y":
+                yr_np_bat[y] = yr_np_bat.get(y, 0.0) + wv
+    with open(os.path.join(RAW, "war_daily_pitch.txt"), encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            y = int(r["year_ID"])
+            if y < 1980 or r["WAR"] in ("", "NULL", "NA"):
+                continue
+            yr_pit[y] = yr_pit.get(y, 0.0) + float(r["WAR"])
+    sh_np = {y: 100.0 * yr_np_bat[y] / (yr_np_bat[y] + yr_pit[y]) for y in sorted(yr_pit)}
+    sh_all = {y: 100.0 * yr_all_bat[y] / (yr_all_bat[y] + yr_pit[y]) for y in sorted(yr_pit)}
+    bad_np = [y for y, s_val in sh_np.items() if round(s_val, 1) != 59.0]
+    bad_all = [y for y, s_val in sh_all.items() if not (58.8 <= s_val <= 59.1)]
+    if bad_np or bad_all:
+        problems.append(f"MISMATCH Remark 4 league WAR split bad_np={bad_np}, bad_all={bad_all}")
+    print(f"Remark 4 (1980-{max(sh_np)}): non-pitcher bat WAR share {min(sh_np.values()):.2f}%-"
+          f"{max(sh_np.values()):.2f}% (59.0/41.0); w/ pitcher batting {min(sh_all.values()):.2f}%-"
+          f"{max(sh_all.values()):.2f}%")
 
     path = write_csv("input_check.csv", ["player", "field", "paper", "bref", "source", "status"], rows)
     counts = {}

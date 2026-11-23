@@ -82,6 +82,13 @@ PITCHER_BATTING = [
     ("Christy Mathewson", 6.6, 1900), ("Clayton Kershaw", 2.8, 847), ("Greg Maddux", 1.8, 1812),
 ]
 
+# Hitters with secondary pitching records discussed in unified / negative-record checks:
+# (name, pos WAR, PA, pitch WAR, BF or None if uncached, IP or None)
+HITTER_PITCHING = [
+    ("Bobby Wallace", 70.4, 9635, 6.0, 1799, None),
+    ("Dan Brouthers", 79.8, 7691, -1.1, None, "23.0"),
+]
+
 # Season checkpoints quoted in the text: (name, label, years, WAR, exposure, kind)
 CHECKPOINTS = [
     ("Albert Pujols", "through 2012", (2001, 2012), 91.4, 8103, "bat"),
@@ -96,4 +103,14 @@ CHECKPOINTS = [
     ("Tim Lincecum", "2007-11", (2007, 2011), 24.5, 4248, "pitch"),
     ("Tim Lincecum", "2012-16", (2012, 2016), -4.6, 2872, "pitch"),
     ("Paul Skenes", "through 2026", (2024, 2026), 17.1, 1959, "pitch"),
+]
+
+# Additional pitcher checkpoint details in Appendix F: (name, label, years, IP, expected neg_seasons or None)
+CHECKPOINT_EXTRA = [
+    ("Dwight Gooden", "1984-85", (1984, 1985), "494.2", None),
+    ("Dwight Gooden", "1984-98", (1984, 1998), "2580.2", None),
+    ("Tim Lincecum", "2007-09", (2007, 2009), "598.2", None),
+    ("Tim Lincecum", "2007-11", (2007, 2011), "1028.0", None),
+    ("Tim Lincecum", "2012-16", (2012, 2016), None, 4),
+    ("Paul Skenes", "through 2026", (2024, 2026), "495.0", None),
 ]

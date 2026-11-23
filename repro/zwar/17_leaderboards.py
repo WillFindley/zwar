@@ -66,7 +66,7 @@ UNI_ILLUS = ["grovele01", "troutmi01", "martipe02", "johnsra05", "seaveto01", "m
              "ohtansh01", "roganbu99"]
 
 # Role profiles of the 18 two-way players (from their B-Ref pages)
-ROLE2 = {"ruthba01": "SP $\\to$ OF", "johnswa01": "SP + Hit/OF", "ohtansh01": "SP + DH",
+ROLE2 = {"ruthba01": "SP $\\to$ OF", "johnswa01": "SP + Hit/PH", "ohtansh01": "SP + DH",
          "roganbu99": "NgL SP + OF", "ferrewe01": "SP + Hit/PH", "ruffire01": "SP + Hit/PH",
          "carutbo01": "SP + OF", "wardjo01": "SP $\\to$ SS", "dihigma99": "NgL UT + SP",
          "uhlege01": "SP + Hit/PH", "lemonbo01": "3B/OF $\\to$ SP", "smithel01": "SP $\\to$ OF",
@@ -74,7 +74,7 @@ ROLE2 = {"ruthba01": "SP $\\to$ OF", "johnswa01": "SP + Hit/OF", "ohtansh01": "S
          "mullige01": "SP + Hit", "foutzda01": "SP $\\to$ 1B/OF", "rileed01": "NgL SP + 1B"}
 # Position labels for the unified table (JAWS page position otherwise)
 POSLAB = {"ruthba01": "OF / SP", "musiast01": "OF / 1B", "rodrial01": "SS / 3B",
-          "robinfr02": "OF", "johnswa01": "SP / OF", "rosepe01": "OF / IF",
+          "robinfr02": "OF", "johnswa01": "SP / PH", "rosepe01": "OF / IF",
           "ohtansh01": "DH / SP", "roganbu99": "SP / OF", "henderi01": "LF"}
 NGL = {"steartu99", "gibsojo99", "roganbu99", "fostebi99", "paigesa01", "dihigma99", "rileed01"}
 
@@ -349,7 +349,7 @@ def main():
         shown["twoway"][p] = (nm(p), round(zp, 2), round(zt, 2), round(zpool[p], 2), round(zuni[A][p], 2),
                               r2w[0.2][p], r2w[0.5][p])
         approx = "$^{*}$" if p in u["approx"] else ""
-        rows.append([f"{bold(r2w[0.2][p])} (\\#{runi[0.2][p]})", f"{bold(nm(p))} ({ROLE2[p]})",
+        rows.append([f"{bold(r2w[0.2][p])} (\\#{thou(runi[0.2][p])})", f"{bold(nm(p))} ({ROLE2[p]})",
                      f"{f1(pw[p])} ({thou(pn[p])})", f"{f1(tw[p])} ({thou(tn[p])}{approx} / {ip_str(outs[p])})",
                      f1(pw[p] + tw[p]), bold(f2(zp)) if zp >= zt else f2(zp), bold(f2(zt)) if zt > zp else f2(zt),
                      f"{f2(zpool[p])} ({pct(zpool[p], base)})", str(r2w[0.5][p]),

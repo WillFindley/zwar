@@ -79,7 +79,7 @@ def score(ps, unit, alpha):
 
 def best(ps, y, unit):
     vals = [(a, auc(score(ps, unit, a), y)) for a in ALPHAS]
-    return max(vals, key=lambda t: t[1] + 1e-12 * 0)
+    return max(vals, key=lambda t: (t[1], -t[0]))
 
 
 def main():

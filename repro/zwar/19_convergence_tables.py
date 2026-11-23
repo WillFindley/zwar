@@ -186,7 +186,8 @@ lines = [r"\begin{table}[htbp]", r"\centering",
          r"\caption{Agreement with expert top-100 lists, careers through the season before publication. Entries are the "
          r"Spearman correlation with list order among the $100$ listed players / the AUC for list membership in the "
          r"universe; the second row of each list gives the number of pitchers in the metric's top $100$ (lists: $28$ and "
-         r"$27$). Two-way records are combined by Definition~\ref{def:twoway}; $c$ multiplies pitcher scores. The final "
+         r"$27$). Two-way records are combined by Definition~\ref{def:twoway} (using its $\alpha \to 1^-$ limit at $Z_1$); "
+         r"$c$ multiplies pitcher scores. The final "
          r"column gives the in-sample optimal exponents $\hat\alpha_\rho$ / $\hat\alpha_{\mathrm{AUC}}$ on a $0.05$ grid "
          r"(achieving $\rho = %s$, $\mathrm{AUC} = %s$ on Sporting News 1998 and $\rho = %s$, $\mathrm{AUC} = %s$ on "
          r"ESPN 2022).}" % (best[0][1], best[0][3], best[1][1], best[1][3]),
@@ -201,7 +202,7 @@ open(os.path.join(TAB, "tab_expert.tex"), "w").write("\n".join(lines))
 # ---------------------------------------------------------------- appendix: all benchmarks
 def short(name):
     s = name
-    s = s.replace("Hall of Fame AUC: ", "HOF: ").replace("Expert list ", "")
+    s = s.replace("Hall of Fame AUC: ", "HOF: ").replace("Expert list TSN 1998", "Sporting News 1998").replace("Expert list ", "")
     s = s.replace(" (careers to 2023)", "").replace(" (careers to 2016)", "")
     s = s.replace("checkpoint k=", "checkpoint ").replace("Hitters (8 positions pooled)", "Hitters")
     s = s.replace(": Spearman with list order", ", list order").replace(": membership AUC (universe 1592)", ", membership")

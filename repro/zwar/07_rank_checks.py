@@ -15,7 +15,7 @@ The universe is built by zwar/universe.py (shared with 17_leaderboards.py).
 Also checks every Z_0.2 value and every rank (alpha = 0, 0.2, 0.5) printed in
 the alpha = 1/5 leaderboards drafted by 17_leaderboards.py (TABLES_A02,
 SUBPOOL_A02, TWOWAY_A02): Z_0.2 values within display rounding (0.005), Z
-ranks within +/-2 places, WAR ranks within the tie block +/-2.
+ranks exact (0 diff), WAR ranks within the tie block.
 Outputs: outputs/rank_check.csv, outputs/rank_alpha02.csv, outputs/rank_tables_a02.csv
 """
 import os
@@ -264,8 +264,8 @@ def main():
             ours_z, ours_w = r_zuni.get(pid), None
             w_lo, w_hi = 0, 0
         dz = abs(ours_z - zr) if ours_z else None
-        w_ok = True if not wr else (w_lo - 2 <= wr <= w_hi + 2)
-        flag = "OK" if (dz is not None and dz <= 2 and w_ok) else "CHECK"
+        w_ok = True if not wr else (w_lo <= wr <= w_hi)
+        flag = "OK" if (dz == 0 and w_ok) else "CHECK"
         bad += flag != "OK"
         rows.append([label, coord, zr, ours_z, wr or "", ours_w or "", flag])
         if flag != "OK":
@@ -276,8 +276,10 @@ def main():
         ours = int((zs > v).sum()) + 1
         rows.append([label, "pitch value", paper_rank, ours, "", "", "approx"])
         print(f"{label:22s} would rank #{ours} among pitchers (paper ~#{paper_rank})")
+    assert r_zpos["washihe01"] == len(zpos) == 23659 and abs(zpos["washihe01"] + 0.5) < 1e-12
+    print(f"Herb Washington Z_1/2={zpos['washihe01']:.3f} ranks #{r_zpos['washihe01']}/{len(zpos)}")
     best_approx = min((r_zpit[p] for p in approx if p in r_zpit), default=None)
-    print(f"{len(CHECKS)} rank checks, {bad} outside +/-2 places; "
+    print(f"{len(CHECKS)} rank checks, {bad} mismatches; "
           f"{len(approx)} pitchers use approximate BF (best such Z_pitch rank: #{best_approx})")
     write_csv("rank_check.csv", ["player", "coordinate", "paper_Z_rank", "ours_Z_rank",
                                  "paper_WAR_rank", "ours_WAR_rank", "status"], rows)
@@ -297,17 +299,23 @@ def main():
     r_pos_a, order_pos_a = ranking(zpos_a)
     r_pit_a, order_pit_a = ranking(zpit_a)
     r_uni_a, order_uni_a = ranking(zuni_a)
+    best_approx_a02 = min(((r_pit_a[p], p) for p in approx if p in r_pit_a), default=None)
+    assert best_approx_a02 is not None and best_approx_a02[0] > 370, (
+        f"Expected no approx pitcher in top 370 at alpha=0.2, got {best_approx_a02}")
+    assert r_pit_a["skenepa01"] == 494 and abs(round(zpit_a["skenepa01"], 2) - 3.75) < 1e-12
+    print(f"alpha = {a}: best approx-BF pitcher rank #{best_approx_a02[0]} ({best_approx_a02[1]} > 370); "
+          f"Skenes Z_0.2={zpit_a['skenepa01']:.2f} (#{r_pit_a['skenepa01']})")
     a_rows, a_bad = [], 0
     for label, coord, _, _, pid in CHECKS:
         r = {"pos": r_pos_a, "pitch": r_pit_a, "unified": r_uni_a}[coord].get(pid)
         paper = PAPER_A02.get((coord, pid))
-        ok = paper is None or abs(r - paper) <= 2
+        ok = paper is None or r == paper
         a_bad += not ok
         a_rows.append([label, coord, paper if paper is not None else "", r, "OK" if ok else "CHECK"])
         if not ok:
             print(f"CHECK alpha={a} {label:18s} {coord:7s} paper {paper} ours {r}")
     n_quoted = sum(1 for k in PAPER_A02)
-    print(f"alpha = {a}: {n_quoted} quoted ranks checked, {a_bad} outside +/-2 places")
+    print(f"alpha = {a}: {n_quoted} quoted ranks checked, {a_bad} mismatches")
     for name, order, sc in [("position play", order_pos_a, zpos_a), ("pitching", order_pit_a, zpit_a),
                             ("unified", order_uni_a, zuni_a)]:
         load = load_war_daily("bat")
@@ -349,10 +357,10 @@ def main():
         t_check(coord, pid, "Z0.2", z_shown, round(z, 4), abs(z - z_shown) <= 0.005 + 1e-9,
                 f"{z:.2f}" == f"{z_shown:.2f}")
         lo, hi = tie_range(wsc[coord], pid)
-        t_check(coord, pid, "WAR rank", r_war, f"{lo}-{hi}" if hi > lo else lo, lo - 2 <= r_war <= hi + 2,
+        t_check(coord, pid, "WAR rank", r_war, f"{lo}-{hi}" if hi > lo else lo, lo <= r_war <= hi,
                 r_war == lo)
-        t_check(coord, pid, "Z0.2 rank", r02, ra[pid], abs(ra[pid] - r02) <= 2, ra[pid] == r02)
-        t_check(coord, pid, "Z0.5 rank", r05, rh[pid], abs(rh[pid] - r05) <= 2, rh[pid] == r05)
+        t_check(coord, pid, "Z0.2 rank", r02, ra[pid], ra[pid] == r02, ra[pid] == r02)
+        t_check(coord, pid, "Z0.5 rank", r05, rh[pid], rh[pid] == r05, rh[pid] == r05)
 
     sp_pool = [d["pid"] for d in load_jaws("SP") if d["IPouts"] >= 4500]   # >= 1,500 IP
     rp_pool = [d["pid"] for d in load_jaws("RP")]
@@ -363,8 +371,8 @@ def main():
         sub[name] = tuple(ranking({p: s[p] for p in pool})[0] for s in sc)
     for (pool, pid), (r02, r05) in SUBPOOL_A02.items():
         o2, o5 = sub[pool][0][pid], sub[pool][1][pid]
-        t_check(pool, pid, "Z0.2 rank", r02, o2, abs(o2 - r02) <= 2, o2 == r02)
-        t_check(pool, pid, "Z0.5 rank", r05, o5, abs(o5 - r05) <= 2, o5 == r05)
+        t_check(pool, pid, "Z0.2 rank", r02, o2, o2 == r02, o2 == r02)
+        t_check(pool, pid, "Z0.5 rank", r05, o5, o5 == r05, o5 == r05)
     if len(two_pool) != len(TWOWAY_A02):
         print(f"CHECK two-way pool has {len(two_pool)} players, table {len(TWOWAY_A02)}")
         t_bad += 1
@@ -376,8 +384,8 @@ def main():
             t_check("twoway", pid, field, shown, round(ours, 4), abs(ours - shown) <= 0.005 + 1e-9,
                     f"{ours:.2f}" == f"{shown:.2f}")
         o2, o5 = sub["twoway"][0][pid], sub["twoway"][1][pid]
-        t_check("twoway", pid, "rank18 0.2", r02, o2, abs(o2 - r02) <= 2, o2 == r02)
-        t_check("twoway", pid, "rank18 0.5", r05, o5, abs(o5 - r05) <= 2, o5 == r05)
+        t_check("twoway", pid, "rank18 0.2", r02, o2, o2 == r02, o2 == r02)
+        t_check("twoway", pid, "rank18 0.5", r05, o5, o5 == r05, o5 == r05)
     print(f"alpha = 1/5 tables: {len(t_rows)} printed values checked, {t_bad} outside tolerance, "
           f"{t_exact} exact")
     write_csv("rank_tables_a02.csv", ["table", "pid", "field", "printed", "ours", "status"], t_rows)

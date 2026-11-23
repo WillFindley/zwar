@@ -144,8 +144,10 @@ def bulk_pitching_tables(refresh):
 
 
 # Franchise histories (season W, L, finish, postseason result) for every AL/NL
-# team-season since 1901: the 30 current franchises plus the 1901-02 Baltimore
-# Orioles (AL); the Athletics are split between ATH (from 2025) and OAK. Used for the season-value convexity estimate (12_season_value.py).
+# team-season since 1901: the 30 current franchises (OAK covers all 1901-2026
+# Athletics AL seasons) plus the 1901-02 Baltimore Orioles (BLA); ATH is the
+# 1876 NL Philadelphia Athletic (filtered out by FIRST = 1901). Used for the
+# season-value convexity estimate (12_season_value.py).
 FRANCHISES = ["ANA", "ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE",
               "COL", "DET", "FLA", "HOU", "KCR", "LAD", "MIL", "MIN", "NYM", "NYY",
               "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBD", "TEX", "TOR", "WSN", "BLA", "OAK"]

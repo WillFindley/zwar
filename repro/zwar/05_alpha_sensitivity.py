@@ -31,6 +31,15 @@ PAPER = {  # name: ranks at ALPHAS as printed in the paper (Table 12)
 }
 
 
+EXPECTED_RHO = {("hitters", 0.4): 0.969, ("hitters", 0.6): 0.980,
+                ("pitchers", 0.4): 0.973, ("pitchers", 0.6): 0.951}
+EXPECTED_A1_TOP = {
+    "hitters": [("wotusro01", "Ron Wotus", 3)],
+    "pitchers": [("bautife01", "Felix Bautista", 2), ("millema03", "Mason Miller", 3),
+                 ("duranjh01", "Jhoan Duran", 4), ("claseem01", "Emmanuel Clase", 5)],
+}
+
+
 def ranks(pool, alpha):
     s = np.array([z_alpha(p["W"], p["N"], alpha) for p in pool])
     order = np.argsort(-s, kind="mergesort")
@@ -43,30 +52,45 @@ def main():
     pools = {"hitters": hitters(), "pitchers": pitchers("SP") + pitchers("RP")}
     print(f"pool sizes: hitters {len(pools['hitters'])} (paper 4,000), "
           f"pitchers {len(pools['pitchers'])} (paper 1,000)")
-    out = []
+    out, fails = [], []
     for kind, pool in pools.items():
         rk = {a: ranks(pool, a) for a in ALPHAS}
         by_name = {}
+        by_pid = {}
         for i, p in enumerate(pool):
             key = p["name"].replace("í", "i").replace("Pedro Martínez", "Pedro Martinez")
             by_name.setdefault(key, i)
+            by_pid[p["pid"]] = i
         for name, paper in PAPER.items():
             if name not in by_name:
                 continue
             i = by_name[name]
             ours = [int(rk[a][0][i]) for a in ALPHAS]
             diff = max(abs(x - y) for x, y in zip(ours, paper))
-            flag = "" if diff <= 2 else f"   <-- max diff {diff}"
+            flag = "" if diff == 0 else f"   <-- MISMATCH max diff {diff}"
+            if diff != 0:
+                fails.append(f"{name}: ours={ours} paper={paper}")
             print(f"{name:18s} ours {ours}\n{'':18s} paper{paper}{flag}")
             out.append([kind, name] + ours + paper + [diff])
+        for pid, label, exp_rk in EXPECTED_A1_TOP[kind]:
+            got_rk = int(rk[1.0][0][by_pid[pid]])
+            if got_rk != exp_rk:
+                fails.append(f"{kind} alpha=1 {label} ({pid}): got #{got_rk}, paper #{exp_rk}")
+            print(f"  alpha=1.0 {label:16s} #{got_rk} (paper #{exp_rk})")
         # Spearman correlations among the top 100 at alpha = 0.5
         r05, _ = rk[0.5]
         top = np.flatnonzero(r05 <= 100)
         for a in (0.4, 0.6):
             rho = spearman(rk[0.5][1][top], rk[a][1][top])
-            print(f"{kind}: Spearman(top-100 at 0.5) alpha 0.5 vs {a}: {rho:.3f}")
+            exp_rho = EXPECTED_RHO[(kind, a)]
+            if abs(round(rho, 3) - exp_rho) > 0.001 + 1e-12:
+                fails.append(f"{kind} Spearman 0.5 vs {a}: got {rho:.3f}, expected {exp_rho:.3f}")
+            print(f"{kind}: Spearman(top-100 at 0.5) alpha 0.5 vs {a}: {rho:.3f} (expected {exp_rho:.3f})")
     write_csv("alpha_ranks.csv", ["pool", "player"] + [f"ours_{a}" for a in ALPHAS]
               + [f"paper_{a}" for a in ALPHAS] + ["max_abs_diff"], out)
+    if fails:
+        print("FAILURES:", fails)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

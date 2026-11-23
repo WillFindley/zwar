@@ -20,7 +20,7 @@ Repository: <https://github.com/WillFindley/zwar>
 | `zwar/02_verify_inputs.py` | Checks every paper input (WAR, PA, IP, BF, season checkpoints, 2026 values) against Baseball-Reference |
 | `zwar/03_spw_check.py` | Validates the Standardized Peak WAR implementation against Gordon (2023) |
 | `zwar/04_hof_validation.py` | Hall of Fame AUCs (Section 5.3, Table 4), including the value point α = 0.2; stratified bootstrap CIs (incl. relief pitchers), cross-validated α, SPW benchmark, pitcher scale factor *c* |
-| `zwar/05_alpha_sensitivity.py` | α-sensitivity ranks (Section 6.6, Table 12) and Spearman correlations |
+| `zwar/05_alpha_sensitivity.py` | α-sensitivity ranks (Section 6.6, Table 12) and top-100 Spearman diagnostics |
 | `zwar/06_sigma.py` | Role-specific per-event σ from season dispersion; implied *c* = σ_pos/σ_pitch; high-leverage relievers vs low-leverage relievers and vs the common (hitter / SP) σ |
 | `zwar/07_rank_checks.py` | Every Z_1/5 value and every rank (α = 0, 1/5, 1/2) printed in the leaderboard tables of Section 6; pitcher counts in the unified top 25/50/100 |
 | `zwar/08_jaws_check.py` | JAWS, S-JAWS and R-JAWS values and ranks quoted in Tables 7–9 |
@@ -44,13 +44,13 @@ Repository: <https://github.com/WillFindley/zwar>
 | Step | Result |
 |---|---|
 | 01 arithmetic | All derived values in the paper reproduce from its inputs |
-| 02 inputs | 336/336 inputs match Baseball-Reference (+ 12 INFO unrounded-WAR comparisons; WAR, PA, IP, BF, season checkpoints, 2026 values for Skenes, Trout, Ohtani, Chapman, Jansen, Kimbrel; small-sample examples Herb Washington and Ron Wotus) |
+| 02 inputs | 350/350 inputs match Baseball-Reference (+ 12 INFO unrounded-WAR comparisons; WAR, PA, IP, BF, season checkpoints incl. IPs, 2026 values for Skenes, Trout, Ohtani, Chapman, Jansen, Kimbrel; small-sample examples Herb Washington and Ron Wotus; Remark 4 1980–2026 59.0/41.0 bWAR split) |
 | 03 SPW | Pedro Martínez 53.5 (Gordon 53.6), Babe Ruth 61.1 (61.4), Eddie Plank 32.8 (32.3); differences reflect WAR revisions since Dec. 2022 |
 | 04 Hall of Fame | Table 4 reproduced (incl. pooled SP + RP row: Z_0.2 0.938, Z_½ 0.939 vs WAR 0.929, JAWS 0.921); Z_0.2 matches or beats WAR and JAWS in 7 of 8 pools (CIs exclude 0 in SP + RP and vs JAWS for RP, while RP Z_0.2 vs WAR touches 0.000); fixed α = 0.2 matches or beats CV-chosen α (to 3 d.p.) in all 8 pools; adds SPW, bootstrap CIs (incl. relievers), cross-validated α (median 0.20–0.25 in most pools), pitcher scale factor c up to 59/41 |
-| 05 α-sensitivity | Table 12 ranks (now including α = 0.2) and Spearman correlations reproduce exactly |
+| 05 α-sensitivity | Table 12 ranks (exact 0 diff, incl. α = 0.2), α = 1 examples (Wotus #3; Bautista/Miller/Duran/Clase #2–#5), and top-100 Spearman diagnostics reproduce |
 | 06 σ by role | σ_pos 0.062–0.066, σ_pitch 0.064–0.066 WAR/√event; c = 0.98–1.01 (quadratic aging: 0.056–0.057, 0.060–0.061; c = 0.94); high-leverage RP (gmLI ≥ 1.5) 0.068–0.072 vs 0.061 for other RP (ratio 1.12–1.17; group mean gmLI 1.667 vs 1.294 implies 1.162 under full (1+gmLI)/2 scaling), but only 1.07–1.09× the common hitter / SP σ (role-specific scores 7–9% lower) |
-| 07 ranks | 662/662 printed leaderboard values (Z_1/5 scores; ranks at α = 0, 1/5, 1/2) match exactly; 95/95 legacy Z_1/2 and 95/95 Z_1/5 rank checks pass; ℓ_γ = total WAR at α = 0 and = quadrature at α = 1/2 (asserted); unified top 25/50/100 has 5/11/28 pitchers at α = 1/5 vs 3/5/13 at α = 1/2 |
-| 08 JAWS | 168/168 JAWS, S-JAWS, R-JAWS values and ranks match (ties at 0.1 resolution allowed) |
+| 07 ranks | 662/662 printed leaderboard values (Z_1/5 scores; ranks at α = 0, 1/5, 1/2) match exactly; 95/95 legacy Z_1/2 and 95/95 Z_1/5 rank checks match with 0 diff (approx-BF pitchers excluded from top 370 at α = 1/5, highest #374); ℓ_γ = total WAR at α = 0 and = quadrature at α = 1/2 (asserted); unified top 25/50/100 has 5/11/28 pitchers at α = 1/5 vs 3/5/13 at α = 1/2 |
+| 08 JAWS | 176/176 JAWS, S-JAWS, R-JAWS values and ranks match (incl. all 8 extra SP benchmark JAWS rows in Table 9; ties at 0.1 resolution allowed) |
 | 09 fWAR | Appendix G hitter (n = 953, ρ = 0.936, 10/10 top-10) and pitcher (n = 560, ρ = 0.743) fWAR Z_WAR correlations, scores, and ranks reproduce |
 | 10 checkpoints | Hitters: Z_½ ≈ best for future WAR / HOF (tiny margins); pitchers: α = 0 best (Z_½ significantly worse for future WAR); rate / EB best for future rate |
 | 11 expert lists | Sporting News 1998 and ESPN 2022 (two-way records by ℓ_γ): best α 0.30 / 0.30 (TSN order / membership), 0.15 / 0.30 (ESPN); Z_1/5 pitchers in top 100: 22 and 28 (lists 28, 27); Z_½ ≈ WAR ≈ JAWS; old quadrature numbers written to `outputs/expert_rankings_quadrature.csv` |
@@ -89,7 +89,7 @@ python3 run_all.py
 * the ten JAWS position leaderboards: career WAR, WAR7, JAWS, S-JAWS, R-JAWS, Hall of Fame flag, career PA / BF / IP, first and last season
 * the career WAR leaderboard and a few full player pages (published career rows; season BF/PA for the checkpoint examples)
 * with `--pitcher-tables`: the standard pitching table (season BF) for every pitcher on the SP and RP JAWS pages, used by SPW and the σ estimate
-* with `--standings`: the franchise-history pages (season W, L, finish, postseason result) of the 30 current franchises plus the 1901–02 Baltimore Orioles and the Athletics' pre-2025 page, into `data/raw/teams/`, used by the season-value estimate (`teams/FETCHED_AT.txt` records the download time, 17 October 2026)
+* with `--standings`: the franchise-history pages (season W, L, finish, postseason result) of the 30 current franchises (`OAK` covers all 1901–2026 Athletics AL seasons) plus the 1901–02 Baltimore Orioles (`BLA`) and 1876 NL Philadelphia Athletic (`ATH`, outside 1901–2025), into `data/raw/teams/`, used by the season-value estimate (`teams/FETCHED_AT.txt` records the download time, 17 October 2026)
 
 ### Data terms
 

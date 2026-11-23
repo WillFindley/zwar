@@ -456,6 +456,10 @@ def main():
         log(f"  regression-implied alpha* read from outputs/implied_alpha.csv ({len(implied)} benchmarks)")
 
     head = [b for b in bench if b["category"] in CAREER and not b["duplicate"]]
+    # Section 1 (zwar_paper.tex): even where m(0.5) > m(0.2) (7 benchmarks), advantage is < 0.01 (max ~0.00904)
+    adv05 = [b["m0.5"] - b["m0.2"] for b in head if b["m0.5"] > b["m0.2"]]
+    assert len(adv05) == 7 and max(adv05) <= 0.00905, f"Unexpected m(0.5)>m(0.2): {len(adv05)}, max={max(adv05):.6f}"
+    log(f"  m(0.5) > m(0.2) in {len(adv05)}/{len(head)} headline benchmarks; max advantage {max(adv05):.6f}")
     rows = []
     for b in bench + pen:
         is_curve = "curve" in b

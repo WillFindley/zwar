@@ -124,7 +124,8 @@ def z_unified(p, alpha, c=1.0):
 def z_two_way(p, alpha, c=1.0):
     """Default two-coordinate score: the l_gamma rule (common.z2d_lgamma) with
     the pitcher coordinate scaled by c. alpha = 1 (gamma = infinity) is the limit
-    of the rule: the coordinate score Z_k = W_k / N_k with the larger |Z_k|."""
+    of the rule: the coordinate score Z_k = W_k / N_k with the larger |Z_k|
+    (checked to have no |Z_pos| == |c * Z_pitch| ties in tsn1998/espn2022)."""
     if alpha >= 1.0 - 1e-12:
         zs = (p["w_pos"] / max(p["pa"], 1.0), c * p["w_pit"] / max(p["bf"], 1.0))
         return max(zs, key=abs)

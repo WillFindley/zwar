@@ -190,6 +190,39 @@ chk("Z0.2 tolerance N=30,000 (0.005*N^0.3)", 0.005 * 30000 ** 0.3, 0.11, 0.005)
 chk("Z0.2 pair rounding bound N=5,000", 0.10 / 5000 ** 0.2, 0.018, 0.0005)
 chk("Z0.2 pair rounding bound N=30,000", 0.10 / 30000 ** 0.2, 0.013, 0.0005)
 
+def rbound_2d(wp, pa, wq, bf, a=0.2):
+    g = 1.0 / (1.0 - a)
+    z = abs(z2d_lgamma(wp, pa, wq, bf, a))
+    return sum(0.05 * (abs(w) / max(n, 1)) ** (g - 1) * z ** (1 - g)
+               for w, n in ((wp, pa), (wq, bf)) if w != 0)
+
+chk("Gibson unified Z0.2 rounding bound", rbound_2d(41.1, 2683, -0.2, 10), 0.0214, 0.0001)
+chk("Dihigo unified Z0.2 rounding bound", rbound_2d(12.4, 1673, 10.0, 1702), 0.0197, 0.0001)
+
+# Section 6.2, 6.4, and Appendix F inline arithmetic
+chk("Ruth-Bonds PA diff", 12606 - 10628, 1978, 0)
+chk("Ruth-Bonds crossover alpha", math.log(162.8 / 162.3) / math.log(12606 / 10628), 0.0180, 0.0005)
+fac_w = (9792 + 2000) / 9792
+chk("Williams +2000 PA WAR %", 100 * (fac_w - 1), 20.4, 0.5)
+chk("Williams +2000 PA Z_0.2 %", 100 * (fac_w ** 0.8 - 1), 16.0, 0.5)
+chk("Williams +2000 PA Z_0.5 %", 100 * (fac_w ** 0.5 - 1), 9.7, 0.5)
+
+x_ruth = 4896 / 10628
+chk("Ruth pool threshold alpha=0.2", ((1 + x_ruth) ** 0.2 - 1) / x_ruth, 0.171, 0.0006)
+chk("Ruth pool lift alpha=0.2 (%)", 100 * (((162.3 + 20.4) / (10628 + 4896) ** 0.2) / (162.3 / 10628 ** 0.2) - 1), 4.4, 0.06)
+chk("Ruth 2D lift alpha=0.2 (%)", 100 * (z2d_lgamma(162.3, 10628, 20.4, 4896, 0.2) / (162.3 / 10628 ** 0.2) - 1), 7.2, 0.06)
+chk("Ruth pool drop alpha=0.5 (%)", 100 * (zpool(162.3, 10628, 20.4, 4896) / (162.3 / s(10628)) - 1), -6.9, 0.06)
+chk("Ruth 2D lift alpha=0.5 (%)", 100 * (z2d(162.3, 10628, 20.4, 4896) / (162.3 / s(10628)) - 1), 1.7, 0.06)
+
+chk("2^0.8 - 1 max 2D lift a=0.2 (%)", 100 * (2 ** 0.8 - 1), 74.1, 0.1)
+chk("sqrt(2) - 1 max 2D lift a=0.5 (%)", 100 * (s(2) - 1), 41.4, 0.1)
+chk("Ohtani rate diff < 1% (%)", float(100 * abs(rp / rb - 1) < 1.0), 1.0, 0)
+chk("Ohtani Z0.2 2D lift (%)", 100 * (z2d_lgamma(38.4, 4947, 19.4, 2479, 0.2) / (38.4 / 4947 ** 0.2) - 1), 38.8, 0.06)
+chk("Ohtani Z0.2 pool lift (%)", 100 * (((38.4 + 19.4) / (4947 + 2479) ** 0.2) / (38.4 / 4947 ** 0.2) - 1), 38.8, 0.06)
+
+chk("Herb Washington Z_1/2", -0.5 / s(max(0, 1)), -0.500, 0.0005)
+chk("Paul Skenes Z_0.2", 17.1 / 1959 ** 0.2, 3.75, 0.006)
+
 print()
 print("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} MISMATCHES: {FAILS}")
 sys.exit(1 if FAILS else 0)

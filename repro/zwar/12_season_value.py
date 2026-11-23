@@ -96,7 +96,7 @@ def load_team_seasons():
                              g=w + l_, era=era_of(y), berth=bool(po) or (y in NO_WS and first),
                              pennant=pennant, ws=po.startswith("Won WS"), no_ws=y in NO_WS))
     uniq = {}
-    for r in rows:  # a team-season can appear on two franchise pages (Athletics: ATH and OAK)
+    for r in rows:  # deduplicate (year, team) across franchise pages (OAK covers 1901-2026 Athletics AL; ATH is 1876 NL)
         uniq.setdefault((r["year"], r["team"]), r)
     return [uniq[k] for k in sorted(uniq)]
 

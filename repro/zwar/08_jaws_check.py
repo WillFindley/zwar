@@ -39,6 +39,9 @@ RP = [("riverma01", 42.5, 48.9, 1), ("eckerde01", 49.9, 39.6, 2), ("wilheho01", 
       ("hoffmtr01", 23.7, 27.2, 5), ("henketo01", 20.2, 19.4, 19), ("smithle02", 24.8, 21.0, 15),
       ("janseke01", 20.8, 24.9, 7), ("kimbrcr01", 21.0, 19.7, 18), ("suttebr01", 24.1, 18.1, 26),
       ("gordoto01", 29.1, 23.6, 10), ("kindeel01", 26.7, 21.5, 13), ("shantbo01", 29.7, 18.4, 24)]
+# Extra SP benchmark rows printed in Table 9 (tab:relievers): pid, JAWS
+SP_IN_RP = [("fellebo01", 57.5), ("suttodo01", 50.3), ("maricju01", 57.3), ("bunniji01", 54.2),
+            ("koufasa01", 47.5), ("fordwh01", 45.8), ("wynnea01", 49.8), ("morrija02", 38.0)]
 
 
 def rank_by(players, key):
@@ -86,6 +89,8 @@ def main():
         check(pid, "JAWS", j, idx[pid]["JAWS"], 0.05)
         check(pid, "R-JAWS", rj, idx[pid]["R_JAWS"], 0.05)
         check(pid, "R-JAWS rank", rr, r_rpj[pid])
+    for pid, j in SP_IN_RP:
+        check(pid, "JAWS (SP in Tab 9)", j, idx[pid]["JAWS"], 0.05)
     print(f"{len(rows)} JAWS checks, {bad} mismatches")
     write_csv("jaws_check.csv", ["pid", "field", "paper", "bref", "status"], rows)
     if bad:
