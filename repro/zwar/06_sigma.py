@@ -122,12 +122,32 @@ def main():
     # Relative to the common scale (hitters and starters), which is what a
     # role-specific variance would rescale high-leverage relievers against.
     print("  High-leverage RP sigma relative to the common (hitter / SP) scale:")
+    hl_vs_pos, hl_vs_sp = [], []
     for label, kw in specs[:3]:
         s_hi, _ = sigma_hat(th_, **kw)
         sh, _ = sigma_hat(th, **kw)
         s_sp, _ = sigma_hat(tsp, **kw)
+        hl_vs_pos.append(s_hi / sh)
+        hl_vs_sp.append(s_hi / s_sp)
         print(f"  {label:45s} sigma_HL/sigma_pos={s_hi / sh:.3f}  sigma_HL/sigma_SP={s_hi / s_sp:.3f}  "
               f"-> score shrink {100 * (1 - sh / s_hi):.1f}% / {100 * (1 - s_sp / s_hi):.1f}%")
+
+    # Verify numbers quoted in Section 3.3 and Appendix H
+    assert (len(H), len(P), len(SP), len(RP)) == (2066, 869, 500, 369)
+    assert (len(hi), len(lo)) == (138, 231)
+    assert abs(round(g_hi, 3) - 1.667) < 1e-9 and abs(round(g_lo, 3) - 1.294) < 1e-9
+    assert abs(round((1 + g_hi) / (1 + g_lo), 2) - 1.16) < 1e-9
+    lin = rows[:5]
+    quad = rows[5:]
+    assert all(0.0615 <= r[1] <= 0.0665 and 0.0635 <= r[2] <= 0.0665 for r in lin)
+    assert all(0.0625 <= r[3] <= 0.0665 and 0.0635 <= r[4] <= 0.0665 for r in lin)
+    assert all(0.975 <= r[5] <= 1.015 for r in lin)
+    assert all(0.0555 <= r[1] <= 0.0575 and 0.0595 <= r[2] <= 0.0615 and abs(round(r[5], 2) - 0.94) < 1e-9
+               for r in quad)
+    hl_ratios = [sigma_hat(th_, **kw)[0] / sigma_hat(tl_, **kw)[0] for _, kw in specs[:3]]
+    assert all(1.115 <= x <= 1.175 for x in hl_ratios), f"Unexpected HL/low RP ratios: {hl_ratios}"
+    assert all(1.075 <= x <= 1.095 for x in hl_vs_pos), f"Unexpected HL/pos ratios: {hl_vs_pos}"
+    assert all(1.065 <= x <= 1.095 for x in hl_vs_sp), f"Unexpected HL/SP ratios: {hl_vs_sp}"
 
 
 def career_gmli():

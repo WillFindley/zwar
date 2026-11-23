@@ -215,6 +215,7 @@ def main():
     have = {(t["year"], t["team"]) for t in teams}
     want = {k for k in ps if FIRST <= k[0] <= LAST and k[0] not in SKIP}
     missing = sorted(want - have)
+    assert len(teams) == 2622 and len(missing) == 0, f"Unexpected team-seasons: {len(teams)}, missing={missing}"
     log(f"team-seasons: {len(teams)} ({FIRST}-{LAST}, excluding {sorted(SKIP)}); "
         f"AL/NL team-seasons in WAR files without a franchise row: {len(missing)} {missing[:10]}")
     for e, (name, _, _) in enumerate(ERAS):
@@ -222,6 +223,7 @@ def main():
         log(f"  {name:32s} {len(T):5d} team-seasons; berth {np.mean([t['berth'] for t in T]):.3f}, "
             f"pennant {np.mean([t['pennant'] for t in T]):.3f}, WS {np.mean([t['ws'] for t in T if not t['no_ws']]):.3f}")
     D = Data(teams, ps)
+    assert len(D.s) == 24400, f"Expected 24,400 usable player-seasons, got {len(D.s)}"
     log(f"player seasons with 1.5 <= WAR (162-game scale) < 10.5: {len(D.s)}")
     log()
 
@@ -234,7 +236,7 @@ def main():
         for ix in era_idx:
             np.add.at(wt, rng.choice(ix, len(ix)), 1.0)
         boot_w.append(wt)
-    rows = []
+    rows, ws_checks = [], None
     for outcome in OUTCOMES:
         for quad in (False, True):
             label = f"{outcome}{' (quadratic logit)' if quad else ''}"
@@ -252,6 +254,8 @@ def main():
                              + gamma_bins(*D.v_actual(cb, outcome, wt)[:2]))
                 B = np.array(B)
                 ci = {j: np.percentile(B[:, j], [2.5, 97.5]) for j in range(4)}
+                if outcome == "ws":
+                    ws_checks = (sum(cnt), vn, gn, ga, ci)
 
             def fmt(val, j):
                 a = f"{val:.3f}"
@@ -268,10 +272,20 @@ def main():
                          round(ga[0], 4), round(ga[1], 4)]
                         + ([round(x, 4) for j in range(4) for x in ci[j]] if ci else [""] * 8))
         cur = D.curves(outcome, ones)
+        era_cn = [gamma_grid(D.v_neutral(cur, outcome, ones, eras=[e]))[0] for e in range(len(ERAS))]
+        if outcome == "ws":
+            assert all(1.215 <= g <= 1.305 for g in era_cn), f"Unexpected WS per-era CN slopes: {era_cn}"
         log("  by era (context-neutral slope): " + "; ".join(
-            f"{ERAS[e][0].split(' ')[0]}: {gamma_grid(D.v_neutral(cur, outcome, ones, eras=[e]))[0]:.2f}"
-            for e in range(len(ERAS))))
+            f"{ERAS[e][0].split(' ')[0]}: {g:.2f}" for e, g in enumerate(era_cn)))
         log()
+    rmap = {(r[0], r[1]): r for r in rows}
+    ws_cnt, ws_vn, ws_gn, ws_ga, ws_ci = ws_checks
+    assert ws_cnt == 23997, f"Expected 23,997 WS player-seasons, got {ws_cnt}"
+    assert f"{100 * ws_vn[S_GRID == 5.0][0]:.2f}" == "4.13" and f"{100 * ws_vn[S_GRID == 10.0][0]:.2f}" == "10.47"
+    assert (f"{rmap[('berth', 'linear')][2]:.2f}", f"{rmap[('berth', 'linear')][4]:.2f}") == ("1.07", "1.10")
+    assert (f"{rmap[('pennant', 'linear')][2]:.2f}", f"{rmap[('pennant', 'linear')][4]:.2f}") == ("1.17", "1.29")
+    assert (f"{ws_gn[0]:.2f}", f"{ws_ci[0][0]:.2f}", f"{ws_ci[0][1]:.2f}") == ("1.25", "1.23", "1.28")
+    assert (f"{ws_ga[0]:.2f}", f"{ws_ci[2][0]:.2f}", f"{ws_ci[2][1]:.2f}") == ("1.30", "1.18", "1.40")
     write_csv("season_value.csv", ["outcome", "logit", "gamma_neutral_slope", "gamma_neutral_ratio",
                                    "gamma_actual_slope", "gamma_actual_ratio",
                                    "ns_lo", "ns_hi", "nr_lo", "nr_hi", "as_lo", "as_hi", "ar_lo", "ar_hi"], rows)

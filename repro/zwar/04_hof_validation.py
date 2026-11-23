@@ -212,6 +212,7 @@ def main():
     log(f"Cross-validated alpha ({CV_REPEATS}x repeated stratified {CV_FOLDS}-fold)")
     for name, ps, _ in pools:
         cv, f05, f0, chosen, f02 = cv_alpha(ps)
+        assert round(f02, 3) >= round(cv, 3), f"{name}: alpha=0.2 ({f02:.4f}) < CV ({cv:.4f})"
         q = np.percentile(chosen, [10, 50, 90])
         log(f"  {name:30s} held-out AUC: CV-alpha {cv:.3f} | alpha=0.5 {f05:.3f} | alpha=0.2 {f02:.3f}"
             f" | alpha=0 {f0:.3f}"
@@ -235,11 +236,17 @@ def main():
     SPRP = SP + RP
     log("")
     log("SP + RP pooled: ranks of relief Hall of Famers in the combined pitcher list")
-    for k in ["WAR", "JAWS", "Z"]:
-        s = metric(SPRP, k)
+    for label, s in [("WAR", metric(SPRP, "WAR")), ("JAWS", metric(SPRP, "JAWS")),
+                     ("Z_0.2", metric(SPRP, "Z", A_VALUE)), ("Z", metric(SPRP, "Z"))]:
         order = (-s).argsort(kind="mergesort").argsort(kind="mergesort")
         ranks = sorted(int(order[i]) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
-        log(f"  {k:5s} {ranks}")
+        log(f"  {label:5s} {ranks}")
+        if label == "WAR":
+            assert ranks[0] == 47 and ranks[-1] == 356, f"Unexpected RP WAR ranks: {ranks}"
+        elif label == "Z_0.2":
+            assert ranks[0] == 45 and ranks[-1] == 316, f"Unexpected RP Z_0.2 ranks: {ranks}"
+        elif label == "Z":
+            assert ranks[0] == 41 and ranks[-1] == 297, f"Unexpected RP Z_1/2 ranks: {ranks}"
 
     # Sensitivity to the banned/PED exclusions
     Hi, SPi, RPi = (hof_eligible(hitters(), exclude=False), hof_eligible(pitchers("SP"), exclude=False),

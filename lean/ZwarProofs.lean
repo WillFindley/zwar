@@ -5169,5 +5169,1004 @@ theorem prop_alpha_discrete_fixed_pos_eventually_gt {W N α r_marg : ℝ}
     (lt_div_iff₀ hr_bar).mp hlt
   exact (prop_alpha_discrete_iff hN hΔN).mpr (by rw [hdiv]; exact hthresh)
 
+/-! ### 15.12 Adversarial Audit Additions: Shrinkage, Discrete Threshold Crossover, Concordance/AUC, OLS Residual Variance, Two-Way Orthant Rounding, One-Sided χ² Calibration, and Benchmarks -/
+
+/-- Sec. 1 Eq. (3): the convex combination weights in `r_EB` are strictly positive (`N/(N+N₀) > 0`)
+and non-negative (`N₀/(N+N₀) ≥ 0`), and when `N₀ > 0` and `W/N ≠ r₀`, `r_EB` strictly shrinks
+the distance to the prior `r₀`. -/
+theorem r_EB_convex_weights_nonneg {N N₀ : ℝ} (hN : 0 < N) (hN₀ : 0 ≤ N₀) :
+    0 < N / (N + N₀) ∧ 0 ≤ N₀ / (N + N₀) ∧ N / (N + N₀) + N₀ / (N + N₀) = 1 := by
+  have hsum : 0 < N + N₀ := by linarith
+  refine ⟨div_pos hN hsum, div_nonneg hN₀ hsum.le, ?_⟩
+  field_simp [hsum.ne']
+
+theorem r_EB_shrinks_dist {W N N₀ r₀ : ℝ} (hN : 0 < N) (hN₀ : 0 < N₀) (hne : W / N ≠ r₀) :
+    |r_EB W N N₀ r₀ - r₀| = (N / (N + N₀)) * |W / N - r₀| ∧
+      |r_EB W N N₀ r₀ - r₀| < |W / N - r₀| := by
+  have hsum : 0 < N + N₀ := by linarith
+  have hdiff : r_EB W N N₀ r₀ - r₀ = (N / (N + N₀)) * (W / N - r₀) := by
+    unfold r_EB
+    field_simp [hN.ne', hsum.ne']
+    ring
+  have hweight_pos : 0 < N / (N + N₀) := div_pos hN hsum
+  have hweight_lt : N / (N + N₀) < 1 := (div_lt_one hsum).mpr (by linarith)
+  have heq : |r_EB W N N₀ r₀ - r₀| = (N / (N + N₀)) * |W / N - r₀| := by
+    rw [hdiff, abs_mul, abs_of_pos hweight_pos]
+  have hdist_pos : 0 < |W / N - r₀| := abs_pos.mpr (sub_ne_zero.mpr hne)
+  refine ⟨heq, ?_⟩
+  rw [heq]
+  nlinarith
+
+/-- Prop. 1 (`prop:alpha`, Eq. 6): discrete threshold equivalence for strict decrease and tie. -/
+theorem prop_alpha_discrete_lt_iff {W N ΔW ΔN α : ℝ} (hN : 0 < N) (hΔN : 0 < ΔN) :
+    Z_alpha (W + ΔW) (N + ΔN) α < Z_alpha W N α ↔
+      ΔW / ΔN < (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) := by
+  unfold Z_alpha
+  have hN_add : 0 < N + ΔN := by linarith
+  have hpowN : 0 < N ^ α := Real.rpow_pos_of_pos hN α
+  have hpowN_add : 0 < (N + ΔN) ^ α := Real.rpow_pos_of_pos hN_add α
+  have hratio : (N + ΔN) / N = 1 + ΔN / N := by field_simp [hN.ne']
+  have hpow_ratio : (N + ΔN) ^ α / N ^ α = (1 + ΔN / N) ^ α := by
+    rw [← Real.div_rpow hN_add.le hN.le, hratio]
+  have hrhs :
+      (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) =
+        (((N + ΔN) ^ α / N ^ α - 1) * W) / ΔN := by
+    rw [hpow_ratio]
+    field_simp [hN.ne', hΔN.ne']
+  rw [hrhs, div_lt_div_iff₀ hpowN_add hpowN, div_lt_div_iff₀ hΔN hΔN]
+  have hmul :
+      (W + ΔW) * N ^ α < W * (N + ΔN) ^ α ↔
+        ΔW < ((N + ΔN) ^ α / N ^ α - 1) * W := by
+    calc (W + ΔW) * N ^ α < W * (N + ΔN) ^ α
+        ↔ ((W + ΔW) * N ^ α) / N ^ α < (W * (N + ΔN) ^ α) / N ^ α :=
+          (div_lt_div_iff_of_pos_right hpowN).symm
+      _ ↔ W + ΔW < ((N + ΔN) ^ α / N ^ α) * W := by
+          field_simp [hpowN.ne']
+      _ ↔ ΔW < ((N + ΔN) ^ α / N ^ α - 1) * W := by
+          constructor <;> intro h <;> linarith
+  simpa [mul_comm, mul_left_comm, mul_assoc] using hmul.trans (mul_lt_mul_iff_left₀ hΔN).symm
+
+theorem prop_alpha_discrete_eq_iff {W N ΔW ΔN α : ℝ} (hN : 0 < N) (hΔN : 0 < ΔN) :
+    Z_alpha (W + ΔW) (N + ΔN) α = Z_alpha W N α ↔
+      ΔW / ΔN = (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) := by
+  constructor
+  · intro heq
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hlt | hgt
+    · exact ((prop_alpha_discrete_lt_iff hN hΔN).mpr hlt).ne heq
+    · exact ((prop_alpha_discrete_iff hN hΔN).mpr hgt).ne' heq
+  · intro heq
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hlt | hgt
+    · exact ((prop_alpha_discrete_lt_iff hN hΔN).mp hlt).ne heq
+    · exact ((prop_alpha_discrete_iff hN hΔN).mp hgt).ne' heq
+
+/-- Prop. 1 (`prop:alpha`, Eq. 6): right-hand Taylor expansion scaled by `r̄ = W / N` in terms of `ΔN`. -/
+theorem prop_alpha_taylor_scaled_isBigO {W N α : ℝ} (hN : 0 < N) :
+    (fun ΔN : ℝ =>
+        (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) -
+          (α - α * (1 - α) / 2 * (ΔN / N)) * (W / N))
+      =O[𝓝[>] (0 : ℝ)] (fun ΔN : ℝ => (ΔN / N) ^ 2) := by
+  have hdiv : Tendsto (fun ΔN : ℝ => ΔN / N) (𝓝[>] 0) (𝓝[>] 0) := by
+    rw [tendsto_nhdsWithin_iff]
+    refine ⟨?_, ?_⟩
+    · have hc : ContinuousAt (fun ΔN : ℝ => ΔN / N) 0 := continuousAt_id.div_const N
+      simpa using hc.tendsto.mono_left nhdsWithin_le_nhds
+    · exact eventually_nhdsWithin_of_forall fun ΔN (hΔN : 0 < ΔN) => div_pos hΔN hN
+  have hcomp := ((prop_alpha_taylor_isBigO_nhdsGT α).comp_tendsto hdiv).const_mul_left (W / N)
+  refine hcomp.congr' ?_ EventuallyEq.rfl
+  refine Eventually.of_forall fun ΔN => ?_
+  dsimp [Function.comp_def]
+  ring
+
+/-- Prop. 1 (`prop:alpha`, Sec. 3.1): as `x → 0` (`x ≠ 0`), the discrete threshold factor
+`((1 + x)^α - 1) / x` converges to the continuous exponent `α`. -/
+theorem prop_alpha_discrete_threshold_tendsto_continuous (α : ℝ) :
+    Tendsto (fun x : ℝ => ((1 + x) ^ α - 1) / x) (𝓝[≠] 0) (𝓝 α) := by
+  have hd_base : HasDerivAt (fun x : ℝ => 1 + x) 1 0 := by
+    simpa using (hasDerivAt_const (0 : ℝ) (1 : ℝ)).add (hasDerivAt_id (0 : ℝ))
+  have hd_pow : HasDerivAt (fun x : ℝ => (1 + x) ^ α) α 0 := by
+    simpa using hd_base.rpow_const (p := α) (Or.inl (by norm_num : (1 + (0 : ℝ)) ≠ 0))
+  have hslope := hd_pow.tendsto_slope_zero
+  refine hslope.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with x _
+  simp [div_eq_inv_mul]
+
+/-- Prop. 1 (`prop:alpha`, Sec. 3.1): for `α ∈ (0, 1)`, the discrete relative threshold
+`x ↦ ((1 + x)^α - 1) / x` is strictly decreasing on `(0, ∞)`. -/
+theorem prop_alpha_discrete_threshold_strictAnti {α : ℝ} (hα0 : 0 < α) (hα1 : α < 1) :
+    StrictAntiOn (fun x : ℝ => ((1 + x) ^ α - 1) / x) (Ioi 0) := by
+  let h : ℝ → ℝ := fun t => (1 + t) ^ (1 - α) - (1 + (1 - α) * t)
+  have hh_deriv : ∀ t ∈ Ici (0 : ℝ), HasDerivAt h ((1 - α) * ((1 + t) ^ (-α) - 1)) t := by
+    intro t (ht : 0 ≤ t)
+    have hpos : 0 < 1 + t := by linarith
+    have hd1 : HasDerivAt (fun u : ℝ => (1 + u) ^ (1 - α))
+        ((1 - α) * (1 + t) ^ ((1 - α) - 1)) t := by
+      simpa using ((hasDerivAt_const t (1 : ℝ)).add (hasDerivAt_id t)).rpow_const
+        (p := 1 - α) (Or.inl hpos.ne')
+    have hd2 : HasDerivAt (fun u : ℝ => 1 + (1 - α) * u) (1 - α) t := by
+      convert (hasDerivAt_const t (1 : ℝ)).add ((hasDerivAt_id t).const_mul (1 - α)) using 1
+      simp
+    convert hd1.sub hd2 using 1
+    rw [show (1 - α) - 1 = -α by ring]
+    ring
+  have hh_anti : StrictAntiOn h (Ici 0) := by
+    refine strictAntiOn_of_hasDerivWithinAt_neg (convex_Ici 0)
+      (f' := fun t => (1 - α) * ((1 + t) ^ (-α) - 1))
+      (fun t ht => (hh_deriv t ht).continuousAt.continuousWithinAt) ?_ ?_
+    · intro t ht
+      rw [interior_Ici] at ht
+      exact (hh_deriv t (Set.mem_Ioi.mp ht).le).hasDerivWithinAt
+    · intro t ht
+      rw [interior_Ici] at ht
+      have h1t : 1 < 1 + t := by linarith [Set.mem_Ioi.mp ht]
+      have hpow_lt : (1 + t) ^ (-α) < 1 := Real.rpow_lt_one_of_one_lt_of_neg h1t (neg_lt_zero.mpr hα0)
+      exact mul_neg_of_pos_of_neg (sub_pos.mpr hα1) (sub_neg.mpr hpow_lt)
+  have hbern : ∀ x : ℝ, 0 < x → (1 + x) ^ (1 - α) < 1 + (1 - α) * x := by
+    intro x hx
+    have hlt := hh_anti (Set.left_mem_Ici) hx.le hx
+    have h0 : h 0 = 0 := by simp [h]
+    rw [h0] at hlt
+    exact sub_neg.mp hlt
+  let g : ℝ → ℝ := fun x => ((1 + x) ^ α - 1) / x
+  let g' : ℝ → ℝ := fun x => (1 - (1 + x) ^ (α - 1) * (1 + (1 - α) * x)) / x ^ 2
+  have hg_deriv : ∀ x ∈ Ioi (0 : ℝ), HasDerivAt g (g' x) x := by
+    intro x (hx : 0 < x)
+    have hpos : 0 < 1 + x := by linarith
+    have hd_num : HasDerivAt (fun t : ℝ => (1 + t) ^ α - 1) (α * (1 + x) ^ (α - 1)) x := by
+      simpa using (((hasDerivAt_const x (1 : ℝ)).add (hasDerivAt_id x)).rpow_const
+        (p := α) (Or.inl hpos.ne')).sub_const 1
+    have hdiv := hd_num.div (hasDerivAt_id x) hx.ne'
+    convert hdiv using 1
+    have hpow_split : (1 + x) ^ α = (1 + x) ^ (α - 1) * (1 + x) := by
+      calc (1 + x) ^ α = (1 + x) ^ ((α - 1) + 1) := by congr 1; ring
+        _ = (1 + x) ^ (α - 1) * (1 + x) ^ (1 : ℝ) := Real.rpow_add hpos _ _
+        _ = (1 + x) ^ (α - 1) * (1 + x) := by rw [Real.rpow_one]
+    dsimp [g']
+    rw [hpow_split]
+    ring
+  show StrictAntiOn g (Ioi 0)
+  refine strictAntiOn_of_hasDerivWithinAt_neg (convex_Ioi 0) (f' := g')
+    (fun x hx => (hg_deriv x hx).continuousAt.continuousWithinAt) ?_ ?_
+  · intro x hx
+    rw [interior_Ioi] at hx
+    exact (hg_deriv x hx).hasDerivWithinAt
+  · intro x hx
+    rw [interior_Ioi] at hx
+    have hx_pos : 0 < x := hx
+    have h1x : 0 < 1 + x := by linarith
+    have hpow_pos : 0 < (1 + x) ^ (α - 1) := Real.rpow_pos_of_pos h1x _
+    have hmul : (1 + x) ^ (α - 1) * (1 + x) ^ (1 - α) = 1 := by
+      rw [← Real.rpow_add h1x, show (α - 1) + (1 - α) = 0 by ring, Real.rpow_zero]
+    have hlt1 : 1 < (1 + x) ^ (α - 1) * (1 + (1 - α) * x) := by
+      calc 1 = (1 + x) ^ (α - 1) * (1 + x) ^ (1 - α) := hmul.symm
+        _ < (1 + x) ^ (α - 1) * (1 + (1 - α) * x) :=
+            mul_lt_mul_of_pos_left (hbern x hx_pos) hpow_pos
+    exact div_neg_of_neg_of_pos (sub_neg.mpr hlt1) (sq_pos_of_pos hx_pos)
+
+/-- Prop. 1 (`prop:alpha`, Sec. 3.1): for `0 < W, 0 < N, α ∈ (0, 1)`, a positive rate
+`r_marg < α * (W / N)` strictly lowers `Z_α` over short blocks (`ΔN → 0⁺`). -/
+theorem prop_alpha_discrete_short_block_lt {W N α r_marg : ℝ}
+    (hW : 0 < W) (hN : 0 < N) (hα0 : 0 < α) (hα1 : α < 1) (hr : r_marg < α * (W / N)) :
+    ∀ᶠ ΔN in 𝓝[>] 0, Z_alpha (W + r_marg * ΔN) (N + ΔN) α < Z_alpha W N α := by
+  have _ := hα0
+  have _ := hα1
+  have hr_bar : 0 < W / N := div_pos hW hN
+  have hdiv_tend : Tendsto (fun ΔN : ℝ => ΔN / N) (𝓝[>] 0) (𝓝[≠] 0) := by
+    rw [tendsto_nhdsWithin_iff]
+    refine ⟨?_, ?_⟩
+    · have hc : ContinuousAt (fun ΔN : ℝ => ΔN / N) 0 := continuousAt_id.div_const N
+      simpa using hc.tendsto.mono_left nhdsWithin_le_nhds
+    · exact eventually_nhdsWithin_of_forall fun ΔN (hΔN : 0 < ΔN) => (div_pos hΔN hN).ne'
+  have hthresh_tend :
+      Tendsto (fun ΔN : ℝ => (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N))
+        (𝓝[>] 0) (𝓝 (α * (W / N))) :=
+    ((prop_alpha_discrete_threshold_tendsto_continuous α).comp hdiv_tend).mul_const (W / N)
+  have hev_thresh :
+      ∀ᶠ ΔN in 𝓝[>] 0, r_marg < (((1 + ΔN / N) ^ α - 1) / (ΔN / N)) * (W / N) :=
+    hthresh_tend.eventually (Ioi_mem_nhds hr)
+  filter_upwards [hev_thresh, self_mem_nhdsWithin] with ΔN hlt (hΔN : 0 < ΔN)
+  have hrate : (r_marg * ΔN) / ΔN = r_marg := mul_div_cancel_right₀ r_marg hΔN.ne'
+  exact (prop_alpha_discrete_lt_iff hN hΔN).mpr (by rw [hrate]; exact hlt)
+
+/-- Prop. 1 (`prop:alpha`, Sec. 3.1): for `0 < W, 0 < N, α ∈ (0, 1)`, and `0 < r_marg < α * (W / N)`,
+there is a unique crossover block size `ΔN_* > 0` below which `Z_α` drops, at which it ties,
+and above which it rises. -/
+theorem prop_alpha_discrete_crossover_unique {W N α r_marg : ℝ}
+    (hW : 0 < W) (hN : 0 < N) (hα0 : 0 < α) (hα1 : α < 1)
+    (hr_pos : 0 < r_marg) (hr_lt : r_marg < α * (W / N)) :
+    ∃! ΔN_star : ℝ, 0 < ΔN_star ∧
+      (∀ ΔN, 0 < ΔN → ΔN < ΔN_star → Z_alpha (W + r_marg * ΔN) (N + ΔN) α < Z_alpha W N α) ∧
+      Z_alpha (W + r_marg * ΔN_star) (N + ΔN_star) α = Z_alpha W N α ∧
+      (∀ ΔN, ΔN_star < ΔN → Z_alpha W N α < Z_alpha (W + r_marg * ΔN) (N + ΔN) α) := by
+  let g : ℝ → ℝ := fun x => ((1 + x) ^ α - 1) / x
+  have hr_bar : 0 < W / N := div_pos hW hN
+  let q : ℝ := r_marg / (W / N)
+  have hq_pos : 0 < q := div_pos hr_pos hr_bar
+  have hq_lt : q < α := (div_lt_iff₀ hr_bar).mpr hr_lt
+  have h_small : ∃ a > 0, q < g a := by
+    have hev : ∀ᶠ x in 𝓝[>] 0, q < g x :=
+      ((prop_alpha_discrete_threshold_tendsto_continuous α).mono_left
+        (nhdsWithin_mono 0 fun _ hx => (lt_of_lt_of_le hx le_rfl).ne')).eventually
+          (Ioi_mem_nhds hq_lt)
+    rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff] at hev
+    obtain ⟨δ, hδ, hmem⟩ := hev
+    refine ⟨δ / 2, half_pos hδ, hmem ?_ (half_pos hδ)⟩
+    rw [Real.dist_eq, sub_zero, abs_of_pos (half_pos hδ)]
+    linarith
+  obtain ⟨a, ha_pos, ha_gt⟩ := h_small
+  have h_large : ∃ b > a, g b < q := by
+    have htend : Tendsto g atTop (𝓝 0) := by
+      have h1 := prop_alpha_discrete_threshold_tendsto_zero zero_lt_one hα0 hα1
+      simpa [g, div_one] using h1
+    have hev : ∀ᶠ b in atTop, g b < q := htend.eventually (Iio_mem_nhds hq_pos)
+    rw [eventually_atTop] at hev
+    obtain ⟨B, hB⟩ := hev
+    refine ⟨max (a + 1) B, by linarith [le_max_left (a + 1) B], hB _ (le_max_right (a + 1) B)⟩
+  obtain ⟨b, hab, hb_lt⟩ := h_large
+  have hg_cont : ContinuousOn g (Icc a b) := by
+    intro x hx
+    have hx_pos : 0 < x := lt_of_lt_of_le ha_pos hx.1
+    have h1x : 0 < 1 + x := by linarith
+    exact (((continuousAt_const.add continuousAt_id).rpow_const (Or.inl h1x.ne')).sub
+      continuousAt_const |>.div continuousAt_id hx_pos.ne').continuousWithinAt
+  have hmem_Icc : q ∈ Icc (g b) (g a) := ⟨hb_lt.le, ha_gt.le⟩
+  obtain ⟨x_star, hx_mem, hx_eq⟩ := intermediate_value_Icc' hab.le hg_cont hmem_Icc
+  have hx_pos : 0 < x_star := lt_of_lt_of_le ha_pos hx_mem.1
+  have hg_anti := prop_alpha_discrete_threshold_strictAnti hα0 hα1
+  refine ⟨N * x_star, ⟨mul_pos hN hx_pos, ?_, ?_, ?_⟩, ?_⟩
+  · intro ΔN hΔN_pos hΔN_lt
+    have hx_lt : ΔN / N < x_star := (div_lt_iff₀ hN).mpr (by linarith)
+    have hgt : q < g (ΔN / N) := by
+      rw [← hx_eq]
+      exact hg_anti (div_pos hΔN_pos hN) hx_pos hx_lt
+    have hrate : (r_marg * ΔN) / ΔN = r_marg := mul_div_cancel_right₀ r_marg hΔN_pos.ne'
+    have hthresh : r_marg < g (ΔN / N) * (W / N) := (div_lt_iff₀ hr_bar).mp hgt
+    exact (prop_alpha_discrete_lt_iff hN hΔN_pos).mpr (by rw [hrate]; exact hthresh)
+  · have hΔN_pos : 0 < N * x_star := mul_pos hN hx_pos
+    have hrate : (r_marg * (N * x_star)) / (N * x_star) = r_marg :=
+      mul_div_cancel_right₀ r_marg hΔN_pos.ne'
+    have hdiv : (N * x_star) / N = x_star := mul_div_cancel_left₀ x_star hN.ne'
+    have hthresh : r_marg = g ((N * x_star) / N) * (W / N) := by
+      rw [hdiv, hx_eq]
+      dsimp [q]
+      field_simp [hr_bar.ne']
+    exact (prop_alpha_discrete_eq_iff hN hΔN_pos).mpr (by rw [hrate]; exact hthresh)
+  · intro ΔN hΔN_gt
+    have hΔN_pos : 0 < ΔN := lt_trans (mul_pos hN hx_pos) hΔN_gt
+    have hx_gt : x_star < ΔN / N := (lt_div_iff₀ hN).mpr (by linarith)
+    have hlt : g (ΔN / N) < q := by
+      rw [← hx_eq]
+      exact hg_anti hx_pos (div_pos hΔN_pos hN) hx_gt
+    have hrate : (r_marg * ΔN) / ΔN = r_marg := mul_div_cancel_right₀ r_marg hΔN_pos.ne'
+    have hthresh : g (ΔN / N) * (W / N) < r_marg := (lt_div_iff₀ hr_bar).mp hlt
+    exact (prop_alpha_discrete_iff hN hΔN_pos).mpr (by rw [hrate]; exact hthresh)
+  · intro ΔN' ⟨hΔN'_pos, _, heq', _⟩
+    by_contra hne
+    rcases lt_or_gt_of_ne hne with hlt | hgt
+    · have hx_lt : ΔN' / N < x_star := (div_lt_iff₀ hN).mpr (by linarith)
+      have hgt' : q < g (ΔN' / N) := by rw [← hx_eq]; exact hg_anti (div_pos hΔN'_pos hN) hx_pos hx_lt
+      have hrate : (r_marg * ΔN') / ΔN' = r_marg := mul_div_cancel_right₀ r_marg hΔN'_pos.ne'
+      have hthresh : r_marg < g (ΔN' / N) * (W / N) := (div_lt_iff₀ hr_bar).mp hgt'
+      have hlt_z : Z_alpha (W + r_marg * ΔN') (N + ΔN') α < Z_alpha W N α :=
+        (prop_alpha_discrete_lt_iff hN hΔN'_pos).mpr (by rw [hrate]; exact hthresh)
+      exact absurd heq' hlt_z.ne
+    · have hx_gt : x_star < ΔN' / N := (lt_div_iff₀ hN).mpr (by linarith)
+      have hlt' : g (ΔN' / N) < q := by rw [← hx_eq]; exact hg_anti hx_pos (div_pos hΔN'_pos hN) hx_gt
+      have hrate : (r_marg * ΔN') / ΔN' = r_marg := mul_div_cancel_right₀ r_marg hΔN'_pos.ne'
+      have hthresh : g (ΔN' / N) * (W / N) < r_marg := (lt_div_iff₀ hr_bar).mp hlt'
+      have hgt_z : Z_alpha W N α < Z_alpha (W + r_marg * ΔN') (N + ΔN') α :=
+        (prop_alpha_discrete_iff hN hΔN'_pos).mpr (by rw [hrate]; exact hthresh)
+      exact absurd heq' hgt_z.ne'
+
+section TargetConcordance
+
+/-- Sec. 3.2 (`sec:target`): conditional-independence log expectation directly in terms of
+`Z_alpha W N (1 - β / κ)` and order equivalence for `0 < κ`. -/
+theorem prop_target_forecast_indep_z_alpha {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    (r_f N_f : Ω → ℝ) {W N c₁ c₂ κ β : ℝ}
+    (hW : 0 < W) (hN : 0 < N) (hc₁ : 0 < c₁) (hc₂ : 0 < c₂) (hκ : κ ≠ 0)
+    (hindep : IndepFun r_f N_f μ)
+    (hr_meas : AEStronglyMeasurable r_f μ) (hN_meas : AEStronglyMeasurable N_f μ)
+    (hr_mean : ∫ ω, r_f ω ∂μ = c₁ * (W / N) ^ κ)
+    (hN_mean : ∫ ω, N_f ω ∂μ = c₂ * N ^ β) :
+    Real.log (∫ ω, r_f ω * N_f ω ∂μ) =
+      κ * Real.log (Z_alpha W N (1 - β / κ)) + Real.log (c₁ * c₂) := by
+  have hlog := (prop_target_forecast_indep_expectation r_f N_f hW hN hc₁ hc₂
+    hindep hr_meas hN_meas hr_mean hN_mean).2
+  have hZ : Real.log (Z_alpha W N (1 - β / κ)) = Real.log W - (1 - β / κ) * Real.log N := by
+    unfold Z_alpha
+    rw [Real.log_div hW.ne' (Real.rpow_pos_of_pos hN _).ne', Real.log_rpow hN]
+  rw [hlog, hZ]
+  field_simp [hκ]
+  ring
+
+private noncomputable def pairConc (W₁ N₁ W₂ N₂ α : ℝ) : ℝ :=
+  if Z_alpha W₁ N₁ α > Z_alpha W₂ N₂ α then 1
+  else if Z_alpha W₁ N₁ α = Z_alpha W₂ N₂ α then (1 / 2 : ℝ)
+  else 0
+
+private lemma pairConc_unimodal_of_star {W₁ N₁ W₂ N₂ α_star : ℝ}
+    (hW₁ : 0 < W₁) (hN₁ : 0 < N₁) (hW₂ : 0 < W₂) (hN₂ : 0 < N₂)
+    (hstar : Z_alpha W₁ N₁ α_star > Z_alpha W₂ N₂ α_star) :
+    MonotoneOn (pairConc W₁ N₁ W₂ N₂) (Iic α_star) ∧
+      AntitoneOn (pairConc W₁ N₁ W₂ N₂) (Ici α_star) ∧
+      pairConc W₁ N₁ W₂ N₂ α_star = 1 := by
+  have h_gt_iff : ∀ α, Z_alpha W₁ N₁ α > Z_alpha W₂ N₂ α ↔
+      Real.log W₁ - Real.log W₂ > α * (Real.log N₁ - Real.log N₂) := by
+    intro α
+    have hZ1 : 0 < Z_alpha W₁ N₁ α := by unfold Z_alpha; positivity
+    have hZ2 : 0 < Z_alpha W₂ N₂ α := by unfold Z_alpha; positivity
+    rw [gt_iff_lt, ← Real.log_lt_log_iff hZ2 hZ1]
+    unfold Z_alpha
+    rw [Real.log_div hW₁.ne' (Real.rpow_pos_of_pos hN₁ _).ne', Real.log_rpow hN₁,
+        Real.log_div hW₂.ne' (Real.rpow_pos_of_pos hN₂ _).ne', Real.log_rpow hN₂]
+    constructor <;> intro h <;> linarith
+  have h_eq_iff : ∀ α, Z_alpha W₁ N₁ α = Z_alpha W₂ N₂ α ↔
+      Real.log W₁ - Real.log W₂ = α * (Real.log N₁ - Real.log N₂) := by
+    intro α
+    have hZ1 : 0 < Z_alpha W₁ N₁ α := by unfold Z_alpha; positivity
+    have hZ2 : 0 < Z_alpha W₂ N₂ α := by unfold Z_alpha; positivity
+    rw [← Real.log_injOn_pos.eq_iff hZ1 hZ2]
+    unfold Z_alpha
+    rw [Real.log_div hW₁.ne' (Real.rpow_pos_of_pos hN₁ _).ne', Real.log_rpow hN₁,
+        Real.log_div hW₂.ne' (Real.rpow_pos_of_pos hN₂ _).ne', Real.log_rpow hN₂]
+    constructor <;> intro h <;> linarith
+  have hpc_star : pairConc W₁ N₁ W₂ N₂ α_star = 1 := by
+    unfold pairConc; rw [if_pos hstar]
+  have hstar_lin : α_star * (Real.log N₁ - Real.log N₂) < Real.log W₁ - Real.log W₂ :=
+    (h_gt_iff α_star).mp hstar
+  have hpair_le : ∀ {a b : ℝ},
+      (Z_alpha W₁ N₁ b > Z_alpha W₂ N₂ b → Z_alpha W₁ N₁ a > Z_alpha W₂ N₂ a) →
+      (Z_alpha W₁ N₁ b ≥ Z_alpha W₂ N₂ b → Z_alpha W₁ N₁ a ≥ Z_alpha W₂ N₂ a) →
+      pairConc W₁ N₁ W₂ N₂ b ≤ pairConc W₁ N₁ W₂ N₂ a := by
+    intro a b hgt hge
+    unfold pairConc
+    rcases lt_trichotomy (Z_alpha W₁ N₁ a) (Z_alpha W₂ N₂ a) with ha_lt | ha_eq | ha_gt <;>
+      rcases lt_trichotomy (Z_alpha W₁ N₁ b) (Z_alpha W₂ N₂ b) with hb_lt | hb_eq | hb_gt
+    · simp [not_lt.mpr ha_lt.le, ha_lt.ne, not_lt.mpr hb_lt.le, hb_lt.ne]
+    · simp [not_lt.mpr ha_lt.le, ha_lt.ne, hb_eq]
+      exact absurd (hge hb_eq.ge) (not_le.mpr ha_lt)
+    · simp [not_lt.mpr ha_lt.le, ha_lt.ne, hb_gt]
+      exact absurd (hgt hb_gt) (not_lt.mpr ha_lt.le)
+    · simp [ha_eq, not_lt.mpr hb_lt.le, hb_lt.ne]
+    · simp [ha_eq, hb_eq]
+    · simp [ha_eq, hb_gt]
+      exact absurd (hgt hb_gt) (not_lt.mpr ha_eq.le)
+    · simp [ha_gt, not_lt.mpr hb_lt.le, hb_lt.ne]
+    · simp [ha_gt, hb_eq]; norm_num
+    · simp [ha_gt, hb_gt]
+  refine ⟨fun a ha b hb hab => ?_, fun a ha b hb hab => ?_, hpc_star⟩
+  · rcases lt_trichotomy (Real.log N₁ - Real.log N₂) 0 with hdz | hdz | hdz
+    · refine hpair_le ?_ ?_
+      · intro ha_gt
+        have ha_lin := (h_gt_iff a).mp ha_gt
+        have hmul : b * (Real.log N₁ - Real.log N₂) ≤ a * (Real.log N₁ - Real.log N₂) :=
+          mul_le_mul_of_nonpos_right hab hdz.le
+        exact (h_gt_iff b).mpr (by linarith)
+      · intro ha_ge
+        rcases eq_or_lt_of_le ha_ge with ha_eq | ha_gt
+        · have ha_lin := (h_eq_iff a).mp ha_eq.symm
+          have hba : b * (Real.log N₁ - Real.log N₂) ≤ a * (Real.log N₁ - Real.log N₂) :=
+            mul_le_mul_of_nonpos_right hab hdz.le
+          rcases eq_or_lt_of_le hba with heq | hlt
+          · exact ((h_eq_iff b).mpr (by linarith)).symm.le
+          · exact ((h_gt_iff b).mpr (by linarith)).le
+        · have ha_lin := (h_gt_iff a).mp ha_gt
+          have hmul : b * (Real.log N₁ - Real.log N₂) ≤ a * (Real.log N₁ - Real.log N₂) :=
+            mul_le_mul_of_nonpos_right hab hdz.le
+          exact ((h_gt_iff b).mpr (by linarith)).le
+    · have hlog_pos : 0 < Real.log W₁ - Real.log W₂ := by
+        rw [hdz, mul_zero] at hstar_lin; exact hstar_lin
+      have ha_gt : Z_alpha W₁ N₁ a > Z_alpha W₂ N₂ a := (h_gt_iff a).mpr (by rw [hdz, mul_zero]; exact hlog_pos)
+      have hb_gt : Z_alpha W₁ N₁ b > Z_alpha W₂ N₂ b := (h_gt_iff b).mpr (by rw [hdz, mul_zero]; exact hlog_pos)
+      unfold pairConc; rw [if_pos ha_gt, if_pos hb_gt]
+    · have hma : a * (Real.log N₁ - Real.log N₂) ≤ α_star * (Real.log N₁ - Real.log N₂) :=
+        mul_le_mul_of_nonneg_right ha hdz.le
+      have hmb : b * (Real.log N₁ - Real.log N₂) ≤ α_star * (Real.log N₁ - Real.log N₂) :=
+        mul_le_mul_of_nonneg_right hb hdz.le
+      have ha_gt : Z_alpha W₁ N₁ a > Z_alpha W₂ N₂ a := (h_gt_iff a).mpr (by linarith)
+      have hb_gt : Z_alpha W₁ N₁ b > Z_alpha W₂ N₂ b := (h_gt_iff b).mpr (by linarith)
+      unfold pairConc; rw [if_pos ha_gt, if_pos hb_gt]
+  · rcases lt_trichotomy (Real.log N₁ - Real.log N₂) 0 with hdz | hdz | hdz
+    · have hma : a * (Real.log N₁ - Real.log N₂) ≤ α_star * (Real.log N₁ - Real.log N₂) :=
+        mul_le_mul_of_nonpos_right ha hdz.le
+      have hmb : b * (Real.log N₁ - Real.log N₂) ≤ α_star * (Real.log N₁ - Real.log N₂) :=
+        mul_le_mul_of_nonpos_right hb hdz.le
+      have ha_gt : Z_alpha W₁ N₁ a > Z_alpha W₂ N₂ a := (h_gt_iff a).mpr (by linarith)
+      have hb_gt : Z_alpha W₁ N₁ b > Z_alpha W₂ N₂ b := (h_gt_iff b).mpr (by linarith)
+      unfold pairConc; rw [if_pos ha_gt, if_pos hb_gt]
+    · have hlog_pos : 0 < Real.log W₁ - Real.log W₂ := by
+        rw [hdz, mul_zero] at hstar_lin; exact hstar_lin
+      have ha_gt : Z_alpha W₁ N₁ a > Z_alpha W₂ N₂ a := (h_gt_iff a).mpr (by rw [hdz, mul_zero]; exact hlog_pos)
+      have hb_gt : Z_alpha W₁ N₁ b > Z_alpha W₂ N₂ b := (h_gt_iff b).mpr (by rw [hdz, mul_zero]; exact hlog_pos)
+      unfold pairConc; rw [if_pos ha_gt, if_pos hb_gt]
+    · refine hpair_le ?_ ?_
+      · intro hb_gt
+        have hb_lin := (h_gt_iff b).mp hb_gt
+        have hmul : a * (Real.log N₁ - Real.log N₂) ≤ b * (Real.log N₁ - Real.log N₂) :=
+          mul_le_mul_of_nonneg_right hab hdz.le
+        exact (h_gt_iff a).mpr (by linarith)
+      · intro hb_ge
+        rcases eq_or_lt_of_le hb_ge with hb_eq | hb_gt
+        · have hb_lin := (h_eq_iff b).mp hb_eq.symm
+          have hab_mul : a * (Real.log N₁ - Real.log N₂) ≤ b * (Real.log N₁ - Real.log N₂) :=
+            mul_le_mul_of_nonneg_right hab hdz.le
+          rcases eq_or_lt_of_le hab_mul with heq | hlt
+          · exact ((h_eq_iff a).mpr (by linarith)).symm.le
+          · exact ((h_gt_iff a).mpr (by linarith)).le
+        · have hb_lin := (h_gt_iff b).mp hb_gt
+          have hmul : a * (Real.log N₁ - Real.log N₂) ≤ b * (Real.log N₁ - Real.log N₂) :=
+            mul_le_mul_of_nonneg_right hab hdz.le
+          exact ((h_gt_iff a).mpr (by linarith)).le
+
+/-- Sec. 3.2 (`sec:target`): for any binary target `y` separated by `Z_{α*}` on positive
+careers `(W_i, N_i)`, the Mann-Whitney AUC / concordance score is unimodal around `α*`
+(monotonically non-decreasing on `(-∞, α*]` and non-increasing on `[α*, ∞)`), and is
+maximized on `[0, 1]` at the clipped exponent `max 0 (min 1 α*)`. -/
+theorem prop_target_concordance_unimodal_clipped_max {ι : Type*} (s : Finset ι)
+    (W N : ι → ℝ) (y : ι → Bool) (α_star : ℝ)
+    (hW : ∀ i ∈ s, 0 < W i) (hN : ∀ i ∈ s, 0 < N i)
+    (hsep : ∀ i ∈ s, ∀ j ∈ s, y i = true → y j = false →
+      Z_alpha (W i) (N i) α_star > Z_alpha (W j) (N j) α_star) :
+    let conc : ℝ → ℝ := fun α =>
+      ∑ i ∈ s with y i = true, ∑ j ∈ s with y j = false, pairConc (W i) (N i) (W j) (N j) α
+    MonotoneOn conc (Iic α_star) ∧
+    AntitoneOn conc (Ici α_star) ∧
+    (∀ α : ℝ, conc α ≤ conc α_star) ∧
+    (let α_clip := max (0 : ℝ) (min (1 : ℝ) α_star)
+     α_clip ∈ Icc (0 : ℝ) 1 ∧ ∀ α ∈ Icc (0 : ℝ) 1, conc α ≤ conc α_clip) := by
+  intro conc
+  have hmono : MonotoneOn conc (Iic α_star) := by
+    intro a ha b hb hab
+    dsimp [conc]
+    refine Finset.sum_le_sum fun i hi => Finset.sum_le_sum fun j hj => ?_
+    rw [Finset.mem_filter] at hi hj
+    exact (pairConc_unimodal_of_star (hW i hi.1) (hN i hi.1) (hW j hj.1) (hN j hj.1)
+      (hsep i hi.1 j hj.1 hi.2 hj.2)).1 ha hb hab
+  have hanti : AntitoneOn conc (Ici α_star) := by
+    intro a ha b hb hab
+    dsimp [conc]
+    refine Finset.sum_le_sum fun i hi => Finset.sum_le_sum fun j hj => ?_
+    rw [Finset.mem_filter] at hi hj
+    exact (pairConc_unimodal_of_star (hW i hi.1) (hN i hi.1) (hW j hj.1) (hN j hj.1)
+      (hsep i hi.1 j hj.1 hi.2 hj.2)).2.1 ha hb hab
+  have hmax : ∀ α : ℝ, conc α ≤ conc α_star := by
+    intro α
+    rcases le_total α α_star with hle | hge
+    · exact hmono hle Set.right_mem_Iic hle
+    · exact hanti Set.left_mem_Ici hge hge
+  refine ⟨hmono, hanti, hmax, ?_⟩
+  intro α_clip
+  have hclip_mem : α_clip ∈ Icc (0 : ℝ) 1 := ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+  refine ⟨hclip_mem, fun α hα => ?_⟩
+  rcases le_total α_star 0 with hle0 | hge0
+  · have hclip0 : α_clip = 0 := by
+      dsimp [α_clip]
+      rw [min_eq_right (by linarith), max_eq_left hle0]
+    rw [hclip0]
+    exact hanti hle0 (hle0.trans hα.1) hα.1
+  · rcases le_total α_star 1 with hle1 | hge1
+    · have hclip_star : α_clip = α_star := by
+        dsimp [α_clip]
+        rw [min_eq_right hle1, max_eq_right hge0]
+      rw [hclip_star]
+      exact hmax α
+    · have hclip1 : α_clip = 1 := by
+        dsimp [α_clip]
+        rw [min_eq_left hge1]
+        norm_num
+      rw [hclip1]
+      exact hmono (hα.2.trans hge1) hge1 hα.2
+
+end TargetConcordance
+
+section NoiseAndOLSAdditions
+
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ]
+
+/-- Sec. 3.3 (`sec:zstat`): persistent positive covariance (`Cov ≥ c₀ > 0` for `i ≠ j`) with
+`SD(W) = c n^α` for any proportionality constant `c > 0` forces `α > 1/2` once
+`1 + (c² - σ²)/c₀ < n`. -/
+theorem prop_frequentist_pos_cov_sd_general_const {n : ℕ} (hn : 2 ≤ n) (w : Fin n → Ω → ℝ)
+    {c c₀ σ α : ℝ} (hc : 0 < c) (hc₀ : 0 < c₀)
+    (hlarge : 1 + (c ^ 2 - σ ^ 2) / c₀ < (n : ℝ))
+    (hL2 : ∀ i, MemLp (w i) 2 μ)
+    (hvar : ∀ i, variance (w i) μ = σ ^ 2)
+    (hcov : ∀ i j, i ≠ j → c₀ ≤ cov[w i, w j; μ])
+    (hsd : Real.sqrt (variance (fun ω => ∑ i, w i ω) μ) = c * (n : ℝ) ^ α) :
+    1 / 2 < α := by
+  have hn_pos : (0 : ℝ) < n := by positivity
+  have hn1 : (1 : ℝ) < n := by exact_mod_cast (by omega : 1 < n)
+  have hvar_ge := (prop_frequentist_pos_cov_var_gt hn w hc₀ hL2 hvar hcov).1
+  have hvar_eq : variance (fun ω => ∑ i, w i ω) μ = c ^ 2 * (n : ℝ) ^ (2 * α) := by
+    have hsq := congrArg (· ^ 2) hsd
+    dsimp only at hsq
+    rw [Real.sq_sqrt (variance_nonneg _ _), mul_pow, ← Real.rpow_natCast ((n : ℝ) ^ α) 2,
+        ← Real.rpow_mul hn_pos.le] at hsq
+    rw [show α * ((2 : ℕ) : ℝ) = 2 * α by ring] at hsq
+    exact hsq
+  have hgt_c : c ^ 2 * (n : ℝ) < (n : ℝ) * σ ^ 2 + (n : ℝ) * ((n : ℝ) - 1) * c₀ := by
+    have h1 : (c ^ 2 - σ ^ 2) < ((n : ℝ) - 1) * c₀ := by
+      have : (c ^ 2 - σ ^ 2) / c₀ < (n : ℝ) - 1 := by linarith
+      exact (div_lt_iff₀ hc₀).mp this
+    nlinarith [hn_pos]
+  have hgt : c ^ 2 * (n : ℝ) < c ^ 2 * (n : ℝ) ^ (2 * α) := by
+    linarith [hvar_ge, hvar_eq]
+  rw [mul_lt_mul_iff_right₀ (sq_pos_of_pos hc)] at hgt
+  conv_lhs at hgt => rw [← Real.rpow_one (n : ℝ)]
+  have hexp := (Real.rpow_lt_rpow_left_iff hn1).mp hgt
+  linarith
+
+/-- Sec. 7 & App. H (`app:uncert`): absolute sampling standard deviation `σ N^(1/2 - α)` strictly
+increases with exposure `N > 0` for `α < 1/2` (such as `α = 1/5`), whereas relative noise
+`σ / (r √N)` strictly decreases with `N > 0` for `r > 0`. -/
+theorem prop_frequentist_sd_strictMono_N {σ α : ℝ} (hσ : 0 < σ) (hα : α < 1 / 2) :
+    StrictMonoOn (fun N : ℝ => σ * N ^ ((1 / 2 : ℝ) - α)) (Ioi 0) := by
+  intro a ha b hb hab
+  have hexp : 0 < (1 / 2 : ℝ) - α := sub_pos.mpr hα
+  exact mul_lt_mul_of_pos_left (Real.rpow_lt_rpow (le_of_lt ha) hab hexp) hσ
+
+theorem prop_frequentist_rel_sd_strictAnti_N {σ r : ℝ} (hσ : 0 < σ) (hr : 0 < r) :
+    StrictAntiOn (fun N : ℝ => σ / (r * Real.sqrt N)) (Ioi 0) := by
+  intro a ha b hb hab
+  have hs_lt : Real.sqrt a < Real.sqrt b := Real.sqrt_lt_sqrt (le_of_lt ha) hab
+  exact div_lt_div_of_pos_left hσ (mul_pos hr (Real.sqrt_pos.mpr ha))
+    (mul_lt_mul_of_pos_left hs_lt hr)
+
+/-- Sec. 3.3 (`sec:zstat`): exact variance of the individual OLS residual
+`e_j = W_j / √N_j - r̂ √N_j` in the no-intercept regression of `W_s/√N_s` on `√N_s`
+equals `(1 - N_j / N_tot) σ²` (so individual OLS residuals depend on `N_j / N_tot`
+even though the errors `W_j/√N_j - r √N_j` are homoscedastic and `E[RSS] = (m-1)σ²`). -/
+theorem ols_residual_var {m : ℕ} (W : Fin m → Ω → ℝ) (N : Fin m → ℝ) {σ : ℝ}
+    (hN : ∀ j, 0 < N j)
+    (hL2 : ∀ j, MemLp (W j) 2 μ)
+    (hvar : ∀ j, variance (W j) μ = N j * σ ^ 2)
+    (huncorr : ∀ j k, j ≠ k → cov[W j, W k; μ] = 0) (j : Fin m) :
+    let N_tot : ℝ := ∑ i : Fin m, N i
+    variance (fun ω => W j ω / Real.sqrt (N j) -
+      ((∑ i : Fin m, W i ω) / N_tot) * Real.sqrt (N j)) μ =
+      (1 - N j / N_tot) * σ ^ 2 := by
+  intro N_tot
+  have hN_tot_pos : 0 < N_tot :=
+    Finset.sum_pos (fun i _ => hN i) ⟨j, Finset.mem_univ j⟩
+  have hsNj : 0 < Real.sqrt (N j) := Real.sqrt_pos.mpr (hN j)
+  have hsqNj : Real.sqrt (N j) ^ 2 = N j := Real.sq_sqrt (hN j).le
+  let a : Fin m → ℝ := fun i =>
+    if i = j then (1 : ℝ) / Real.sqrt (N j) - Real.sqrt (N j) / N_tot
+    else -(Real.sqrt (N j) / N_tot)
+  have heq : (fun ω => W j ω / Real.sqrt (N j) -
+      ((∑ i : Fin m, W i ω) / N_tot) * Real.sqrt (N j)) =
+      fun ω => ∑ i : Fin m, a i * W i ω := by
+    ext ω
+    have hsplit : ∑ i : Fin m, a i * W i ω =
+        (W j ω / Real.sqrt (N j)) + ∑ i : Fin m, -(Real.sqrt (N j) / N_tot) * W i ω := by
+      have hterm : ∀ i : Fin m,
+          a i * W i ω = (if i = j then W j ω / Real.sqrt (N j) else 0) +
+            (-(Real.sqrt (N j) / N_tot) * W i ω) := by
+        intro i
+        dsimp [a]
+        split_ifs with hij
+        · subst hij; ring
+        · ring
+      rw [Finset.sum_congr rfl (fun i _ => hterm i), Finset.sum_add_distrib]
+      simp [Finset.sum_ite_eq']
+    rw [hsplit, ← Finset.mul_sum]
+    ring
+  rw [heq, variance_fun_sum (fun i => (hL2 i).const_mul (a i))]
+  have hcov_term : ∀ i : Fin m,
+      ∑ k : Fin m, cov[fun ω => a i * W i ω, fun ω => a k * W k ω; μ] =
+        (a i) ^ 2 * N i * σ ^ 2 := by
+    intro i
+    rw [Finset.sum_eq_single i]
+    · rw [covariance_self ((hL2 i).const_mul (a i)).aemeasurable, variance_const_mul, hvar i]
+      ring
+    · intro k _ hki
+      rw [covariance_const_mul_left, covariance_const_mul_right, huncorr i k hki.symm,
+          mul_zero, mul_zero]
+    · intro hi; exact absurd (Finset.mem_univ i) hi
+  simp_rw [hcov_term]
+  have hsum_coeff : ∑ i : Fin m, (a i) ^ 2 * N i = 1 - N j / N_tot := by
+    rw [← Finset.add_sum_erase Finset.univ (fun i => (a i) ^ 2 * N i) (Finset.mem_univ j)]
+    have haj : (a j) ^ 2 * N j = (1 - N j / N_tot) ^ 2 := by
+      dsimp [a]
+      rw [if_pos rfl]
+      calc ((1 : ℝ) / Real.sqrt (N j) - Real.sqrt (N j) / N_tot) ^ 2 * N j
+          = ((1 / Real.sqrt (N j) ^ 2 - 2 / N_tot + Real.sqrt (N j) ^ 2 / N_tot ^ 2) * N j) := by
+              field_simp [hsNj.ne', hN_tot_pos.ne']
+              ring
+        _ = (1 / N j - 2 / N_tot + N j / N_tot ^ 2) * N j := by rw [hsqNj]
+        _ = (1 - N j / N_tot) ^ 2 := by field_simp [(hN j).ne', hN_tot_pos.ne']; ring
+    have ha_other : ∑ i ∈ Finset.univ.erase j, (a i) ^ 2 * N i =
+        (N j / N_tot ^ 2) * (N_tot - N j) := by
+      have hterm : ∀ i ∈ Finset.univ.erase j, (a i) ^ 2 * N i = (N j / N_tot ^ 2) * N i := by
+        intro i hi
+        have hne : i ≠ j := (Finset.mem_erase.mp hi).1
+        dsimp [a]
+        rw [if_neg hne, neg_sq, div_pow, hsqNj]
+      rw [Finset.sum_congr rfl hterm, ← Finset.mul_sum]
+      have hsum_erase : ∑ i ∈ Finset.univ.erase j, N i = N_tot - N j := by
+        have := Finset.add_sum_erase Finset.univ N (Finset.mem_univ j)
+        dsimp only [N_tot]
+        linarith
+      rw [hsum_erase]
+    rw [haj, ha_other]
+    field_simp [hN_tot_pos.ne']
+    ring
+  rw [← Finset.sum_mul, hsum_coeff]
+
+end NoiseAndOLSAdditions
+
+/-- Sec. 3.5 (`sec:twoway_theory`): for non-negative coordinates and `α ∈ [0, 1)`, `Z_{α,2D}`
+is the `ℓ_γ` norm `((Z₁)^γ + (Z₂)^γ)^(1/γ)` (in particular `ℓ_{5/4}` at `α = 1/5`). -/
+theorem Z_twoway_both_nonneg {W₁ N₁ W₂ N₂ α : ℝ}
+    (h1 : 0 ≤ W₁) (h2 : 0 ≤ W₂) (hN₁ : 0 < N₁) (hN₂ : 0 < N₂) (hα : α < 1) :
+    Z_twoway W₁ N₁ W₂ N₂ α =
+      (Z_alpha W₁ N₁ α ^ gamma α + Z_alpha W₂ N₂ α ^ gamma α) ^ (1 / gamma α) := by
+  simpa [Fin.sum_univ_two] using twoway_nonneg_eq_radon h1 h2 hN₁ hN₂ hα
+
+theorem Z_twoway_fifth_both_nonneg {W₁ N₁ W₂ N₂ : ℝ}
+    (h1 : 0 ≤ W₁) (h2 : 0 ≤ W₂) (hN₁ : 0 < N₁) (hN₂ : 0 < N₂) :
+    Z_twoway W₁ N₁ W₂ N₂ (1 / 5) =
+      (Z_alpha W₁ N₁ (1 / 5) ^ ((5 : ℝ) / 4) +
+        Z_alpha W₂ N₂ (1 / 5) ^ ((5 : ℝ) / 4)) ^ ((4 : ℝ) / 5) := by
+  have hg : gamma (1 / 5 : ℝ) = 5 / 4 := by unfold gamma; norm_num
+  have h1g : (1 : ℝ) / gamma (1 / 5 : ℝ) = 4 / 5 := by rw [hg]; norm_num
+  rw [Z_twoway_both_nonneg h1 h2 hN₁ hN₂ (by norm_num), hg]
+  norm_num
+
+/-- Sec. 6 & App. H (`app:uncert`): on the non-negative orthant (`W₁, W₂ ≥ 0` and
+`W₁ + δ₁, W₂ + δ₂ ≥ 0`) with `α ∈ [0, 1)`, `Z_{α,2D}` satisfies the `ℓ_γ` triangle /
+Lipschitz rounding bound `|ΔZ_{α,2D}| ≤ (|δ₁/N₁^α|^γ + |δ₂/N₂^α|^γ)^(1/γ) ≤ |δ₁|/N₁^α + |δ₂|/N₂^α`. -/
+private lemma minkowski_two_nonneg {a₁ a₂ b₁ b₂ p : ℝ}
+    (ha₁ : 0 ≤ a₁) (ha₂ : 0 ≤ a₂) (hb₁ : 0 ≤ b₁) (hb₂ : 0 ≤ b₂) (hp : 1 ≤ p) :
+    ((a₁ + b₁) ^ p + (a₂ + b₂) ^ p) ^ (1 / p) ≤
+      (a₁ ^ p + a₂ ^ p) ^ (1 / p) + (b₁ ^ p + b₂ ^ p) ^ (1 / p) := by
+  have hp_pos : 0 < p := by linarith
+  set A : ℝ := (a₁ ^ p + a₂ ^ p) ^ (1 / p)
+  set B : ℝ := (b₁ ^ p + b₂ ^ p) ^ (1 / p)
+  have hA_nn : 0 ≤ A := Real.rpow_nonneg (by positivity) _
+  have hB_nn : 0 ≤ B := Real.rpow_nonneg (by positivity) _
+  have hAp : A ^ p = a₁ ^ p + a₂ ^ p := by
+    dsimp [A]; rw [← Real.rpow_mul (by positivity), one_div_mul_cancel hp_pos.ne', Real.rpow_one]
+  have hBp : B ^ p = b₁ ^ p + b₂ ^ p := by
+    dsimp [B]; rw [← Real.rpow_mul (by positivity), one_div_mul_cancel hp_pos.ne', Real.rpow_one]
+  rcases eq_or_lt_of_le hA_nn with hA0 | hA_pos
+  · have hAp0 : a₁ ^ p + a₂ ^ p = 0 := by rw [← hAp, ← hA0, Real.zero_rpow hp_pos.ne']
+    have ha1_0 : a₁ ^ p = 0 := by linarith [Real.rpow_nonneg ha₁ p, Real.rpow_nonneg ha₂ p]
+    have ha2_0 : a₂ ^ p = 0 := by linarith [Real.rpow_nonneg ha₁ p, Real.rpow_nonneg ha₂ p]
+    have ha1z : a₁ = 0 := (Real.rpow_eq_zero_iff_of_nonneg ha₁).mp ha1_0 |>.1
+    have ha2z : a₂ = 0 := (Real.rpow_eq_zero_iff_of_nonneg ha₂).mp ha2_0 |>.1
+    simp [ha1z, ha2z, ← hA0, B]
+  · rcases eq_or_lt_of_le hB_nn with hB0 | hB_pos
+    · have hBp0 : b₁ ^ p + b₂ ^ p = 0 := by rw [← hBp, ← hB0, Real.zero_rpow hp_pos.ne']
+      have hb1_0 : b₁ ^ p = 0 := by linarith [Real.rpow_nonneg hb₁ p, Real.rpow_nonneg hb₂ p]
+      have hb2_0 : b₂ ^ p = 0 := by linarith [Real.rpow_nonneg hb₁ p, Real.rpow_nonneg hb₂ p]
+      have hb1z : b₁ = 0 := (Real.rpow_eq_zero_iff_of_nonneg hb₁).mp hb1_0 |>.1
+      have hb2z : b₂ = 0 := (Real.rpow_eq_zero_iff_of_nonneg hb₂).mp hb2_0 |>.1
+      simp [hb1z, hb2z, ← hB0, A]
+    · have hS : 0 < A + B := add_pos hA_pos hB_pos
+      have hconv := convexOn_rpow hp
+      have hcoord : ∀ u v : ℝ, 0 ≤ u → 0 ≤ v →
+          ((u + v) / (A + B)) ^ p ≤ (A / (A + B)) * (u / A) ^ p + (B / (A + B)) * (v / B) ^ p := by
+        intro u v hu hv
+        have heq : (u + v) / (A + B) = (A / (A + B)) • (u / A) + (B / (A + B)) • (v / B) := by
+          rw [smul_eq_mul, smul_eq_mul]
+          field_simp [hA_pos.ne', hB_pos.ne', hS.ne']
+        rw [heq]
+        exact hconv.2 (show u / A ∈ Ici (0 : ℝ) from div_nonneg hu hA_pos.le)
+          (show v / B ∈ Ici (0 : ℝ) from div_nonneg hv hB_pos.le)
+          (div_nonneg hA_pos.le hS.le) (div_nonneg hB_pos.le hS.le)
+          (by field_simp [hS.ne'])
+      have hc1 := hcoord a₁ b₁ ha₁ hb₁
+      have hc2 := hcoord a₂ b₂ ha₂ hb₂
+      have hsum_le : ((a₁ + b₁) / (A + B)) ^ p + ((a₂ + b₂) / (A + B)) ^ p ≤ 1 := by
+        calc ((a₁ + b₁) / (A + B)) ^ p + ((a₂ + b₂) / (A + B)) ^ p
+            ≤ ((A / (A + B)) * (a₁ / A) ^ p + (B / (A + B)) * (b₁ / B) ^ p) +
+              ((A / (A + B)) * (a₂ / A) ^ p + (B / (A + B)) * (b₂ / B) ^ p) := add_le_add hc1 hc2
+          _ = (A / (A + B)) * ((a₁ / A) ^ p + (a₂ / A) ^ p) +
+              (B / (A + B)) * ((b₁ / B) ^ p + (b₂ / B) ^ p) := by ring
+          _ = (A / (A + B)) * ((a₁ ^ p + a₂ ^ p) / A ^ p) +
+              (B / (A + B)) * ((b₁ ^ p + b₂ ^ p) / B ^ p) := by
+                rw [Real.div_rpow ha₁ hA_pos.le, Real.div_rpow ha₂ hA_pos.le,
+                    Real.div_rpow hb₁ hB_pos.le, Real.div_rpow hb₂ hB_pos.le]
+                ring
+          _ = (A / (A + B)) * 1 + (B / (A + B)) * 1 := by
+                rw [← hAp, div_self (Real.rpow_pos_of_pos hA_pos p).ne',
+                    ← hBp, div_self (Real.rpow_pos_of_pos hB_pos p).ne']
+          _ = 1 := by field_simp [hS.ne']
+      rw [Real.div_rpow (add_nonneg ha₁ hb₁) hS.le, Real.div_rpow (add_nonneg ha₂ hb₂) hS.le,
+          ← add_div, div_le_one (Real.rpow_pos_of_pos hS p)] at hsum_le
+      have hrpow := Real.rpow_le_rpow (by positivity) hsum_le (one_div_pos.mpr hp_pos).le
+      rwa [← Real.rpow_mul hS.le, mul_one_div_cancel hp_pos.ne', Real.rpow_one] at hrpow
+
+theorem app_h_twoway_rounding_bound {W₁ δ₁ N₁ W₂ δ₂ N₂ α : ℝ}
+    (h0 : 0 ≤ α) (h1 : α < 1) (hN₁ : 0 < N₁) (hN₂ : 0 < N₂)
+    (hW₁ : 0 ≤ W₁) (hW₂ : 0 ≤ W₂) (hW₁' : 0 ≤ W₁ + δ₁) (hW₂' : 0 ≤ W₂ + δ₂) :
+    |Z_twoway (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α - Z_twoway W₁ N₁ W₂ N₂ α| ≤
+      ((|δ₁| / N₁ ^ α) ^ gamma α + (|δ₂| / N₂ ^ α) ^ gamma α) ^ (1 / gamma α) ∧
+    ((|δ₁| / N₁ ^ α) ^ gamma α + (|δ₂| / N₂ ^ α) ^ gamma α) ^ (1 / gamma α) ≤
+      |δ₁| / N₁ ^ α + |δ₂| / N₂ ^ α := by
+  have hg_ge : 1 ≤ gamma α := one_le_gamma h0 h1
+  have hg_pos : 0 < gamma α := by linarith
+  have hZ1_nn : 0 ≤ Z_alpha W₁ N₁ α := by unfold Z_alpha; positivity
+  have hZ2_nn : 0 ≤ Z_alpha W₂ N₂ α := by unfold Z_alpha; positivity
+  have hZ1'_nn : 0 ≤ Z_alpha (W₁ + δ₁) N₁ α := by unfold Z_alpha; positivity
+  have hZ2'_nn : 0 ≤ Z_alpha (W₂ + δ₂) N₂ α := by unfold Z_alpha; positivity
+  set d₁ : ℝ := |δ₁| / N₁ ^ α
+  set d₂ : ℝ := |δ₂| / N₂ ^ α
+  have hd1_nn : 0 ≤ d₁ := by positivity
+  have hd2_nn : 0 ≤ d₂ := by positivity
+  have h1_upper : Z_alpha (W₁ + δ₁) N₁ α ≤ Z_alpha W₁ N₁ α + d₁ := by
+    unfold Z_alpha; dsimp [d₁]
+    rw [add_div, add_le_add_iff_left]
+    exact div_le_div_of_nonneg_right (le_abs_self δ₁) (Real.rpow_pos_of_pos hN₁ α).le
+  have h2_upper : Z_alpha (W₂ + δ₂) N₂ α ≤ Z_alpha W₂ N₂ α + d₂ := by
+    unfold Z_alpha; dsimp [d₂]
+    rw [add_div, add_le_add_iff_left]
+    exact div_le_div_of_nonneg_right (le_abs_self δ₂) (Real.rpow_pos_of_pos hN₂ α).le
+  have h1_lower : Z_alpha W₁ N₁ α ≤ Z_alpha (W₁ + δ₁) N₁ α + d₁ := by
+    unfold Z_alpha; dsimp [d₁]
+    rw [add_div, add_assoc, le_add_iff_nonneg_right]
+    have : 0 ≤ δ₁ / N₁ ^ α + |δ₁| / N₁ ^ α := by
+      rw [← add_div]
+      exact div_nonneg (by linarith [neg_abs_le δ₁]) (Real.rpow_pos_of_pos hN₁ α).le
+    exact this
+  have h2_lower : Z_alpha W₂ N₂ α ≤ Z_alpha (W₂ + δ₂) N₂ α + d₂ := by
+    unfold Z_alpha; dsimp [d₂]
+    rw [add_div, add_assoc, le_add_iff_nonneg_right]
+    have : 0 ≤ δ₂ / N₂ ^ α + |δ₂| / N₂ ^ α := by
+      rw [← add_div]
+      exact div_nonneg (by linarith [neg_abs_le δ₂]) (Real.rpow_pos_of_pos hN₂ α).le
+    exact this
+  rw [Z_twoway_both_nonneg hW₁' hW₂' hN₁ hN₂ h1, Z_twoway_both_nonneg hW₁ hW₂ hN₁ hN₂ h1]
+  have h_up : (Z_alpha (W₁ + δ₁) N₁ α ^ gamma α + Z_alpha (W₂ + δ₂) N₂ α ^ gamma α) ^ (1 / gamma α) -
+      (Z_alpha W₁ N₁ α ^ gamma α + Z_alpha W₂ N₂ α ^ gamma α) ^ (1 / gamma α) ≤
+      (d₁ ^ gamma α + d₂ ^ gamma α) ^ (1 / gamma α) := by
+    have hm1 : (Z_alpha (W₁ + δ₁) N₁ α ^ gamma α + Z_alpha (W₂ + δ₂) N₂ α ^ gamma α) ^ (1 / gamma α) ≤
+        ((Z_alpha W₁ N₁ α + d₁) ^ gamma α + (Z_alpha W₂ N₂ α + d₂) ^ gamma α) ^ (1 / gamma α) := by
+      refine Real.rpow_le_rpow (by positivity) (add_le_add
+        (Real.rpow_le_rpow hZ1'_nn h1_upper hg_pos.le)
+        (Real.rpow_le_rpow hZ2'_nn h2_upper hg_pos.le)) (one_div_pos.mpr hg_pos).le
+    linarith [minkowski_two_nonneg hZ1_nn hZ2_nn hd1_nn hd2_nn hg_ge]
+  have h_dn : (Z_alpha W₁ N₁ α ^ gamma α + Z_alpha W₂ N₂ α ^ gamma α) ^ (1 / gamma α) -
+      (Z_alpha (W₁ + δ₁) N₁ α ^ gamma α + Z_alpha (W₂ + δ₂) N₂ α ^ gamma α) ^ (1 / gamma α) ≤
+      (d₁ ^ gamma α + d₂ ^ gamma α) ^ (1 / gamma α) := by
+    have hm1 : (Z_alpha W₁ N₁ α ^ gamma α + Z_alpha W₂ N₂ α ^ gamma α) ^ (1 / gamma α) ≤
+        ((Z_alpha (W₁ + δ₁) N₁ α + d₁) ^ gamma α + (Z_alpha (W₂ + δ₂) N₂ α + d₂) ^ gamma α) ^ (1 / gamma α) := by
+      refine Real.rpow_le_rpow (by positivity) (add_le_add
+        (Real.rpow_le_rpow hZ1_nn h1_lower hg_pos.le)
+        (Real.rpow_le_rpow hZ2_nn h2_lower hg_pos.le)) (one_div_pos.mpr hg_pos).le
+    linarith [minkowski_two_nonneg hZ1'_nn hZ2'_nn hd1_nn hd2_nn hg_ge]
+  refine ⟨abs_le.mpr ⟨by linarith, by linarith⟩, ?_⟩
+  have hsuper : d₁ ^ gamma α + d₂ ^ gamma α ≤ (d₁ + d₂) ^ gamma α :=
+    Real.add_rpow_le_rpow_add hd1_nn hd2_nn hg_ge
+  have hrpow := Real.rpow_le_rpow (by positivity) hsuper (one_div_pos.mpr hg_pos).le
+  rwa [← Real.rpow_mul (add_nonneg hd1_nn hd2_nn), mul_one_div_cancel hg_pos.ne', Real.rpow_one] at hrpow
+
+/-- App. B (`app:twoway`): for `α ∈ (0, 1/2]` and `W_pitch ≠ 0` (and symmetrically `W_pos ≠ 0`),
+`Z_{α,2D}` is not twice Fréchet differentiable on `ℝ²` at `W_k = 0`. -/
+theorem Z_twoway_not_twice_fderiv_at_W1_zero {PA W_pitch BF α : ℝ}
+    (h0 : 0 < α) (hhalf : α ≤ 1 / 2) (hPA : 0 < PA) (hBF : 0 < BF) (hW₂ : W_pitch ≠ 0) :
+    ¬ DifferentiableAt ℝ (fderiv ℝ (fun w : ℝ × ℝ => Z_twoway w.1 PA w.2 BF α)) (0, W_pitch) := by
+  intro hdiff
+  have hnot := (Z_twoway_not_twice_diff_at_W1_zero h0 hhalf hPA hBF hW₂).1
+  apply hnot
+  have h1 : α < 1 := by linarith
+  have hI0 : I_twoway 0 PA W_pitch BF α ≠ 0 := by
+    unfold I_twoway signedPow
+    rw [Real.sign_zero, zero_mul, zero_div, zero_add]
+    have hBFpow : BF ^ (gamma α - 1) ≠ 0 := (Real.rpow_pos_of_pos hBF _).ne'
+    have hs : Real.sign W_pitch ≠ 0 := by
+      rcases lt_or_gt_of_ne hW₂ with hneg | hpos
+      · rw [Real.sign_of_neg hneg]; norm_num
+      · rw [Real.sign_of_pos hpos]; norm_num
+    exact div_ne_zero (mul_ne_zero hs (Real.rpow_pos_of_pos (abs_pos.mpr hW₂) _).ne') hBFpow
+  have hI_cont : Continuous (fun w : ℝ => I_twoway w PA W_pitch BF α) := by
+    unfold I_twoway
+    exact ((signedPow_continuous (gamma_pos h1)).div_const _).add continuous_const
+  have hev_I_ne : ∀ᶠ w in 𝓝 (0 : ℝ), I_twoway w PA W_pitch BF α ≠ 0 :=
+    hI_cont.continuousAt.eventually_ne hI0
+  have hev_deriv : (deriv (fun w => Z_twoway w PA W_pitch BF α)) =ᶠ[𝓝 (0 : ℝ)]
+      fun w => fderiv ℝ (fun p : ℝ × ℝ => Z_twoway p.1 PA p.2 BF α) (w, W_pitch) (1, 0) := by
+    filter_upwards [hev_I_ne] with w hw
+    have hfd := Z_twoway_hasFDerivAt h0 h1 hPA hBF hw
+    have hpd := Z_twoway_hasDerivAt_W1 h0 h1 hPA hw
+    rw [hpd.deriv, hfd.fderiv]
+    simp
+  have hcomp : DifferentiableAt ℝ
+      (fun w : ℝ => fderiv ℝ (fun p : ℝ × ℝ => Z_twoway p.1 PA p.2 BF α) (w, W_pitch) (1, 0)) 0 := by
+    have hinj : DifferentiableAt ℝ (fun w : ℝ => (w, W_pitch)) 0 :=
+      differentiableAt_id.prodMk (differentiableAt_const W_pitch)
+    exact (hdiff.comp 0 hinj).clm_apply (differentiableAt_const (1, 0))
+  exact hcomp.congr_of_eventuallyEq hev_deriv
+
+theorem Z_twoway_not_twice_fderiv_at_W2_zero {W_pos PA BF α : ℝ}
+    (h0 : 0 < α) (hhalf : α ≤ 1 / 2) (hPA : 0 < PA) (hBF : 0 < BF) (hW₁ : W_pos ≠ 0) :
+    ¬ DifferentiableAt ℝ (fderiv ℝ (fun w : ℝ × ℝ => Z_twoway w.1 PA w.2 BF α)) (W_pos, 0) := by
+  intro hdiff
+  have hnot := (Z_twoway_not_twice_diff_at_W2_zero h0 hhalf hPA hBF hW₁).1
+  apply hnot
+  have h1 : α < 1 := by linarith
+  have hI0 : I_twoway W_pos PA 0 BF α ≠ 0 := by
+    unfold I_twoway signedPow
+    rw [Real.sign_zero, zero_mul, zero_div, add_zero]
+    have hPApow : PA ^ (gamma α - 1) ≠ 0 := (Real.rpow_pos_of_pos hPA _).ne'
+    have hs : Real.sign W_pos ≠ 0 := by
+      rcases lt_or_gt_of_ne hW₁ with hneg | hpos
+      · rw [Real.sign_of_neg hneg]; norm_num
+      · rw [Real.sign_of_pos hpos]; norm_num
+    exact div_ne_zero (mul_ne_zero hs (Real.rpow_pos_of_pos (abs_pos.mpr hW₁) _).ne') hPApow
+  have hI_cont : Continuous (fun w : ℝ => I_twoway W_pos PA w BF α) := by
+    unfold I_twoway
+    exact continuous_const.add ((signedPow_continuous (gamma_pos h1)).div_const _)
+  have hev_I_ne : ∀ᶠ w in 𝓝 (0 : ℝ), I_twoway W_pos PA w BF α ≠ 0 :=
+    hI_cont.continuousAt.eventually_ne hI0
+  have hev_deriv : (deriv (fun w => Z_twoway W_pos PA w BF α)) =ᶠ[𝓝 (0 : ℝ)]
+      fun w => fderiv ℝ (fun p : ℝ × ℝ => Z_twoway p.1 PA p.2 BF α) (W_pos, w) (0, 1) := by
+    filter_upwards [hev_I_ne] with w hw
+    have hfd := Z_twoway_hasFDerivAt h0 h1 hPA hBF hw
+    have hpd := Z_twoway_hasDerivAt_W2 h0 h1 hBF hw
+    rw [hpd.deriv, hfd.fderiv]
+    simp
+  have hcomp : DifferentiableAt ℝ
+      (fun w : ℝ => fderiv ℝ (fun p : ℝ × ℝ => Z_twoway p.1 PA p.2 BF α) (W_pos, w) (0, 1)) 0 := by
+    have hinj : DifferentiableAt ℝ (fun w : ℝ => (W_pos, w)) 0 :=
+      (differentiableAt_const W_pos).prodMk differentiableAt_id
+    exact (hdiff.comp 0 hinj).clm_apply (differentiableAt_const (0, 1))
+  exact hcomp.congr_of_eventuallyEq hev_deriv
+
+/-- App. B (`app:twoway`): strict anti-monotonicity of `Z_{α,2D}` in positive secondary exposure `N₂`. -/
+theorem Z_twoway_pos_strictAnti_exposure {W₁ N₁ W₂ N₂ N₂' α : ℝ}
+    (h0 : 0 < α) (h1 : α < 1) (hW₂ : 0 < W₂) (hN₂ : 0 < N₂) (hNlt : N₂ < N₂') :
+    Z_twoway W₁ N₁ W₂ N₂' α < Z_twoway W₁ N₁ W₂ N₂ α := by
+  have hg : 0 < gamma α := gamma_pos h1
+  have hg_sub : 0 < gamma α - 1 := by linarith [one_lt_gamma h0 h1]
+  have hinv : 0 < 1 / gamma α := one_div_pos.mpr hg
+  apply signedPow_strictMono hinv
+  unfold I_twoway
+  rw [add_lt_add_iff_left, signedPow_nonneg hW₂.le hg]
+  have hnum : 0 < W₂ ^ gamma α := Real.rpow_pos_of_pos hW₂ _
+  have hden1 : 0 < N₂ ^ (gamma α - 1) := Real.rpow_pos_of_pos hN₂ _
+  have hden2 : N₂ ^ (gamma α - 1) < N₂' ^ (gamma α - 1) :=
+    Real.rpow_lt_rpow hN₂.le hNlt hg_sub
+  exact div_lt_div_of_pos_left hnum hden1 hden2
+
+/-- App. B (`app:twoway`): one-sided normal tail probability is strictly smaller than the
+corresponding two-sided `χ²_1` and `χ²_2` tail probabilities for every `t > 0`, so one-sided
+normal calibration shrinks even more strictly (`z_cal_1s < √t_2s < √t`). -/
+theorem chi2_one_sided_dominance_gaussian_strict (v : ℝ≥0) (hv : v ≠ 0) {σ t : ℝ}
+    (hσ : 0 < σ) (ht : 0 < t) :
+    let μ := gaussianReal 0 v
+    let μp : Measure (ℝ × ℝ) := μ.prod μ
+    μ {z | Real.sqrt t * σ ≤ z} < μp {p | t ≤ p.1 ^ 2 / σ ^ 2} ∧
+    μp {p | t ≤ p.1 ^ 2 / σ ^ 2} < μp {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2} := by
+  intro μ μp
+  refine ⟨?_, chi2_dominance_gaussian_strict v hv hσ ht⟩
+  let E_pos : Set (ℝ × ℝ) := {p | Real.sqrt t * σ ≤ p.1}
+  let E_neg : Set (ℝ × ℝ) := {p | p.1 ≤ -(Real.sqrt t * σ)}
+  let E_two : Set (ℝ × ℝ) := {p | t ≤ p.1 ^ 2 / σ ^ 2}
+  have hpos_eq : E_pos = (Ici (Real.sqrt t * σ)) ×ˢ Set.univ := by
+    ext p; simp [E_pos]
+  have hμ_Epos : μp E_pos = μ {z | Real.sqrt t * σ ≤ z} := by
+    rw [hpos_eq]
+    dsimp [μp]
+    rw [Measure.prod_prod, measure_univ, mul_one]
+    rfl
+  have hE_neg_meas : MeasurableSet E_neg :=
+    measurableSet_le measurable_fst measurable_const
+  have hdisj : Disjoint E_pos E_neg := by
+    refine Set.disjoint_left.mpr fun p hp1 hp2 => ?_
+    dsimp [E_pos, E_neg] at hp1 hp2
+    have hgt : 0 < Real.sqrt t * σ := mul_pos (Real.sqrt_pos.mpr ht) hσ
+    linarith [hp1, hp2]
+  have hunion : E_pos ∪ E_neg = E_two := by
+    ext p
+    simp only [Set.mem_union, Set.mem_setOf_eq, E_pos, E_neg, E_two]
+    have hsq_eq : t * σ ^ 2 = (Real.sqrt t * σ) ^ 2 := by
+      rw [mul_pow, Real.sq_sqrt ht.le]
+    rw [le_div_iff₀ (sq_pos_of_pos hσ), hsq_eq, sq_le_sq, abs_of_pos (mul_pos (Real.sqrt_pos.mpr ht) hσ)]
+    simpa [or_comm] using (le_abs' (a := Real.sqrt t * σ) (b := p.1)).symm
+  have hvol_ac : volume ≪ μ := gaussianReal_absolutelyContinuous' 0 hv
+  have hneg_pos : 0 < μp E_neg := by
+    let a : ℝ := Real.sqrt t * σ
+    let A : Set ℝ := Ioo (-(a + 1)) (-a)
+    have hA_sub : A ×ˢ Set.univ ⊆ E_neg := by
+      intro ⟨x, y⟩ ⟨hx, _⟩
+      exact hx.2.le
+    have hA_pos : 0 < μ A := by
+      rw [pos_iff_ne_zero]
+      intro h0
+      have hv0 := hvol_ac h0
+      have hvolA : volume A = ENNReal.ofReal (-a - -(a + 1)) := Real.volume_Ioo
+      rw [hv0] at hvolA
+      norm_num at hvolA
+    have hprod_pos : 0 < μp (A ×ˢ Set.univ) := by
+      dsimp [μp]
+      rw [Measure.prod_prod, measure_univ, mul_one]
+      exact hA_pos
+    exact hprod_pos.trans_le (measure_mono hA_sub)
+  change μ {z | Real.sqrt t * σ ≤ z} < μp E_two
+  rw [← hμ_Epos, ← hunion, measure_union hdisj hE_neg_meas]
+  exact ENNReal.lt_add_right (measure_ne_top μp E_pos) hneg_pos.ne'
+
+theorem chi2_one_sided_calibration_shrinks (v : ℝ≥0) (hv : v ≠ 0) {σ t t_2s z_1s : ℝ}
+    (hσ : 0 < σ) (ht : 0 < t)
+    (hmatch_2s : (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t_2s ≤ p.1 ^ 2 / σ ^ 2} =
+      (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2})
+    (hmatch_1s : gaussianReal 0 v {z | z_1s * σ ≤ z} =
+      (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2}) :
+    z_1s < Real.sqrt t ∧ (0 < t_2s → z_1s < Real.sqrt t_2s ∧ Real.sqrt t_2s < Real.sqrt t) := by
+  let μ := gaussianReal 0 v
+  let μp := μ.prod μ
+  have hdom_t := chi2_one_sided_dominance_gaussian_strict v hv hσ ht
+  have h1 : μ {z | Real.sqrt t * σ ≤ z} < μ {z | z_1s * σ ≤ z} := by
+    rw [hmatch_1s]
+    exact hdom_t.1.trans hdom_t.2
+  have hz_lt_t : z_1s < Real.sqrt t := by
+    by_contra hge
+    have hle : Real.sqrt t * σ ≤ z_1s * σ := mul_le_mul_of_nonneg_right (not_lt.mp hge) hσ.le
+    have hmono : μ {z | z_1s * σ ≤ z} ≤ μ {z | Real.sqrt t * σ ≤ z} :=
+      measure_mono fun z hz => hle.trans hz
+    exact h1.not_ge hmono
+  refine ⟨hz_lt_t, fun ht2s => ?_⟩
+  have h2s_lt : t_2s < t := chi2_calibration_shrinks v hv hσ ht hmatch_2s
+  have hsqrt_2s : Real.sqrt t_2s < Real.sqrt t := Real.sqrt_lt_sqrt ht2s.le h2s_lt
+  have hdom_2s := (chi2_one_sided_dominance_gaussian_strict v hv hσ ht2s).1
+  have h2 : μ {z | Real.sqrt t_2s * σ ≤ z} < μ {z | z_1s * σ ≤ z} := by
+    rw [hmatch_1s, ← hmatch_2s]
+    exact hdom_2s
+  have hz_lt_2s : z_1s < Real.sqrt t_2s := by
+    by_contra hge
+    have hle : Real.sqrt t_2s * σ ≤ z_1s * σ := mul_le_mul_of_nonneg_right (not_lt.mp hge) hσ.le
+    have hmono : μ {z | z_1s * σ ≤ z} ≤ μ {z | Real.sqrt t_2s * σ ≤ z} :=
+      measure_mono fun z hz => hle.trans hz
+    exact h2.not_ge hmono
+  exact ⟨hz_lt_2s, hsqrt_2s⟩
+
+/-- Sec. 3.4 & 6.3-6.4: exact numerical brackets for `2^(γ(1/4)) = 2^(4/3) ≈ 2.5`,
+`2^(1 - 1/5) = 2^0.8 ≈ 1.74` (+74%), `4^(1 - 1/5) = 4^0.8 ≈ 3.03` (≈ 3x),
+and `(750/280)^0.2 ≈ 1.22`, `(750/2000)^0.2 ≈ 0.82`. -/
+theorem paper_exponent_numerical_bounds :
+    ((251 / 100 : ℝ) < (2 : ℝ) ^ gamma (1 / 4) ∧ (2 : ℝ) ^ gamma (1 / 4) < (253 / 100 : ℝ)) ∧
+    ((174 / 100 : ℝ) < (2 : ℝ) ^ (1 - (1 / 5 : ℝ)) ∧ (2 : ℝ) ^ (1 - (1 / 5 : ℝ)) < (175 / 100 : ℝ)) ∧
+    ((303 / 100 : ℝ) < (4 : ℝ) ^ (1 - (1 / 5 : ℝ)) ∧ (4 : ℝ) ^ (1 - (1 / 5 : ℝ)) < (304 / 100 : ℝ)) ∧
+    ((121 / 100 : ℝ) < ((750 : ℝ) / 280) ^ (1 / 5 : ℝ) ∧ ((750 : ℝ) / 280) ^ (1 / 5 : ℝ) < (123 / 100 : ℝ)) ∧
+    ((81 / 100 : ℝ) < ((750 : ℝ) / 2000) ^ (1 / 5 : ℝ) ∧ ((750 : ℝ) / 2000) ^ (1 / 5 : ℝ) < (83 / 100 : ℝ)) := by
+  have hg4 : gamma (1 / 4 : ℝ) = ((4 : ℕ) : ℝ) / ((3 : ℕ) : ℝ) := by unfold gamma; norm_num
+  have h15 : (1 : ℝ) - 1 / 5 = ((4 : ℕ) : ℝ) / ((5 : ℕ) : ℝ) := by norm_num
+  have h15' : (1 / 5 : ℝ) = ((1 : ℕ) : ℝ) / ((5 : ℕ) : ℝ) := by norm_num
+  have pow_lt_pow_rpow : ∀ {a b : ℝ} (p q : ℕ), 0 ≤ a → 0 ≤ b → 0 < q →
+      a ^ q < b ^ p → a < b ^ ((p : ℝ) / q) := by
+    intro a b p q ha hb hq hlt
+    have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
+    have hr := Real.rpow_lt_rpow (pow_nonneg ha q) hlt (one_div_pos.mpr hq_pos)
+    have h1 : (a ^ q) ^ (1 / (q : ℝ)) = a := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
+    have h2 : (b ^ p) ^ (1 / (q : ℝ)) = b ^ ((p : ℝ) / q) := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div]
+    rwa [h1, h2] at hr
+  have pow_lt_pow_rpow' : ∀ {a b : ℝ} (p q : ℕ), 0 ≤ a → 0 ≤ b → 0 < q →
+      a ^ p < b ^ q → a ^ ((p : ℝ) / q) < b := by
+    intro a b p q ha hb hq hlt
+    have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
+    have hr := Real.rpow_lt_rpow (pow_nonneg ha p) hlt (one_div_pos.mpr hq_pos)
+    have h1 : (a ^ p) ^ (1 / (q : ℝ)) = a ^ ((p : ℝ) / q) := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div]
+    have h2 : (b ^ q) ^ (1 / (q : ℝ)) = b := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
+    rwa [h1, h2] at hr
+  refine ⟨⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
+  · rw [hg4]; exact pow_lt_pow_rpow 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [hg4]; exact pow_lt_pow_rpow' 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact pow_lt_pow_rpow 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact pow_lt_pow_rpow' 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact pow_lt_pow_rpow 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact pow_lt_pow_rpow' 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact pow_lt_pow_rpow 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact pow_lt_pow_rpow' 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact pow_lt_pow_rpow 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact pow_lt_pow_rpow' 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+
 end ZwarProofs
 

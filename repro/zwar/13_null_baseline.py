@@ -98,12 +98,19 @@ def hof_part():
     # 1. Is the evidence question open?
     log("")
     log(f"Share of Hall of Famers with z = (W - l D)/(sigma sqrt N) > 1.96 (sigma = {SIGMA})")
+    exp_shares = {
+        "Hitters": {0.0: 0.96, 1.0: 0.85, 1.5: 0.60, 2.0: 0.27},
+        "SP": {0.0: 1.00, 1.0: 0.88, 1.5: 0.61, 2.0: 0.22},
+        "RP": {0.0: 1.00, 1.0: 0.88, 1.5: 0.25, 2.0: 0.00},
+    }
     for name, ps in [("Hitters", H), ("SP", SP), ("RP", RP)]:
         hof = [p for p in ps if p["hof"]]
         parts = []
         for lam in (0.0, 1.0, 1.5, 2.0):
             z = scores(hof, 0.5, lam) / SIGMA
-            parts.append(f"l={lam:g}: {np.mean(z > 1.96):.0%} (median z {np.median(z):.1f})")
+            sh = float(np.mean(z > 1.96))
+            assert round(sh, 2) == exp_shares[name][lam], f"{name} l={lam}: share {sh}"
+            parts.append(f"l={lam:g}: {sh:.0%} (median z {np.median(z):.1f})")
         log(f"  {name:8s} ({len(hof):3d} HOF)  " + "; ".join(parts))
 
     # 2. AUC over the (alpha, lambda) grid
@@ -116,9 +123,15 @@ def hof_part():
         for (a, lam), v in grid.items():
             rows.append(["hof", name, a, lam, round(v, 4)])
         best = max(grid, key=grid.get)
+        assert best[1] == 0.0, f"{name}: expected overall best at lambda=0, got {best}"
+        auc_half = [grid[(0.5, lam)] for lam in LAMBDAS]
+        assert all(auc_half[i] > auc_half[i + 1] for i in range(len(auc_half) - 1)), (
+            f"{name}: AUC(0.5, lambda) not strictly decreasing: {auc_half}")
         per_l = []
         for lam in LAMBDAS:
             a_b = max(ALPHAS, key=lambda a: grid[(a, lam)])
+            if lam == 1.0:
+                assert a_b == 0.0, f"{name}: expected best alpha=0 at lambda=1, got {a_b}"
             per_l.append(f"l={lam:g}: a*={a_b:.2f} ({grid[(a_b, lam)]:.3f}), a=.5 {grid[(0.5, lam)]:.3f}")
         log(f"  {name:30s} overall best a={best[0]:.2f}, l={best[1]:g} ({grid[best]:.3f})")
         log("      " + " | ".join(per_l))
@@ -133,6 +146,7 @@ def hof_part():
         war = scores(ps, 0.0, 0.0)
         z25 = scores(ps, 0.25, 0.0)
         lo1, hi1 = bootstrap_auc_diff(z1, z0, y, N_BOOT)
+        assert hi1 < 0.0, f"{name}: expected WAA/sqrtN - Z_1/2 CI < 0, got [{lo1}, {hi1}]"
         lo2, hi2 = bootstrap_auc_diff(z1, war, y, N_BOOT)
         lo3, hi3 = bootstrap_auc_diff(z1, z25, y, N_BOOT)
         log(f"  {name:30s} AUC(WAA/sqrtN)={auc(z1, y):.3f}: minus Z_1/2 [{lo1:+.3f}, {hi1:+.3f}]; "
@@ -152,6 +166,7 @@ def hof_part():
             parts.append(f"l={lam:g}: a*={a_b:.2f} a_eff median {np.median(eff):.2f}")
         log(f"  {name:30s} " + " | ".join(parts))
         eff_half = [0.5 + 0.5 * 1.0 * (p["W"] - p["WAA"]) / p["W"] for p in hof]
+        assert round(float(np.median(eff_half)), 2) == 0.74
         log(f"  {'':30s} WAA/sqrtN (a=.5, l=1): a_eff median {np.median(eff_half):.2f} "
             f"(10-90%: {np.percentile(eff_half, 10):.2f}-{np.percentile(eff_half, 90):.2f})")
     return rows

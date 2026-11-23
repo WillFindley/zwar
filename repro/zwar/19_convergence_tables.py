@@ -158,7 +158,7 @@ lines = [r"\begin{table}[htbp]", r"\centering",
          r"on $\log r$, players with positive $\WAR$ in both periods) and the Spearman correlation $\rho_r$ between early "
          r"and future rates. If future rate and exposure were independent, Proposition~\ref{prop:target} would put the "
          r"optimum for a cumulative target at $\alpha = 0$ whenever $\beta \ge \kappa$; this matches the pitcher and "
-         r"midpoint designs but not the hitter checkpoints (Section~\ref{sec:forecast}). Future $\WAR$ at checkpoints uses careers ending by 2023; all other outcomes use careers ending by 2016 "
+         r"midpoint designs but not the hitter checkpoints (Section~\ref{sec:forecast}). Future $\WAR$ at checkpoints uses careers ending by 2023; midpoint future $\WAR$ and all honor outcomes use careers ending by 2016 "
          r"(Hall of Fame: by 2010).}",
          r"\label{tab:forecast}", r"\footnotesize", r"\resizebox{\textwidth}{!}{%",
          r"\begin{tabular}{@{}lccccccc@{}}", r"\toprule",

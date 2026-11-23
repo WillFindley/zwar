@@ -77,7 +77,9 @@ U = [("Cobb",149.8,13103,0.1,20,1.309),("Speaker",136.1,12021,-0.1,4,1.240),("Cl
      ("Nichols",-0.8,2265,119.0,21099,0.819),("Alexander",3.0,1982,116.9,20893,0.812),("Pedro",-2.2,518,86.1,11394,0.801),
      ("Gibson",41.1,2683,-0.2,10,0.791),("Rivera",0.0,4,56.3,5103,0.788),("RJohnson",-2.5,691,103.5,17067,0.787),
      ("Seaver",3.9,1552,106.0,19369,0.768),("Mathewson",6.6,1900,100.6,18929,0.747),("Kershaw",2.8,847,78.1,11279,0.742),
-     ("Maddux",1.8,1812,104.8,20421,0.735),("Wallace",70.4,9635,6.0,1799,0.731)]
+     ("Maddux",1.8,1812,104.8,20421,0.735),
+     # Legacy checks preserved from an earlier draft alongside paper_values.HITTER_PITCHING:
+     ("Wallace",70.4,9635,6.0,1799,0.731)]
 for n,a,b,c,d,z in U:
     chk(n+" unified", z2d(a,b,c,d), z, 0.0006)
 chk("Young pooled", zpool(-2.2,3107,165.9,29565), 0.906, 0.0006)
@@ -222,6 +224,12 @@ chk("Ohtani Z0.2 pool lift (%)", 100 * (((38.4 + 19.4) / (4947 + 2479) ** 0.2) /
 
 chk("Herb Washington Z_1/2", -0.5 / s(max(0, 1)), -0.500, 0.0005)
 chk("Paul Skenes Z_0.2", 17.1 / 1959 ** 0.2, 3.75, 0.006)
+chk("ZWAR=1.00 is ~15 SE above replacement (sigma=0.065)", 1.00 / 0.065, 15.38, 0.4)
+chk("Z0.2 +-0.05 WAR step at N=3,000", 0.05 / 3000 ** 0.2, 0.010, 0.0005)
+chk("Z0.2 +-0.05 WAR step at N=30,000", 0.05 / 30000 ** 0.2, 0.0064, 0.0005)
+chk("WAA alpha_eff at r0 = rbar / 2", 0.0 + 1.0 * 0.5, 0.50, 1e-12)
+chk("WAA/sqrt(N) alpha_eff at r0 = rbar / 2", 0.5 + 0.5 * 0.5, 0.75, 0.015)
+chk("Pairwise ZWAR diff SE sqrt(2)*0.065", s(2) * 0.065, 0.092, 0.002)
 
 print()
 print("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} MISMATCHES: {FAILS}")

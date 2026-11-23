@@ -111,6 +111,7 @@ def main():
     for name, ps in pools:
         y = np.array([p["hof"] for p in ps], bool)
         r = {u: auc(score(ps, u, A_VALUE), y) for u in ("N", "S", "S100")}
+        assert r["N"] > r["S"], f"{name}: expected events > seasons at a=0.2, got {r}"
         b = {u: best(ps, y, u) for u in ("N", "S", "S100")}
         lo, hi = bootstrap_auc_diff(score(ps, "S", A_VALUE), score(ps, "N", A_VALUE), y, N_BOOT)
         log(f"{name:32s} {r['N']:7.3f} {r['S']:7.3f} {r['S100']:7.3f}  "
@@ -119,6 +120,9 @@ def main():
         rows.append([name, len(ps), int(y.sum()), round(r["N"], 4), round(r["S"], 4), round(r["S100"], 4),
                      b["N"][0], round(b["N"][1], 4), b["S"][0], round(b["S"][1], 4),
                      b["S100"][0], round(b["S100"][1], 4), round(lo, 4), round(hi, 4)])
+    assert sum(1 for r in rows[:8] if r[8] == 0.0) == 7
+    assert sum(1 for r in rows[:8] if round(r[13], 3) < 0.0) == 6
+    assert sum(1 for r in rows[:8] if r[13] < 0.0) == 7
 
     # Relief Hall of Famers within the combined SP + RP list
     SPRP = SP + RP
@@ -128,6 +132,8 @@ def main():
         s = score(SPRP, u, A_VALUE)
         order = (-s).argsort(kind="mergesort").argsort(kind="mergesort")
         ranks = sorted(int(order[i]) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
+        if u == "N":
+            assert (ranks[0], ranks[-1]) == (45, 316)
         log(f"  {'events' if u == 'N' else 'seasons':8s} {ranks}")
 
     # Expert lists

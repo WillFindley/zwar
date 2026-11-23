@@ -125,6 +125,7 @@ def main():
         pid = resolve(name, "bat")
         check(name, "posWAR", w, *published_war(pid, "bat"), True)
         check(name, "PA", pa, *published(pid, "bat", "PA"), False)
+    check("Herb Washington", "G", 105, career("bat", "washihe01")["G"], "war_daily (season sum)", False)
 
     for name, w, bf, ip in PV.PITCHERS:
         pid = resolve(name, "pitch")

@@ -223,9 +223,14 @@ def main():
     head = [r for r in rows if r[1] in ("judgment", "forecast", "concurrent") and not r[-1]]
     a_arg = np.array([r[5] for r in head], float)
     a_st = np.array([r[8] for r in head], float)
+    rho_imp = float(spearmanr(a_arg, a_st)[0])
+    assert abs(round(rho_imp, 2) - 0.79) < 1e-9, f"Unexpected Spearman(argmax, alpha*): {rho_imp}"
+    judg_rows = [r for r in head if r[1] == "judgment"]
+    assert len(judg_rows) == 12 and sum(r[13] for r in judg_rows) == 12
+    assert abs(round(float(np.nanmedian([r[8] for r in judg_rows])), 2) - 0.26) < 1e-9
     log()
     log(f"  career-value benchmarks (duplicates excluded): {len(head)}; alpha* inside the argmax 95% interval in "
-        f"{sum(r[13] for r in head)}/{len(head)}; Spearman(argmax, alpha*) = {spearmanr(a_arg, a_st)[0]:.2f}; "
+        f"{sum(r[13] for r in head)}/{len(head)}; Spearman(argmax, alpha*) = {rho_imp:.2f}; "
         f"median alpha* {np.nanmedian(a_st):.2f} vs median argmax {np.median(a_arg):.2f}")
     for cat in ("judgment", "concurrent", "forecast"):
         H = [r for r in head if r[1] == cat]
@@ -279,6 +284,19 @@ def main():
                "rate_on_logr", "rate_on_logN", "exposure_on_logr", "exposure_on_logN",
                "observed_argmax_futureWAR", "argmax_lo", "argmax_hi", "implied_alpha_star_futureWAR",
                "benchmark"], drows)
+    # Table 6 / Section 5.5 headline persistence and two-equation decomposition assertions
+    t6 = [d for d in drows if (d[1].startswith("checkpoint") and d[2] == "2023") or (d[1] == "midpoint" and d[2] == "2016")]
+    assert len(t6) == 6
+    assert all(0.865 <= d[5] <= 1.635 for d in t6)
+    h6 = [d for d in t6 if d[0] == "Hitters"]
+    p6 = [d for d in t6 if d[0] == "Pitchers"]
+    assert all(0.415 <= d[9] <= 0.495 and 0.525 <= d[13] <= 0.595 for d in h6)
+    assert all(0.025 <= d[9] <= 0.195 and 0.225 <= d[13] <= 0.265 for d in p6)
+    d_map = {(d[0], d[1], d[2]): d for d in drows}
+    k3 = d_map[("Hitters", "checkpoint k=3", "2023")]
+    k5 = d_map[("Hitters", "checkpoint k=5", "2023")]
+    assert (f"{k3[18]:.2f}", f"{k3[19]:.2f}", f"{k3[20]:.2f}") == ("0.37", "-0.35", "0.99")
+    assert (f"{k5[18]:.2f}", f"{k5[19]:.2f}", f"{k5[20]:.2f}") == ("-0.21", "-0.83", "0.24")
     with open(os.path.join(OUT, "implied_alpha_summary.txt"), "w") as fh:
         fh.write("\n".join(LOG) + "\n")
 

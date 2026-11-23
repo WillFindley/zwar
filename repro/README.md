@@ -43,8 +43,8 @@ Repository: <https://github.com/WillFindley/zwar>
 
 | Step | Result |
 |---|---|
-| 01 arithmetic | All derived values in the paper reproduce from its inputs |
-| 02 inputs | 350/350 inputs match Baseball-Reference (+ 12 INFO unrounded-WAR comparisons; WAR, PA, IP, BF, season checkpoints incl. IPs, 2026 values for Skenes, Trout, Ohtani, Chapman, Jansen, Kimbrel; small-sample examples Herb Washington and Ron Wotus; Remark 4 1980–2026 59.0/41.0 bWAR split) |
+| 01 arithmetic | All derived values in the paper reproduce from its inputs (incl. SE/rounding bounds and $\alpha_{\mathrm{eff}}$) |
+| 02 inputs | 351/351 inputs match Baseball-Reference (+ 12 INFO unrounded-WAR comparisons; WAR, PA, IP, BF, season checkpoints incl. IPs, 2026 values for Skenes, Trout, Ohtani, Chapman, Jansen, Kimbrel; small-sample examples Herb Washington incl. 105 G and Ron Wotus; Remark 4 1980–2026 59.0/41.0 bWAR split) |
 | 03 SPW | Pedro Martínez 53.5 (Gordon 53.6), Babe Ruth 61.1 (61.4), Eddie Plank 32.8 (32.3); differences reflect WAR revisions since Dec. 2022 |
 | 04 Hall of Fame | Table 4 reproduced (incl. pooled SP + RP row: Z_0.2 0.938, Z_½ 0.939 vs WAR 0.929, JAWS 0.921); Z_0.2 matches or beats WAR and JAWS in 7 of 8 pools (CIs exclude 0 in SP + RP and vs JAWS for RP, while RP Z_0.2 vs WAR touches 0.000); fixed α = 0.2 matches or beats CV-chosen α (to 3 d.p.) in all 8 pools; adds SPW, bootstrap CIs (incl. relievers), cross-validated α (median 0.20–0.25 in most pools), pitcher scale factor c up to 59/41, and banned-player sensitivity checks |
 | 05 α-sensitivity | Table 12 ranks (exact 0 diff, incl. α = 0.2), α = 1 examples (Wotus #3; Bautista/Miller/Duran/Clase #2–#5), and top-100 Spearman diagnostics reproduce |

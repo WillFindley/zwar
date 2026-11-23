@@ -24,7 +24,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import load_jaws, load_war_daily, z2d, z2d_lgamma, write_csv  # noqa: E402
+from common import load_jaws, load_war_daily, z2d, z2d_alpha, z2d_lgamma, write_csv  # noqa: E402
 import universe  # noqa: E402
 
 # Value point of the family (gamma = 1.25, Proposition 4 / Section 4)
@@ -326,12 +326,21 @@ def main():
     write_csv("rank_alpha02.csv", ["player", "coordinate", "paper_rank_alpha0.2",
                                    "ours_rank_alpha0.2", "status"], a_rows)
     _, order_uni = ranking(zuni)
+    expected_uni_pit = {"alpha = 0.5": [3, 5, 13], f"alpha = {a}": [5, 11, 28]}
     for lab, order in [("alpha = 0.5", order_uni), (f"alpha = {a}", order_uni_a)]:
         counts = []
         for k in (25, 50, 100):
             counts.append(sum(1 for p in order[:k] if pit_w[p] > pos_w[p]))
+        assert counts == expected_uni_pit[lab], f"Unexpected unified pitcher counts {lab}: {counts}"
         print(f"  unified {lab}: pitchers (pitching WAR > position WAR) in top 25/50/100: "
               + "/".join(map(str, counts)))
+
+    # Section 6.3 claim: Rivera's 9.05 WAR/820 BF is the highest career rate among all pitchers >= 2,000 BF
+    rate_top = max((pit_w[p] / (pit_n[p] / 820.0), p) for p in zpit if pit_n[p] >= 2000)
+    assert rate_top[1] == "riverma01" and abs(round(rate_top[0], 2) - 9.05) < 1e-12, f"Top rate >=2000 BF: {rate_top}"
+    # Section 6.2 & App. H claim: Kershaw (#20) 0.10 tie block spans #17-#21 (Keefe, Mussina, Verlander, Kershaw, Schilling)
+    assert order_pit_a[16:21] == ["keefeti01", "mussimi01", "verlaju01", "kershcl01", "schilcu01"]
+    assert universe.tie_range(zpit_a, "kershcl01", eps=0.10) == (17, 21)
 
     # ------------------------------------------------------------------
     # alpha = 1/5 leaderboards (17_leaderboards.py): every printed Z_0.2 value
@@ -379,6 +388,8 @@ def main():
     a = ALPHA_VALUE
     for pid, (zp, zt, zpl, z2, r02, r05) in TWOWAY_A02.items():
         pool_v = (pos_w[pid] + pit_w[pid]) / max(pos_n[pid] + pit_n[pid], 1) ** a
+        assert z2d_alpha(pos_w[pid], pos_n[pid], pit_w[pid], pit_n[pid], a) < pool_v, (
+            f"Expected quadrature < pool for {pid} at alpha={a}")
         for field, shown, ours in [("Zpos0.2", zp, zpos_a[pid]), ("Zpitch0.2", zt, zpit_a[pid]),
                                    ("Zpool0.2", zpl, pool_v), ("Z2D0.2", z2, zuni_a[pid])]:
             t_check("twoway", pid, field, shown, round(ours, 4), abs(ours - shown) <= 0.005 + 1e-9,

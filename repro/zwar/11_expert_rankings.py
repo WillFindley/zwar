@@ -158,7 +158,16 @@ def main():
         listed = {pid for _, pid, _ in entries}
         car = careers_through(cutoff)
         uni = [pid for pid, p in car.items() if p["war"] >= MIN_WAR or pid in listed]
+        expected_uni = {"tsn1998": 1592, "espn2022": 2082}[lst]
+        assert len(uni) == expected_uni, f"{lst}: expected universe {expected_uni}, got {len(uni)}"
+        for pid in uni:
+            p = car[pid]
+            zp = abs(p["w_pos"] / max(p["pa"], 1.0))
+            zt = abs(p["w_pit"] / max(p["bf"], 1.0))
+            assert not (zp > 0 and zt > 0 and abs(zp - zt) < 1e-12), f"{lst} {pid}: c=1 tie at alpha=1"
+            assert not (zp > 0 and zt > 0 and abs(zp - C_BWAR * zt) < 1e-12), f"{lst} {pid}: c=59/41 tie at alpha=1"
         below = sorted((car[pid]["war"], name) for _, pid, name in entries if car[pid]["war"] < MIN_WAR)
+        assert not below, f"{lst}: listed player(s) below MIN_WAR: {below}"
         y = np.array([pid in listed for pid in uni])
         ranks = np.array([r for r, _, _ in entries], float)
         lp = [pid for _, pid, _ in entries]
@@ -174,6 +183,7 @@ def main():
             f"(career WAR >= {MIN_WAR:g} or listed); listed below threshold: "
             + (", ".join(f"{n} {w:.1f}" for w, n in below) or "none"))
         n_pitch_list = sum(car[pid]["pitcher"] for pid in lp)
+        assert n_pitch_list == {"tsn1998": 28, "espn2022": 27}[lst]
         res = {}
         for name, f in metrics.items():
             s_uni = np.array([f(car[pid]) for pid in uni])
@@ -214,13 +224,21 @@ def main():
             if round(a * 20) % 2 == 0:
                 quad_parts.append(f"{a:.2f}:{rho_q:.3f}/{auc_q:.3f}")
         log("  previous default (signed quadrature at every alpha), Spearman / AUC: " + "  ".join(quad_parts))
+        assert res["Z0.20"][3] == {"tsn1998": 22, "espn2022": 28}[lst]
         for m1, m2 in [("Z0.50", "WAR"), ("Z0.50", "JAWS"), ("Z0.25", "WAR"), ("Z0.25", "Z0.50"),
                        ("Z0.50_c1.2", "JAWS"), ("Z0.50_c1.2", "Z0.50")]:
             lo, hi = boot_spearman_diff(ranks, res[m1][5], res[m2][5])
             alo, ahi = bootstrap_auc_diff(res[m1][4], res[m2][4], y, n_boot=N_BOOT)
+            if (m1, m2) == ("Z0.25", "WAR"):
+                assert alo > 0.0, f"{lst}: expected Z0.25 - WAR AUC CI > 0, got [{alo}, {ahi}]"
             log(f"  {m1} - {m2}: Spearman diff 95% CI [{lo:+.3f}, {hi:+.3f}]; "
                 f"AUC diff 95% CI [{alo:+.3f}, {ahi:+.3f}]")
         log()
+    lg_map = {(r[0], r[1]): r for r in rows}
+    qd_map = {(r[0], r[1]): r for r in rows_q}
+    drho = [abs(lg_map[k][2] - v[2]) for k, v in qd_map.items() if float(k[1][1:]) <= 0.5 + 1e-9]
+    dauc = [abs(lg_map[k][3] - v[3]) for k, v in qd_map.items() if float(k[1][1:]) <= 0.5 + 1e-9]
+    assert max(drho) <= 0.008 and max(dauc) <= 0.001, f"Appendix E diff exceeded: {max(drho)}, {max(dauc)}"
     write_csv("expert_rankings.csv", ["list", "metric", "spearman_list_order", "membership_auc",
                                       "top100_overlap", "pitchers_in_top100", "pitchers_in_list"], rows)
     write_csv("expert_rankings_quadrature.csv", ["list", "metric", "spearman_list_order", "membership_auc",

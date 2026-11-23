@@ -456,9 +456,48 @@ def main():
         log(f"  regression-implied alpha* read from outputs/implied_alpha.csv ({len(implied)} benchmarks)")
 
     head = [b for b in bench if b["category"] in CAREER and not b["duplicate"]]
+    # Section 1 & Table 3 headline assertions
+    assert len(head) == 42, f"Expected 42 headline benchmarks, got {len(head)}"
+    assert sum(b["has02"] for b in head) == 28 and sum(b["has05"] for b in head) == 13
+    assert (sum(b["d02_05"] > 0 for b in head), sum(b["d02_05_lo"] > 0 for b in head),
+            sum(b["d02_05_hi"] < 0 for b in head)) == (35, 20, 0)
+    assert (sum(b["d02_0"] > 0 for b in head), sum(b["d02_0_lo"] > 0 for b in head),
+            sum(b["d02_0_hi"] < 0 for b in head)) == (20, 5, 12)
+    judg = [b for b in head if b["category"] == "judgment"]
+    assert len(judg) == 12 and sum(b["has02"] for b in judg) == 12 and sum(b["d02_0"] > 0 for b in judg) == 11
+    assert sum(0.15 - 1e-9 <= b["argmax"] <= 0.25 + 1e-9 for b in judg) == 6
+    assert sum(0.15 - 1e-9 <= b["argmax"] <= 0.30 + 1e-9 for b in judg) == 9
+    assert _fmt2(np.median([b["argmax"] for b in judg])) == "0.25"
     # Section 1 (zwar_paper.tex): even where m(0.5) > m(0.2) (7 benchmarks), advantage is < 0.01 (max ~0.00904)
     adv05 = [b["m0.5"] - b["m0.2"] for b in head if b["m0.5"] > b["m0.2"]]
     assert len(adv05) == 7 and max(adv05) <= 0.00905, f"Unexpected m(0.5)>m(0.2): {len(adv05)}, max={max(adv05):.6f}"
+    # Regret assertions (Table 3 caption, Section 5.2, Section 5.5)
+    C_all = np.array([b["curve"] for b in head])
+    R_all = C_all.max(axis=1, keepdims=True) - C_all
+    j15 = int(np.flatnonzero(np.isclose(ab.ALPHAS, 0.15))[0])
+    j20 = int(np.flatnonzero(np.isclose(ab.ALPHAS, 0.20))[0])
+    assert abs(ab.ALPHAS[int(np.argmin(R_all.max(axis=0)))] - 0.15) < 1e-9
+    assert abs(ab.ALPHAS[int(np.argmin(R_all.mean(axis=0)))] - 0.15) < 1e-9
+    assert R_all.max(axis=0)[j20] - R_all.max(axis=0)[j15] < 0.001
+    assert R_all.mean(axis=0)[j20] - R_all.mean(axis=0)[j15] < 0.001
+    for drop_name, exp_a in [("Relief pitchers, concurrent (careers to 2016): career All-Star selections", 0.10),
+                             ("Pitchers, midpoint (careers to 2016): future WAR", 0.20)]:
+        sub_R = np.array([R_all[i] for i, b in enumerate(head) if b["benchmark"] != drop_name])
+        assert len(sub_R) == len(head) - 1, f"Filter missed {drop_name}"
+        assert abs(ab.ALPHAS[int(np.argmin(sub_R.max(axis=0)))] - exp_a) < 1e-9
+    C_j = np.array([b["curve"] for b in judg])
+    R_j = C_j.max(axis=1, keepdims=True) - C_j
+    assert abs(ab.ALPHAS[int(np.argmin(R_j.max(axis=0)))] - 0.20) < 1e-9
+    assert abs(ab.ALPHAS[int(np.argmin(R_j.mean(axis=0)))] - 0.20) < 1e-9
+    # Forecast bullets (Section 5.5)
+    pit_ck = [b for b in head if b["category"] == "forecast" and b["role_group"] == "Pitchers"
+              and b["design_group"] == "checkpoint"]
+    assert len(pit_ck) == 8 and all(0.0015 <= -b["d02_0"] <= 0.0065 for b in pit_ck)
+    hit_ck = [b for b in head if b["category"] == "forecast" and b["role_group"] == "Hitters"
+              and b["design_group"] == "checkpoint"]
+    assert len(hit_ck) == 8 and all(float(np.ptp(b["curve"][:11])) <= 0.01 for b in hit_ck)
+    mid_fc = [b for b in head if b["category"] == "forecast" and b["design_group"] == "midpoint"]
+    assert len(mid_fc) == 8 and all(b["d02_05_lo"] > 0 for b in mid_fc)
     log(f"  m(0.5) > m(0.2) in {len(adv05)}/{len(head)} headline benchmarks; max advantage {max(adv05):.6f}")
     rows = []
     for b in bench + pen:
