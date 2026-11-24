@@ -252,11 +252,17 @@ lines = [r"\section{Every benchmark}", r"\label{app:benchmarks}", "",
 open(os.path.join(TAB, "app_benchmarks.tex"), "w").write("\n".join(lines))
 print("wrote tab_convergence.tex, tab_forecast.tex, tab_expert.tex, app_benchmarks.tex to", TAB)
 
-# Figure 1 is drawn by 16_alpha_convergence.py; copy it next to the paper.
+# Figure 1 is drawn by 16_alpha_convergence.py; copy it next to the paper if changed.
 import shutil  # noqa: E402
 FIG_SRC = os.path.join(OUT, "figures", "fig_alpha_curves.pdf")
 FIG_DST = os.path.join(os.path.dirname(os.path.dirname(OUT)), "figures")
+FIG_DST_FILE = os.path.join(FIG_DST, "fig_alpha_curves.pdf")
 if os.path.exists(FIG_SRC):
     os.makedirs(FIG_DST, exist_ok=True)
-    shutil.copy2(FIG_SRC, FIG_DST)
-    print("copied Figure 1 to", FIG_DST)
+    same = (os.path.exists(FIG_DST_FILE)
+            and open(FIG_SRC, "rb").read() == open(FIG_DST_FILE, "rb").read())
+    if not same:
+        shutil.copy2(FIG_SRC, FIG_DST_FILE)
+        print("copied Figure 1 to", FIG_DST)
+    else:
+        print("Figure 1 unchanged in", FIG_DST)

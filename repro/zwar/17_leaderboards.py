@@ -364,7 +364,7 @@ def main():
            "are relative to $\\max(Z_{1/5,\\mathrm{pos}}, Z_{1/5,\\mathrm{pitch}})$. Column 1 gives the rank among the 18 with the all-time "
            "unified rank in parentheses; $Z_{1/2}$ \\textbf{Rk} is the rank among the 18 under "
            "Equation~\\eqref{eq:universal_zwar} ($\\gamma = 2$). Total $\\WAR$ is the sum of the rounded components "
-           "(Baseball-Reference lists Ruth's total as $182.6$ and Ruffing's as $68.6$)"
+           "and can differ by $0.1$ from Baseball-Reference's published career totals (e.g., Ruth $182.6$, Ruffing $68.6$)"
            + (f"; $^{{*}}$$\\BF$ estimated at $4.2$ per inning ({', '.join(approx_names)})" if approx_names else "")
            + ".")
     hdr = ["& \\textbf{Player} & \\textbf{Pos $\\WAR$} & \\textbf{Pitch $\\WAR$} & \\textbf{Total} & & & $Z_{1/5,\\mathrm{pool}}$ & "

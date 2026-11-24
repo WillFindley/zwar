@@ -369,7 +369,8 @@ def figure(bench, band):
     fig.tight_layout(rect=(0, 0.13, 1, 1), w_pad=1.0)
     os.makedirs(FIG, exist_ok=True)
     for ext in ("pdf", "png"):
-        fig.savefig(os.path.join(FIG, f"fig_alpha_curves.{ext}"), dpi=300, bbox_inches="tight")
+        kw = {"metadata": {"CreationDate": None}} if ext == "pdf" else {}
+        fig.savefig(os.path.join(FIG, f"fig_alpha_curves.{ext}"), dpi=300, bbox_inches="tight", **kw)
     plt.close(fig)
     log(f"figure: {os.path.join(FIG, 'fig_alpha_curves.pdf')} (+ .png, 300 dpi)")
 

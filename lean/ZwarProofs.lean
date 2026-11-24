@@ -6124,6 +6124,26 @@ theorem chi2_one_sided_calibration_shrinks (v : ℝ≥0) (hv : v ≠ 0) {σ t t_
     exact h2.not_ge hmono
   exact ⟨hz_lt_2s, hsqrt_2s⟩
 
+private lemma lt_rpow_div_nat {a b : ℝ} (p q : ℕ) (ha : 0 ≤ a) (hb : 0 ≤ b) (hq : 0 < q)
+    (hlt : a ^ q < b ^ p) : a < b ^ ((p : ℝ) / q) := by
+  have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
+  have hr := Real.rpow_lt_rpow (pow_nonneg ha q) hlt (one_div_pos.mpr hq_pos)
+  have h1 : (a ^ q) ^ (1 / (q : ℝ)) = a := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
+  have h2 : (b ^ p) ^ (1 / (q : ℝ)) = b ^ ((p : ℝ) / q) := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div]
+  rwa [h1, h2] at hr
+
+private lemma rpow_div_nat_lt {a b : ℝ} (p q : ℕ) (ha : 0 ≤ a) (hb : 0 ≤ b) (hq : 0 < q)
+    (hlt : a ^ p < b ^ q) : a ^ ((p : ℝ) / q) < b := by
+  have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
+  have hr := Real.rpow_lt_rpow (pow_nonneg ha p) hlt (one_div_pos.mpr hq_pos)
+  have h1 : (a ^ p) ^ (1 / (q : ℝ)) = a ^ ((p : ℝ) / q) := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div]
+  have h2 : (b ^ q) ^ (1 / (q : ℝ)) = b := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
+  rwa [h1, h2] at hr
+
 /-- Sec. 3.4 & 6.3-6.4: exact numerical brackets for `2^(γ(1/4)) = 2^(4/3) ≈ 2.5`,
 `2^(1 - 1/5) = 2^0.8 ≈ 1.74` (+74%), `4^(1 - 1/5) = 4^0.8 ≈ 3.03` (≈ 3x),
 and `(750/280)^0.2 ≈ 1.22`, `(750/2000)^0.2 ≈ 0.82`. -/
@@ -6136,37 +6156,380 @@ theorem paper_exponent_numerical_bounds :
   have hg4 : gamma (1 / 4 : ℝ) = ((4 : ℕ) : ℝ) / ((3 : ℕ) : ℝ) := by unfold gamma; norm_num
   have h15 : (1 : ℝ) - 1 / 5 = ((4 : ℕ) : ℝ) / ((5 : ℕ) : ℝ) := by norm_num
   have h15' : (1 / 5 : ℝ) = ((1 : ℕ) : ℝ) / ((5 : ℕ) : ℝ) := by norm_num
-  have pow_lt_pow_rpow : ∀ {a b : ℝ} (p q : ℕ), 0 ≤ a → 0 ≤ b → 0 < q →
-      a ^ q < b ^ p → a < b ^ ((p : ℝ) / q) := by
-    intro a b p q ha hb hq hlt
-    have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
-    have hr := Real.rpow_lt_rpow (pow_nonneg ha q) hlt (one_div_pos.mpr hq_pos)
-    have h1 : (a ^ q) ^ (1 / (q : ℝ)) = a := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
-    have h2 : (b ^ p) ^ (1 / (q : ℝ)) = b ^ ((p : ℝ) / q) := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div]
-    rwa [h1, h2] at hr
-  have pow_lt_pow_rpow' : ∀ {a b : ℝ} (p q : ℕ), 0 ≤ a → 0 ≤ b → 0 < q →
-      a ^ p < b ^ q → a ^ ((p : ℝ) / q) < b := by
-    intro a b p q ha hb hq hlt
-    have hq_pos : (0 : ℝ) < q := Nat.cast_pos.mpr hq
-    have hr := Real.rpow_lt_rpow (pow_nonneg ha p) hlt (one_div_pos.mpr hq_pos)
-    have h1 : (a ^ p) ^ (1 / (q : ℝ)) = a ^ ((p : ℝ) / q) := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul ha, mul_one_div]
-    have h2 : (b ^ q) ^ (1 / (q : ℝ)) = b := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul hb, mul_one_div_cancel hq_pos.ne', Real.rpow_one]
-    rwa [h1, h2] at hr
   refine ⟨⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
-  · rw [hg4]; exact pow_lt_pow_rpow 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [hg4]; exact pow_lt_pow_rpow' 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15]; exact pow_lt_pow_rpow 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15]; exact pow_lt_pow_rpow' 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15]; exact pow_lt_pow_rpow 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15]; exact pow_lt_pow_rpow' 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15']; exact pow_lt_pow_rpow 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15']; exact pow_lt_pow_rpow' 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15']; exact pow_lt_pow_rpow 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
-  · rw [h15']; exact pow_lt_pow_rpow' 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [hg4]; exact lt_rpow_div_nat 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [hg4]; exact rpow_div_nat_lt 4 3 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact lt_rpow_div_nat 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact rpow_div_nat_lt 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact lt_rpow_div_nat 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15]; exact rpow_div_nat_lt 4 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  · rw [h15']; exact rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+
+/-! ### 15.13 Completeness Additions: Extension Scaling, Opportunity Cost, Two-Way Boost, Null Effective Exponent, and Appendix H Brackets -/
+
+/-- Sec. 6.1 (`sec:hitters`): extending a career `(W, N)` by `ΔN` events at its career rate `W / N`
+scales `Z_α` by `(1 + ΔN / N)^(1 - α)`. -/
+theorem z_alpha_constant_rate_extension {W N ΔN α : ℝ} (hN : 0 < N) (hNΔ : 0 < N + ΔN) :
+    Z_alpha (W + (W / N) * ΔN) (N + ΔN) α =
+      (1 + ΔN / N) ^ (1 - α) * Z_alpha W N α := by
+  have hc : 0 < 1 + ΔN / N := by
+    rw [show (1 : ℝ) + ΔN / N = (N + ΔN) / N by rw [add_div, div_self hN.ne']]
+    exact div_pos hNΔ hN
+  have hW : W + (W / N) * ΔN = (1 + ΔN / N) * W := by ring
+  have hN' : N + ΔN = (1 + ΔN / N) * N := by
+    rw [add_mul, one_mul, div_mul_cancel₀ ΔN hN.ne']
+  rw [hW, hN']
+  exact z_alpha_homogeneous_scaling hc hN
+
+/-- Sec. 6.1 (`sec:hitters`): for a positive exposure extension `ΔN > 0`, the constant-rate
+scaling factor `(1 + ΔN / N)^(1 - α)` is strictly decreasing in `α`. -/
+theorem z_alpha_constant_rate_extension_strictAnti_alpha {N ΔN : ℝ} (hN : 0 < N) (hΔN : 0 < ΔN) :
+    StrictAnti (fun α : ℝ => (1 + ΔN / N) ^ (1 - α)) := by
+  intro α₁ α₂ hα
+  dsimp only
+  have hbase : 1 < 1 + ΔN / N := by linarith [div_pos hΔN hN]
+  exact Real.rpow_lt_rpow_of_exponent_lt hbase (by linarith)
+
+/-- Sec. 3.4 & 4 (`sec:value`, `sec:gamma`): valuing seasons above a positive baseline `r_avg`
+(`0 < r_avg < s₁ < s₂`) strictly increases the value ratio `(s₂ - r_avg)/(s₁ - r_avg) > s₂/s₁`
+and implies an effective convexity exponent `γ_eff > 1`. -/
+theorem lineup_opportunity_cost_ratio {s₁ s₂ r_avg : ℝ}
+    (hravg : 0 < r_avg) (hs₁ : r_avg < s₁) (hs : s₁ < s₂) :
+    let γ_eff := Real.log ((s₂ - r_avg) / (s₁ - r_avg)) / Real.log (s₂ / s₁)
+    s₂ / s₁ < (s₂ - r_avg) / (s₁ - r_avg) ∧
+      1 < γ_eff ∧
+      (s₂ / s₁) ^ γ_eff = (s₂ - r_avg) / (s₁ - r_avg) := by
+  intro γ_eff
+  have hs₁_pos : 0 < s₁ := hravg.trans hs₁
+  have hs₂_pos : 0 < s₂ := hs₁_pos.trans hs
+  have hsub₁_pos : 0 < s₁ - r_avg := sub_pos.mpr hs₁
+  have hsub₂_pos : 0 < s₂ - r_avg := sub_pos.mpr (hs₁.trans hs)
+  have hratio_gt : s₂ / s₁ < (s₂ - r_avg) / (s₁ - r_avg) := by
+    rw [div_lt_div_iff₀ hs₁_pos hsub₁_pos]
+    nlinarith [mul_pos hravg (sub_pos.mpr hs)]
+  have hs_ratio_gt1 : 1 < s₂ / s₁ := (one_lt_div hs₁_pos).mpr hs
+  have hlog_den : 0 < Real.log (s₂ / s₁) := Real.log_pos hs_ratio_gt1
+  have hlog_lt : Real.log (s₂ / s₁) < Real.log ((s₂ - r_avg) / (s₁ - r_avg)) :=
+    (Real.log_lt_log_iff (div_pos hs₂_pos hs₁_pos) (div_pos hsub₂_pos hsub₁_pos)).mpr hratio_gt
+  have hγ_gt1 : 1 < γ_eff := (one_lt_div hlog_den).mpr hlog_lt
+  have hpow : (s₂ / s₁) ^ γ_eff = (s₂ - r_avg) / (s₁ - r_avg) := by
+    rw [← Real.log_injOn_pos.eq_iff
+      (Real.rpow_pos_of_pos (div_pos hs₂_pos hs₁_pos) _) (div_pos hsub₂_pos hsub₁_pos)]
+    rw [Real.log_rpow (div_pos hs₂_pos hs₁_pos)]
+    dsimp [γ_eff]
+    exact div_mul_cancel₀ _ hlog_den.ne'
+  exact ⟨hratio_gt, hγ_gt1, hpow⟩
+
+/-- Sec. 4 (`sec:gamma`, L351): relative to `2 WAR`, a `10-WAR` season is worth `8/3` of a
+`5-WAR` season, giving `γ_eff = log₂(8/3) ∈ (1.4, 1.42)`. -/
+theorem lineup_opportunity_cost_benchmark :
+    ((10 : ℝ) - 2) / (5 - 2) = 8 / 3 ∧
+      (2 : ℝ) ^ (Real.log (8 / 3) / Real.log 2) = 8 / 3 ∧
+      (7 / 5 : ℝ) < Real.log (8 / 3) / Real.log 2 ∧
+      Real.log (8 / 3) / Real.log 2 < (17 / 12 : ℝ) := by
+  have hratio : ((10 : ℝ) - 2) / (5 - 2) = 8 / 3 := by norm_num
+  have hlog2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hpow : (2 : ℝ) ^ (Real.log (8 / 3) / Real.log 2) = 8 / 3 := by
+    rw [← Real.log_injOn_pos.eq_iff (Real.rpow_pos_of_pos (by norm_num) _) (by norm_num),
+        Real.log_rpow (by norm_num)]
+    exact div_mul_cancel₀ _ hlog2.ne'
+  have hlow : (7 / 5 : ℝ) < Real.log (8 / 3) / Real.log 2 := by
+    have h2pow : (2 : ℝ) ^ (((7 : ℕ) : ℝ) / (5 : ℕ)) < 8 / 3 :=
+      rpow_div_nat_lt 7 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+    norm_num at h2pow
+    have hlog := (Real.log_lt_log_iff (Real.rpow_pos_of_pos (by norm_num) _) (by norm_num)).mpr h2pow
+    rw [Real.log_rpow (by norm_num)] at hlog
+    exact (lt_div_iff₀ hlog2).mpr hlog
+  have hhigh : Real.log (8 / 3) / Real.log 2 < (17 / 12 : ℝ) := by
+    have h2pow : (8 / 3 : ℝ) < (2 : ℝ) ^ (((17 : ℕ) : ℝ) / (12 : ℕ)) :=
+      lt_rpow_div_nat 17 12 (by norm_num) (by norm_num) (by omega) (by norm_num)
+    norm_num at h2pow
+    have hlog := (Real.log_lt_log_iff (by norm_num) (Real.rpow_pos_of_pos (by norm_num) _)).mpr h2pow
+    rw [Real.log_rpow (by norm_num)] at hlog
+    exact (div_lt_iff₀ hlog2).mpr hlog
+  exact ⟨hratio, hpow, hlow, hhigh⟩
+
+/-- Sec. 4 (`sec:gamma`, Table 2): upper interval endpoint `γ ≤ 1.40` implies `α = 1 - 1/γ < 0.29`. -/
+theorem paper_upper_gamma_bound {γ : ℝ} (hγ0 : 0 < γ) (hγ : γ ≤ 140 / 100) :
+    1 - 1 / γ < (29 / 100 : ℝ) := by
+  have hinv : (100 / 140 : ℝ) ≤ 1 / γ := by
+    rw [show (100 / 140 : ℝ) = 1 / (140 / 100 : ℝ) by norm_num]
+    exact div_le_div_of_nonneg_left zero_le_one hγ0 hγ
+  linarith
+
+/-- Sec. 6.4 & App. B (`def:twoway`): the positive two-coordinate boost factor `(1 + ρ^γ)^(1/γ)`
+is strictly increasing in the coordinate ratio `ρ ≥ 0`. -/
+theorem twoway_pos_ratio_factor_strictMono {α : ℝ} (hα : α < 1) :
+    StrictMonoOn (fun ρ : ℝ => (1 + ρ ^ gamma α) ^ (1 / gamma α)) (Ici 0) := by
+  intro ρ₁ (hρ₁ : 0 ≤ ρ₁) ρ₂ _ hlt
+  have hg : 0 < gamma α := gamma_pos hα
+  have hinv : 0 < 1 / gamma α := one_div_pos.mpr hg
+  have hpow : ρ₁ ^ gamma α < ρ₂ ^ gamma α := Real.rpow_lt_rpow hρ₁ hlt hg
+  have hadd : 1 + ρ₁ ^ gamma α < 1 + ρ₂ ^ gamma α := by linarith
+  exact Real.rpow_lt_rpow (by positivity) hadd hinv
+
+/-- Sec. 6.4 & App. B (`def:twoway`): for positive coordinates with `0 ≤ Z₂ ≤ Z₁`, the relative
+two-way boost `(Z_{α,2D} - Z₁) / Z₁` lies in `[0, 2^(1 - α) - 1]`, vanishes iff `Z₂ = 0`, attains
+`2^(1 - α) - 1` iff `Z₂ / Z₁ = 1`, and satisfies `0.74 < 2^0.8 - 1 < 0.75` and
+`0.41 < √2 - 1 < 0.42`. -/
+theorem twoway_pos_relative_boost_le {W₁ N₁ W₂ N₂ α : ℝ}
+    (hN₁ : 0 < N₁) (hN₂ : 0 < N₂) (hα : α < 1)
+    (hZ₁ : 0 < Z_alpha W₁ N₁ α) (hZ₂ : 0 ≤ Z_alpha W₂ N₂ α)
+    (hle : Z_alpha W₂ N₂ α ≤ Z_alpha W₁ N₁ α) :
+    let Z₁ := Z_alpha W₁ N₁ α
+    let Z₂ := Z_alpha W₂ N₂ α
+    let boost := (Z_twoway W₁ N₁ W₂ N₂ α - Z₁) / Z₁
+    0 ≤ boost ∧ (boost = 0 ↔ Z₂ = 0) ∧
+      boost ≤ 2 ^ (1 - α) - 1 ∧ (boost = 2 ^ (1 - α) - 1 ↔ Z₂ / Z₁ = 1) ∧
+      ((74 / 100 : ℝ) < (2 : ℝ) ^ (1 - (1 / 5 : ℝ)) - 1 ∧
+        (2 : ℝ) ^ (1 - (1 / 5 : ℝ)) - 1 < (75 / 100 : ℝ)) ∧
+      ((41 / 100 : ℝ) < Real.sqrt 2 - 1 ∧ Real.sqrt 2 - 1 < (42 / 100 : ℝ)) := by
+  intro Z₁ Z₂ boost
+  obtain ⟨_, ⟨hge, heq0⟩, ⟨hle2, heq2⟩⟩ := twoway_pos_ratio_exact hN₁ hN₂ hα hZ₁ hZ₂ hle
+  have hnn : 0 ≤ boost := div_nonneg (sub_nonneg.mpr hge) hZ₁.le
+  have hzero_iff : boost = 0 ↔ Z₂ = 0 := by
+    dsimp [boost]
+    rw [div_eq_zero_iff, or_iff_left hZ₁.ne', sub_eq_zero]
+    exact heq0
+  have hsplit : boost = Z_twoway W₁ N₁ W₂ N₂ α / Z₁ - 1 := by
+    dsimp [boost]
+    rw [sub_div, div_self hZ₁.ne']
+  have hle_max : boost ≤ 2 ^ (1 - α) - 1 := by
+    rw [hsplit]
+    linarith [(div_le_iff₀ hZ₁).mpr hle2]
+  have hmax_iff : boost = 2 ^ (1 - α) - 1 ↔ Z₂ / Z₁ = 1 := by
+    rw [hsplit]
+    have h1 : Z_twoway W₁ N₁ W₂ N₂ α / Z₁ - 1 = 2 ^ (1 - α) - 1 ↔
+        Z_twoway W₁ N₁ W₂ N₂ α = 2 ^ (1 - α) * Z₁ := by
+      constructor <;> intro h
+      · have hdiv : Z_twoway W₁ N₁ W₂ N₂ α / Z₁ = 2 ^ (1 - α) := by linarith
+        exact (div_eq_iff hZ₁.ne').mp hdiv
+      · have hdiv : Z_twoway W₁ N₁ W₂ N₂ α / Z₁ = 2 ^ (1 - α) := (div_eq_iff hZ₁.ne').mpr h
+        linarith
+    exact h1.trans heq2
+  have h08 := paper_exponent_numerical_bounds.2.1
+  have hsqrt_lo : (141 / 100 : ℝ) < Real.sqrt 2 := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : ((141 / 100 : ℝ) ^ 2) < 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have hsqrt_hi : Real.sqrt 2 < (142 / 100 : ℝ) := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : (2 : ℝ) < (142 / 100 : ℝ) ^ 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  exact ⟨hnn, hzero_iff, hle_max, hmax_iff,
+    ⟨by linarith [h08.1], by linarith [h08.2]⟩,
+    ⟨by linarith, by linarith⟩⟩
+
+/-- Sec. 6.4 (`sec:twoway_empirical`): the opposite-sign retention factor `(1 - ρ^γ)^(1/γ)`
+is strictly decreasing in the negative ratio `ρ ∈ [0, 1]`. -/
+theorem twoway_opp_sign_factor_strictAnti {α : ℝ} (hα : α < 1) :
+    StrictAntiOn (fun ρ : ℝ => (1 - ρ ^ gamma α) ^ (1 / gamma α)) (Icc 0 1) := by
+  intro ρ₁ hρ₁ ρ₂ hρ₂ hlt
+  have hg : 0 < gamma α := gamma_pos hα
+  have hinv : 0 < 1 / gamma α := one_div_pos.mpr hg
+  have hpow : ρ₁ ^ gamma α < ρ₂ ^ gamma α := Real.rpow_lt_rpow hρ₁.1 hlt hg
+  have hsub : 1 - ρ₂ ^ gamma α < 1 - ρ₁ ^ gamma α := by linarith
+  have hnn : 0 ≤ 1 - ρ₂ ^ gamma α := by
+    have hle : ρ₂ ^ gamma α ≤ 1 := Real.rpow_le_one hρ₂.1 hρ₂.2 hg.le
+    linarith
+  exact Real.rpow_lt_rpow hnn hsub hinv
+
+/-- Appendix C (`app:null`): for `α < 1`, `0 < D`, and `0 < W`, the effective exponent
+`α_eff = α + (1 - α) λ D / W` is strictly increasing in the null multiplier `λ`. -/
+theorem prop_null_lambda_alpha_eff_strictMono_lam {W D α : ℝ}
+    (hα : α < 1) (hD : 0 < D) (hW : 0 < W) :
+    StrictMono (fun lam : ℝ => α + (1 - α) * (lam * D / W)) := by
+  intro a b hab
+  dsimp only
+  have h1α : 0 < 1 - α := sub_pos.mpr hα
+  have hDW : 0 < D / W := div_pos hD hW
+  have hmul : a * (D / W) < b * (D / W) := mul_lt_mul_of_pos_right hab hDW
+  have hdiv : a * D / W < b * D / W := by simpa only [mul_div_assoc] using hmul
+  linarith [mul_lt_mul_of_pos_left hdiv h1α]
+
+/-- Appendix C (`app:null`): when `r₀ < r̄` and `0 < r̄` (in particular whenever `W - r₀ N > 0`
+and `W > 0` with `N > 0`), the effective exponent `α_eff = α + (1 - α) r₀ / r̄` is strictly
+increasing in `α`. -/
+theorem prop_null_alpha_eff_strictMono_alpha {r_bar r₀ : ℝ}
+    (hr : 0 < r_bar) (hlt : r₀ < r_bar) :
+    StrictMono (fun α : ℝ => α + (1 - α) * (r₀ / r_bar)) := by
+  intro a b hab
+  dsimp only
+  have hslope : 0 < 1 - r₀ / r_bar := sub_pos.mpr ((div_lt_one hr).mpr hlt)
+  have heq : ∀ x : ℝ, x + (1 - x) * (r₀ / r_bar) = r₀ / r_bar + x * (1 - r₀ / r_bar) := by
+    intro x; ring
+  rw [heq a, heq b]
+  linarith [mul_lt_mul_of_pos_right hab hslope]
+
+/-- Appendix C (`sec:null`): for `α ≥ 0` and `lam * D ≤ W` (`0 < W`), lowering `α` cannot push
+`α_eff` below its `α = 0` value `lam * D / W`. -/
+theorem prop_null_lambda_alpha_eff_ge_at_zero {W lam D α : ℝ}
+    (hW : 0 < W) (hα : 0 ≤ α) (hle : lam * D ≤ W) :
+    lam * D / W ≤ α + (1 - α) * (lam * D / W) := by
+  have hratio : lam * D / W ≤ 1 := (div_le_one hW).mpr hle
+  have hnonneg : 0 ≤ α * (1 - lam * D / W) := mul_nonneg hα (sub_nonneg.mpr hratio)
+  have heq : α + (1 - α) * (lam * D / W) - lam * D / W = α * (1 - lam * D / W) := by ring
+  linarith
+
+/-- Appendix H (`app:uncert`): a perturbation `ΔW = tol_half * √N` producing shift `tol_half`
+on `Z_{1/2}` produces shift `tol_half * N^(3/10)` on `Z_{1/5}` (in particular `0.005 * N^(0.3)`). -/
+theorem app_h_rounding_tolerance_scaling {W N tol_half : ℝ} (hN : 0 < N) :
+    let ΔW := tol_half * Real.sqrt N
+    Z_alpha (W + ΔW) N (1 / 2) - Z_alpha W N (1 / 2) = tol_half ∧
+    Z_alpha (W + ΔW) N (1 / 5) - Z_alpha W N (1 / 5) = tol_half * N ^ ((3 : ℝ) / 10) := by
+  intro ΔW
+  have h1 := (app_h_rounding_shift (W := W) (ΔW := ΔW) (N := N) (α := 1 / 2) hN).1
+  have h2 := (app_h_rounding_shift (W := W) (ΔW := ΔW) (N := N) (α := 1 / 5) hN).1
+  refine ⟨?_, ?_⟩
+  · rw [h1]
+    dsimp [ΔW]
+    rw [Real.sqrt_eq_rpow]
+    exact mul_div_cancel_right₀ tol_half (Real.rpow_pos_of_pos hN _).ne'
+  · rw [h2]
+    dsimp [ΔW]
+    rw [Real.sqrt_eq_rpow, mul_div_assoc, ← Real.rpow_sub hN]
+    norm_num
+
+/-- Appendix H (`app:uncert`): exact numerical brackets for the scaled `Z_{1/5}` rounding
+tolerance `0.005 * N^(0.3)` (`0.06`–`0.11` for `N ∈ [5000, 30000]`), pairwise `±0.05 WAR`
+rounding bounds (`0.013`–`0.018`), and sampling SDs at `σ = 0.065, α = 0.2` (`0.64`–`1.27`
+for `N ∈ [2000, 20000]`, and `√2 * σ ≈ 0.09`). -/
+theorem app_h_rounding_and_sampling_bounds :
+    ((6 / 100 : ℝ) < (5 / 1000 : ℝ) * (5000 : ℝ) ^ ((3 : ℝ) / 10) ∧
+      (5 / 1000 : ℝ) * (5000 : ℝ) ^ ((3 : ℝ) / 10) < (7 / 100 : ℝ)) ∧
+    ((11 / 100 : ℝ) < (5 / 1000 : ℝ) * (30000 : ℝ) ^ ((3 : ℝ) / 10) ∧
+      (5 / 1000 : ℝ) * (30000 : ℝ) ^ ((3 : ℝ) / 10) < (111 / 1000 : ℝ)) ∧
+    ((12 / 1000 : ℝ) < (1 / 10 : ℝ) / (30000 : ℝ) ^ ((1 : ℝ) / 5) ∧
+      (1 / 10 : ℝ) / (30000 : ℝ) ^ ((1 : ℝ) / 5) < (13 / 1000 : ℝ)) ∧
+    ((18 / 1000 : ℝ) < (1 / 10 : ℝ) / (5000 : ℝ) ^ ((1 : ℝ) / 5) ∧
+      (1 / 10 : ℝ) / (5000 : ℝ) ^ ((1 : ℝ) / 5) < (19 / 1000 : ℝ)) ∧
+    ((63 / 100 : ℝ) < (65 / 1000 : ℝ) * (2000 : ℝ) ^ ((3 : ℝ) / 10) ∧
+      (65 / 1000 : ℝ) * (2000 : ℝ) ^ ((3 : ℝ) / 10) < (64 / 100 : ℝ)) ∧
+    ((126 / 100 : ℝ) < (65 / 1000 : ℝ) * (20000 : ℝ) ^ ((3 : ℝ) / 10) ∧
+      (65 / 1000 : ℝ) * (20000 : ℝ) ^ ((3 : ℝ) / 10) < (127 / 100 : ℝ)) ∧
+    ((9 / 100 : ℝ) < Real.sqrt 2 * (65 / 1000 : ℝ) ∧
+      Real.sqrt 2 * (65 / 1000 : ℝ) < (92 / 1000 : ℝ)) := by
+  have h5k_lo : (12 : ℝ) < (5000 : ℝ) ^ ((3 : ℝ) / 10) := by
+    simpa using lt_rpow_div_nat (a := (12 : ℝ)) (b := (5000 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h5k_hi : (5000 : ℝ) ^ ((3 : ℝ) / 10) < (14 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (5000 : ℝ)) (b := (14 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h30k_lo : (22 : ℝ) < (30000 : ℝ) ^ ((3 : ℝ) / 10) := by
+    simpa using lt_rpow_div_nat (a := (22 : ℝ)) (b := (30000 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h30k_hi : (30000 : ℝ) ^ ((3 : ℝ) / 10) < (111 / 5 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (30000 : ℝ)) (b := (111 / 5 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hp30k_lo : (100 / 13 : ℝ) < (30000 : ℝ) ^ ((1 : ℝ) / 5) := by
+    simpa using lt_rpow_div_nat (a := (100 / 13 : ℝ)) (b := (30000 : ℝ)) 1 5
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hp30k_hi : (30000 : ℝ) ^ ((1 : ℝ) / 5) < (100 / 12 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (30000 : ℝ)) (b := (100 / 12 : ℝ)) 1 5
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hp30k_pos : 0 < (30000 : ℝ) ^ ((1 : ℝ) / 5) := Real.rpow_pos_of_pos (by norm_num) _
+  have hp5k_lo : (100 / 19 : ℝ) < (5000 : ℝ) ^ ((1 : ℝ) / 5) := by
+    simpa using lt_rpow_div_nat (a := (100 / 19 : ℝ)) (b := (5000 : ℝ)) 1 5
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hp5k_hi : (5000 : ℝ) ^ ((1 : ℝ) / 5) < (100 / 18 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (5000 : ℝ)) (b := (100 / 18 : ℝ)) 1 5
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hp5k_pos : 0 < (5000 : ℝ) ^ ((1 : ℝ) / 5) := Real.rpow_pos_of_pos (by norm_num) _
+  have hs2k_lo : (126 / 13 : ℝ) < (2000 : ℝ) ^ ((3 : ℝ) / 10) := by
+    simpa using lt_rpow_div_nat (a := (126 / 13 : ℝ)) (b := (2000 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hs2k_hi : (2000 : ℝ) ^ ((3 : ℝ) / 10) < (128 / 13 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (2000 : ℝ)) (b := (128 / 13 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hs20k_lo : (252 / 13 : ℝ) < (20000 : ℝ) ^ ((3 : ℝ) / 10) := by
+    simpa using lt_rpow_div_nat (a := (252 / 13 : ℝ)) (b := (20000 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hs20k_hi : (20000 : ℝ) ^ ((3 : ℝ) / 10) < (254 / 13 : ℝ) := by
+    simpa using rpow_div_nat_lt (a := (20000 : ℝ)) (b := (254 / 13 : ℝ)) 3 10
+      (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have hsqrt2_lo : (90 / 65 : ℝ) < Real.sqrt 2 := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : ((90 / 65 : ℝ) ^ 2) < 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have hsqrt2_hi : Real.sqrt 2 < (92 / 65 : ℝ) := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : (2 : ℝ) < (92 / 65 : ℝ) ^ 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  refine ⟨⟨by linarith, by linarith⟩, ⟨by linarith, by linarith⟩,
+    ⟨(lt_div_iff₀ hp30k_pos).mpr (by linarith), (div_lt_iff₀ hp30k_pos).mpr (by linarith)⟩,
+    ⟨(lt_div_iff₀ hp5k_pos).mpr (by linarith), (div_lt_iff₀ hp5k_pos).mpr (by linarith)⟩,
+    ⟨by linarith, by linarith⟩, ⟨by linarith, by linarith⟩,
+    ⟨by linarith, by linarith⟩⟩
+
+/-- Appendix H (`app:uncert`): non-positive orthant counterpart to `app_h_twoway_rounding_bound`
+by odd symmetry. -/
+theorem app_h_twoway_rounding_bound_both_nonpos {W₁ δ₁ N₁ W₂ δ₂ N₂ α : ℝ}
+    (h0 : 0 ≤ α) (h1 : α < 1) (hN₁ : 0 < N₁) (hN₂ : 0 < N₂)
+    (hW₁ : W₁ ≤ 0) (hW₂ : W₂ ≤ 0) (hW₁' : W₁ + δ₁ ≤ 0) (hW₂' : W₂ + δ₂ ≤ 0) :
+    |Z_twoway (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α - Z_twoway W₁ N₁ W₂ N₂ α| ≤
+      ((|δ₁| / N₁ ^ α) ^ gamma α + (|δ₂| / N₂ ^ α) ^ gamma α) ^ (1 / gamma α) ∧
+    ((|δ₁| / N₁ ^ α) ^ gamma α + (|δ₂| / N₂ ^ α) ^ gamma α) ^ (1 / gamma α) ≤
+      |δ₁| / N₁ ^ α + |δ₂| / N₂ ^ α := by
+  have hpos := app_h_twoway_rounding_bound (W₁ := -W₁) (δ₁ := -δ₁) (N₁ := N₁)
+    (W₂ := -W₂) (δ₂ := -δ₂) (N₂ := N₂) h0 h1 hN₁ hN₂
+    (neg_nonneg.mpr hW₁) (neg_nonneg.mpr hW₂) (by linarith) (by linarith)
+  have heq1 : Z_twoway (-W₁ + -δ₁) N₁ (-W₂ + -δ₂) N₂ α =
+      -Z_twoway (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α := by
+    rw [show -W₁ + -δ₁ = -(W₁ + δ₁) by ring, show -W₂ + -δ₂ = -(W₂ + δ₂) by ring]
+    exact Z_twoway_odd_symm (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α
+  have heq2 : Z_twoway (-W₁) N₁ (-W₂) N₂ α = -Z_twoway W₁ N₁ W₂ N₂ α :=
+    Z_twoway_odd_symm W₁ N₁ W₂ N₂ α
+  rw [heq1, heq2, abs_neg, abs_neg] at hpos
+  simpa only [show -Z_twoway (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α - -Z_twoway W₁ N₁ W₂ N₂ α =
+    -(Z_twoway (W₁ + δ₁) N₁ (W₂ + δ₂) N₂ α - Z_twoway W₁ N₁ W₂ N₂ α) by ring, abs_neg] using hpos
+
+/-- Section 5.5 (`sec:forecast`): when `k_r + n_r > 0`, ranking by the two-equation forecast
+`r_f * N_f` is equivalent to ranking by `Z_alpha W N α*` with `α* = 1 - (k_N + n_N)/(k_r + n_r)`. -/
+theorem prop_target_two_equation_order_equiv
+    {W₁ N₁ r_f₁ N_f₁ W₂ N₂ r_f₂ N_f₂ k₀ k_r k_N n₀ n_r n_N : ℝ}
+    (hW₁ : 0 < W₁) (hN₁ : 0 < N₁) (hrf₁ : 0 < r_f₁) (hNf₁ : 0 < N_f₁)
+    (hW₂ : 0 < W₂) (hN₂ : 0 < N₂) (hrf₂ : 0 < r_f₂) (hNf₂ : 0 < N_f₂)
+    (hkr : 0 < k_r + n_r)
+    (hr₁ : Real.log r_f₁ = k₀ + k_r * Real.log (W₁ / N₁) + k_N * Real.log N₁)
+    (hN₁_eq : Real.log N_f₁ = n₀ + n_r * Real.log (W₁ / N₁) + n_N * Real.log N₁)
+    (hr₂ : Real.log r_f₂ = k₀ + k_r * Real.log (W₂ / N₂) + k_N * Real.log N₂)
+    (hN₂_eq : Real.log N_f₂ = n₀ + n_r * Real.log (W₂ / N₂) + n_N * Real.log N₂) :
+    let α_star := 1 - (k_N + n_N) / (k_r + n_r)
+    r_f₁ * N_f₁ < r_f₂ * N_f₂ ↔ Z_alpha W₁ N₁ α_star < Z_alpha W₂ N₂ α_star := by
+  intro α_star
+  have hp₁ : 0 < r_f₁ * N_f₁ := mul_pos hrf₁ hNf₁
+  have hp₂ : 0 < r_f₂ * N_f₂ := mul_pos hrf₂ hNf₂
+  have hZ₁ : 0 < Z_alpha W₁ N₁ α_star := by unfold Z_alpha; positivity
+  have hZ₂ : 0 < Z_alpha W₂ N₂ α_star := by unfold Z_alpha; positivity
+  rw [← Real.log_lt_log_iff hp₁ hp₂,
+      prop_target_two_equation hW₁ hN₁ hrf₁ hNf₁ hkr.ne' hr₁ hN₁_eq,
+      prop_target_two_equation hW₂ hN₂ hrf₂ hNf₂ hkr.ne' hr₂ hN₂_eq,
+      add_lt_add_iff_left, mul_lt_mul_iff_right₀ hkr,
+      Real.log_lt_log_iff hZ₁ hZ₂]
+
+/-- Appendix B (`app:twoway`): for `α ∈ (1/2, 1)` (`γ > 2`), the second partial derivative
+of `I_{α,k}` at `W_k = 0` exists and equals `0`. -/
+theorem I_twoway_second_deriv_at_zero_of_half_lt {PA W_pitch BF α : ℝ}
+    (hhalf : 1 / 2 < α) (h1 : α < 1) :
+    HasDerivAt (deriv (fun t => I_twoway t PA W_pitch BF α)) 0 0 := by
+  have hg1 : 1 < gamma α := one_lt_gamma (by linarith) h1
+  have hg2 : 2 < gamma α := by
+    unfold gamma
+    rw [lt_div_iff₀ (sub_pos.mpr h1)]
+    linarith
+  have hderiv_eq : deriv (fun t => I_twoway t PA W_pitch BF α) =
+      fun t => (gamma α * |t| ^ (gamma α - 1)) / PA ^ (gamma α - 1) := by
+    ext t
+    have hd : HasDerivAt (fun u => I_twoway u PA W_pitch BF α)
+        (gamma α * |t| ^ (gamma α - 1) / PA ^ (gamma α - 1)) t := by
+      unfold I_twoway
+      exact ((signedPow_hasDerivAt hg1 t).div_const _).add_const _
+    exact hd.deriv
+  rw [hderiv_eq]
+  have hd0 := (signedPow_deriv_hasDerivAt_of_two_lt hg2 0).div_const (PA ^ (gamma α - 1))
+  have hzero : (gamma α * (gamma α - 1) * signedPow 0 (gamma α - 2)) / PA ^ (gamma α - 1) = 0 := by
+    rw [signedPow_zero_left (by linarith)]
+    ring
+  rwa [hzero] at hd0
 
 end ZwarProofs
 
