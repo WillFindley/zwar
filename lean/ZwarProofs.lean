@@ -6531,5 +6531,810 @@ theorem I_twoway_second_deriv_at_zero_of_half_lt {PA W_pitch BF α : ℝ}
     ring
   rwa [hzero] at hd0
 
+/-! ### 15.14 Deep Audit Additions: Spearman Unimodality, LIL Running-Max Bridge, Unconditional χ² Calibration, Two-Way Sign & Regularity Polish, and Remaining Numerical Brackets -/
+
+section TargetSpearman
+
+private noncomputable def midRankZ {ι : Type*} (W N : ι → ℝ) (s : Finset ι) (α : ℝ) (i : ι) : ℝ :=
+  ∑ j ∈ s, pairConc (W i) (N i) (W j) (N j) α
+
+private lemma pairConc_self (W N α : ℝ) : pairConc W N W N α = 1 / 2 := by
+  unfold pairConc
+  simp
+
+private lemma pairConc_add_symm (W₁ N₁ W₂ N₂ α : ℝ) :
+    pairConc W₁ N₁ W₂ N₂ α + pairConc W₂ N₂ W₁ N₁ α = 1 := by
+  unfold pairConc
+  rcases lt_trichotomy (Z_alpha W₁ N₁ α) (Z_alpha W₂ N₂ α) with hlt | heq | hgt
+  · have hgt' : Z_alpha W₂ N₂ α > Z_alpha W₁ N₁ α := hlt
+    simp [not_lt.mpr hlt.le, hlt.ne, hgt']
+  · simp [heq]; norm_num
+  · have hlt' : ¬ (Z_alpha W₂ N₂ α > Z_alpha W₁ N₁ α) := not_lt.mpr hgt.le
+    simp [hgt, hlt', hgt.ne]
+
+private lemma midRankZ_sum_const {ι : Type*} (W N : ι → ℝ) (s : Finset ι) (α : ℝ) :
+    ∑ i ∈ s, midRankZ W N s α i = (s.card : ℝ) ^ 2 / 2 := by
+  have h1 : 2 * ∑ i ∈ s, midRankZ W N s α i = (s.card : ℝ) ^ 2 := by
+    calc 2 * ∑ i ∈ s, midRankZ W N s α i
+        = ∑ i ∈ s, ∑ j ∈ s, pairConc (W i) (N i) (W j) (N j) α +
+          ∑ i ∈ s, ∑ j ∈ s, pairConc (W i) (N i) (W j) (N j) α := by
+            unfold midRankZ; ring
+      _ = ∑ i ∈ s, ∑ j ∈ s, pairConc (W i) (N i) (W j) (N j) α +
+          ∑ i ∈ s, ∑ j ∈ s, pairConc (W j) (N j) (W i) (N i) α := by
+            congr 1; exact Finset.sum_comm
+      _ = ∑ i ∈ s, ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α +
+            pairConc (W j) (N j) (W i) (N i) α) := by
+            simp only [← Finset.sum_add_distrib]
+      _ = ∑ _i ∈ s, ∑ _j ∈ s, (1 : ℝ) := by
+            refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>
+              pairConc_add_symm (W i) (N i) (W j) (N j) α
+      _ = (s.card : ℝ) ^ 2 := by
+            simp [Finset.sum_const, nsmul_eq_mul, pow_two]
+  linarith
+
+private lemma midRankZ_cov_eq {ι : Type*} (W N Y : ι → ℝ) (s : Finset ι) (α : ℝ) :
+    ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i =
+      ∑ i ∈ s, ∑ j ∈ s with Y j < Y i,
+        (Y i - Y j) * (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) := by
+  let g : ι → ι → ℝ := fun i j => (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * (Y i - Y j)
+  have hanti : ∀ i j, g j i = g i j := by
+    intro i j
+    dsimp [g]
+    have hsym := pairConc_add_symm (W i) (N i) (W j) (N j) α
+    have hsub : pairConc (W j) (N j) (W i) (N i) α - 1 / 2 =
+        -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) := by linarith
+    rw [hsub]
+    ring
+  have hlhs : 2 * ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i =
+      ∑ i ∈ s, ∑ j ∈ s, g i j := by
+    have hterm : ∀ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i =
+        ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i := by
+      intro i _
+      unfold midRankZ
+      rw [← Finset.sum_mul, Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul]
+      ring
+    rw [Finset.sum_congr rfl hterm]
+    have hswap : ∑ i ∈ s, ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i =
+        ∑ i ∈ s, ∑ j ∈ s, -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y j := by
+      calc ∑ i ∈ s, ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i
+          = ∑ j ∈ s, ∑ i ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i := Finset.sum_comm
+        _ = ∑ i ∈ s, ∑ j ∈ s, (pairConc (W j) (N j) (W i) (N i) α - 1 / 2) * Y j := rfl
+        _ = ∑ i ∈ s, ∑ j ∈ s, -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y j := by
+            refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+            have hsym := pairConc_add_symm (W i) (N i) (W j) (N j) α
+            have hsub : pairConc (W j) (N j) (W i) (N i) α - 1 / 2 =
+                -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) := by linarith
+            rw [hsub]
+    calc 2 * ∑ i ∈ s, ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i
+        = (∑ i ∈ s, ∑ j ∈ s, (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i) +
+          (∑ i ∈ s, ∑ j ∈ s, -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y j) := by
+            conv_rhs => rw [← hswap]
+            ring
+      _ = ∑ i ∈ s, ∑ j ∈ s, ((pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y i +
+            -(pairConc (W i) (N i) (W j) (N j) α - 1 / 2) * Y j) := by
+            simp only [← Finset.sum_add_distrib]
+      _ = ∑ i ∈ s, ∑ j ∈ s, g i j := by
+            refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+            dsimp [g]; ring
+  have hrhs : ∑ i ∈ s, ∑ j ∈ s, g i j =
+      2 * ∑ i ∈ s, ∑ j ∈ s with Y j < Y i, g i j := by
+    have hsplit : ∀ i ∈ s, ∑ j ∈ s, g i j =
+        (∑ j ∈ s with Y j < Y i, g i j) + (∑ j ∈ s with Y i < Y j, g i j) := by
+      intro i _
+      have h1 : ∑ j ∈ s, g i j = (∑ j ∈ s with Y j < Y i, g i j) +
+          (∑ j ∈ s with ¬ (Y j < Y i), g i j) := (Finset.sum_filter_add_sum_filter_not _ _ _).symm
+      have h2 : ∑ j ∈ s with ¬ (Y j < Y i), g i j =
+          (∑ j ∈ s with ¬ (Y j < Y i) ∧ Y j = Y i, g i j) +
+          (∑ j ∈ s with ¬ (Y j < Y i) ∧ Y j ≠ Y i, g i j) := by
+        rw [← Finset.sum_filter_add_sum_filter_not (s.filter fun j => ¬ (Y j < Y i)) (fun j => Y j = Y i)]
+        simp [Finset.filter_filter]
+      have heq0 : ∑ j ∈ s with ¬ (Y j < Y i) ∧ Y j = Y i, g i j = 0 := by
+        refine Finset.sum_eq_zero fun j hj => ?_
+        rw [Finset.mem_filter] at hj
+        dsimp [g]
+        rw [hj.2.2, sub_self, mul_zero]
+      have hfilt : (s.filter fun j => ¬ (Y j < Y i) ∧ Y j ≠ Y i) = s.filter fun j => Y i < Y j := by
+        ext j; simp only [Finset.mem_filter, not_lt]
+        exact ⟨fun ⟨h1', h2', h3'⟩ => ⟨h1', lt_of_le_of_ne h2' h3'.symm⟩,
+               fun ⟨h1', h2'⟩ => ⟨h1', h2'.le, h2'.ne'⟩⟩
+      rw [h1, h2, heq0, zero_add, hfilt]
+    rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
+    have hswap2 : (∑ i ∈ s, ∑ j ∈ s with Y i < Y j, g i j) =
+        ∑ i ∈ s, ∑ j ∈ s with Y j < Y i, g i j := by
+      simp only [Finset.sum_filter]
+      calc ∑ i ∈ s, ∑ j ∈ s, (if Y i < Y j then g i j else 0)
+          = ∑ j ∈ s, ∑ i ∈ s, (if Y i < Y j then g i j else 0) := Finset.sum_comm
+        _ = ∑ j ∈ s, ∑ i ∈ s, (if Y i < Y j then g j i else 0) := by
+            refine Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => ?_
+            split_ifs <;> simp [hanti]
+        _ = ∑ i ∈ s, ∑ j ∈ s, (if Y j < Y i then g i j else 0) := rfl
+    rw [hswap2]
+    ring
+  have heq : ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i =
+      ∑ i ∈ s, ∑ j ∈ s with Y j < Y i, g i j := by linarith
+  rw [heq]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  dsimp [g]; ring
+
+private lemma midRankZ_sum_sq_of_inj {ι : Type*} :
+    ∀ n : ℕ, ∀ (s : Finset ι) (f : ι → ℝ), s.card = n → (∀ i ∈ s, ∀ j ∈ s, i ≠ j → f i ≠ f j) →
+      ∑ i ∈ s, (∑ j ∈ s, if f i > f j then (1 : ℝ) else if f i = f j then 1 / 2 else 0) ^ 2 =
+        (n : ℝ) * (4 * (n : ℝ) ^ 2 - 1) / 12 := by
+  classical
+  intro n
+  induction n with
+  | zero =>
+    intro s f hs _
+    rw [Finset.card_eq_zero.mp hs]
+    simp
+  | succ k ih =>
+    intro s f hs hinj
+    have hne : s.Nonempty := Finset.card_pos.mp (by omega)
+    obtain ⟨m, hm, hmax⟩ := s.exists_max_image f hne
+    let s' := s.erase m
+    have hs'_card : s'.card = k := by
+      dsimp [s']; rw [Finset.card_erase_of_mem hm, hs]; simp
+    have hs'_inj : ∀ i ∈ s', ∀ j ∈ s', i ≠ j → f i ≠ f j :=
+      fun i hi j hj hij => hinj i (Finset.erase_subset m s hi) j (Finset.erase_subset m s hj) hij
+    have hm_term : (∑ j ∈ s, if f m > f j then (1 : ℝ) else if f m = f j then 1 / 2 else 0) =
+        (k : ℝ) + 1 / 2 := by
+      rw [← Finset.add_sum_erase s _ hm]
+      have hself : (if f m > f m then (1 : ℝ) else if f m = f m then 1 / 2 else 0) = 1 / 2 := by
+        simp
+      have hrest : ∑ j ∈ s', (if f m > f j then (1 : ℝ) else if f m = f j then 1 / 2 else 0) =
+          (k : ℝ) := by
+        have hterm : ∀ j ∈ s',
+            (if f m > f j then (1 : ℝ) else if f m = f j then 1 / 2 else 0) = (1 : ℝ) := by
+          intro j hj
+          have hjm : j ≠ m := (Finset.mem_erase.mp hj).1
+          have hj_s : j ∈ s := (Finset.mem_erase.mp hj).2
+          have hlt : f j < f m := lt_of_le_of_ne (hmax j hj_s) (hinj j hj_s m hm hjm)
+          simp [hlt]
+        rw [Finset.sum_congr rfl hterm, Finset.sum_const, hs'_card, nsmul_eq_mul, mul_one]
+      rw [hself, hrest]; ring
+    have hother : ∀ i ∈ s',
+        (∑ j ∈ s, if f i > f j then (1 : ℝ) else if f i = f j then 1 / 2 else 0) =
+          ∑ j ∈ s', if f i > f j then (1 : ℝ) else if f i = f j then 1 / 2 else 0 := by
+      intro i hi
+      rw [← Finset.add_sum_erase s _ hm]
+      have him : i ≠ m := (Finset.mem_erase.mp hi).1
+      have hi_s : i ∈ s := (Finset.mem_erase.mp hi).2
+      have hlt : f i < f m := lt_of_le_of_ne (hmax i hi_s) (hinj i hi_s m hm him)
+      have hm0 : (if f i > f m then (1 : ℝ) else if f i = f m then 1 / 2 else 0) = 0 := by
+        simp [not_lt.mpr hlt.le, hlt.ne]
+      rw [hm0, zero_add]
+    rw [← Finset.add_sum_erase s _ hm, hm_term]
+    have hsum_eq : ∑ i ∈ s', (∑ j ∈ s, if f i > f j then (1 : ℝ) else if f i = f j then 1 / 2 else 0) ^ 2 =
+        ∑ i ∈ s', (∑ j ∈ s', if f i > f j then (1 : ℝ) else if f i = f j then 1 / 2 else 0) ^ 2 :=
+      Finset.sum_congr rfl fun i hi => by rw [hother i hi]
+    rw [hsum_eq, ih s' f hs'_card hs'_inj, Nat.cast_succ]
+    ring
+
+private lemma midRankZ_var_of_inj {ι : Type*} (W N : ι → ℝ) (s : Finset ι) (α : ℝ)
+    (hinj : ∀ i ∈ s, ∀ j ∈ s, i ≠ j → Z_alpha (W i) (N i) α ≠ Z_alpha (W j) (N j) α) :
+    ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) ^ 2 =
+      (s.card : ℝ) * ((s.card : ℝ) ^ 2 - 1) / 12 := by
+  have hsq : ∑ i ∈ s, (midRankZ W N s α i) ^ 2 =
+      (s.card : ℝ) * (4 * (s.card : ℝ) ^ 2 - 1) / 12 := by
+    have h := midRankZ_sum_sq_of_inj s.card s (fun i => Z_alpha (W i) (N i) α) rfl hinj
+    simpa [midRankZ, pairConc] using h
+  have hsum := midRankZ_sum_const W N s α
+  have hexp : ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) ^ 2 =
+      (∑ i ∈ s, (midRankZ W N s α i) ^ 2) -
+        (s.card : ℝ) * (∑ i ∈ s, midRankZ W N s α i) +
+        (s.card : ℝ) * ((s.card : ℝ) / 2) ^ 2 := by
+    have hterm : ∀ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) ^ 2 =
+        (midRankZ W N s α i) ^ 2 - (s.card : ℝ) * midRankZ W N s α i + ((s.card : ℝ) / 2) ^ 2 := by
+      intro i _; ring
+    rw [Finset.sum_congr rfl hterm, Finset.sum_add_distrib, Finset.sum_sub_distrib,
+        ← Finset.mul_sum, Finset.sum_const, nsmul_eq_mul]
+  rw [hexp, hsq, hsum]
+  ring
+
+/-- Sec. 3.2 (`sec:target`), Sec. 5.1 (`sec:benchmarks`), & Sec. 5.5 (`sec:forecast`):
+for ANY real-valued target `Y` strictly ordered by `Z_{α*}` on positive careers `(W_i, N_i)`
+(`Y j < Y i → Z_{α*}(j) < Z_{α*}(i)`), the Spearman rank-covariance numerator
+`∑_i (midRank(Z_α)_i - n/2) (Y_i - Ȳ)` is unimodal around `α*` (monotone non-decreasing on
+`(-∞, α*]`, non-increasing on `[α*, ∞)`) and maximized on `[0, 1]` at `max 0 (min 1 α*)`. -/
+theorem prop_target_spearman_cov_unimodal_clipped_max {ι : Type*} (s : Finset ι)
+    (W N Y : ι → ℝ) (α_star : ℝ)
+    (hW : ∀ i ∈ s, 0 < W i) (hN : ∀ i ∈ s, 0 < N i)
+    (hord : ∀ i ∈ s, ∀ j ∈ s, Y j < Y i →
+      Z_alpha (W j) (N j) α_star < Z_alpha (W i) (N i) α_star) :
+    let Ybar : ℝ := (∑ i ∈ s, Y i) / (s.card : ℝ)
+    let covR : ℝ → ℝ := fun α =>
+      ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * (Y i - Ybar)
+    MonotoneOn covR (Iic α_star) ∧
+    AntitoneOn covR (Ici α_star) ∧
+    (∀ α : ℝ, covR α ≤ covR α_star) ∧
+    (let α_clip := max (0 : ℝ) (min (1 : ℝ) α_star)
+     α_clip ∈ Icc (0 : ℝ) 1 ∧ ∀ α ∈ Icc (0 : ℝ) 1, covR α ≤ covR α_clip) := by
+  intro Ybar covR
+  have hcov_eq : ∀ α : ℝ, covR α =
+      ∑ i ∈ s, ∑ j ∈ s with Y j < Y i,
+        (Y i - Y j) * (pairConc (W i) (N i) (W j) (N j) α - 1 / 2) := by
+    intro α
+    have hmean_zero : ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) = 0 := by
+      rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, midRankZ_sum_const]
+      ring
+    have hshift : covR α = ∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i := by
+      dsimp [covR]
+      have hterm : ∀ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * (Y i - Ybar) =
+          (midRankZ W N s α i - (s.card : ℝ) / 2) * Y i -
+          Ybar * (midRankZ W N s α i - (s.card : ℝ) / 2) := by
+        intro i _; ring
+      rw [Finset.sum_congr rfl hterm, Finset.sum_sub_distrib, ← Finset.mul_sum, hmean_zero,
+          mul_zero, sub_zero]
+    rw [hshift]
+    exact midRankZ_cov_eq W N Y s α
+  have hmono : MonotoneOn covR (Iic α_star) := by
+    intro a ha b hb hab
+    rw [hcov_eq a, hcov_eq b]
+    refine Finset.sum_le_sum fun i hi => Finset.sum_le_sum fun j hj => ?_
+    rw [Finset.mem_filter] at hj
+    have hpc := (pairConc_unimodal_of_star (hW i hi) (hN i hi) (hW j hj.1) (hN j hj.1)
+      (hord i hi j hj.1 hj.2)).1 ha hb hab
+    exact mul_le_mul_of_nonneg_left (by linarith) (sub_pos.mpr hj.2).le
+  have hanti : AntitoneOn covR (Ici α_star) := by
+    intro a ha b hb hab
+    rw [hcov_eq a, hcov_eq b]
+    refine Finset.sum_le_sum fun i hi => Finset.sum_le_sum fun j hj => ?_
+    rw [Finset.mem_filter] at hj
+    have hpc := (pairConc_unimodal_of_star (hW i hi) (hN i hi) (hW j hj.1) (hN j hj.1)
+      (hord i hi j hj.1 hj.2)).2.1 ha hb hab
+    exact mul_le_mul_of_nonneg_left (by linarith) (sub_pos.mpr hj.2).le
+  have hmax : ∀ α : ℝ, covR α ≤ covR α_star := by
+    intro α
+    rcases le_total α α_star with hle | hge
+    · exact hmono hle Set.right_mem_Iic hle
+    · exact hanti Set.left_mem_Ici hge hge
+  refine ⟨hmono, hanti, hmax, ?_⟩
+  intro α_clip
+  have hclip_mem : α_clip ∈ Icc (0 : ℝ) 1 := ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+  refine ⟨hclip_mem, fun α hα => ?_⟩
+  rcases le_total α_star 0 with hle0 | hge0
+  · have hclip0 : α_clip = 0 := by
+      dsimp [α_clip]; rw [min_eq_right (by linarith), max_eq_left hle0]
+    rw [hclip0]
+    exact hanti hle0 (hle0.trans hα.1) hα.1
+  · rcases le_total α_star 1 with hle1 | hge1
+    · have hclip_star : α_clip = α_star := by
+        dsimp [α_clip]; rw [min_eq_right hle1, max_eq_right hge0]
+      rw [hclip_star]
+      exact hmax α
+    · have hclip1 : α_clip = 1 := by
+        dsimp [α_clip]; rw [min_eq_left hge1]; norm_num
+      rw [hclip1]
+      exact hmono (hα.2.trans hge1) hge1 hα.2
+
+/-- Sec. 3.2 (`sec:target`): normalized Spearman rank correlation `ρ(α)` for a real target `Y`
+ordered by `Z_{α*}` is unimodal and maximized on `[0, 1]` at `max 0 (min 1 α*)` across any
+tie-free exponent comparison. -/
+theorem prop_target_spearman_rho_unimodal_clipped_max {ι : Type*} (s : Finset ι)
+    (W N Y : ι → ℝ) (α_star : ℝ)
+    (hW : ∀ i ∈ s, 0 < W i) (hN : ∀ i ∈ s, 0 < N i)
+    (hord : ∀ i ∈ s, ∀ j ∈ s, Y j < Y i →
+      Z_alpha (W j) (N j) α_star < Z_alpha (W i) (N i) α_star)
+    (hY_nontriv : ∃ i ∈ s, ∃ j ∈ s, Y i ≠ Y j) :
+    let Ybar : ℝ := (∑ i ∈ s, Y i) / (s.card : ℝ)
+    let ρ : ℝ → ℝ := fun α =>
+      (∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) * (Y i - Ybar)) /
+        Real.sqrt ((∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) ^ 2) *
+          (∑ i ∈ s, (Y i - Ybar) ^ 2))
+    ∀ {α₁ α₂ : ℝ},
+      (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Z_alpha (W i) (N i) α₁ ≠ Z_alpha (W j) (N j) α₁) →
+      (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Z_alpha (W i) (N i) α₂ ≠ Z_alpha (W j) (N j) α₂) →
+      ((α₁ ≤ α₂ ∧ α₂ ≤ α_star) ∨ (α_star ≤ α₂ ∧ α₂ ≤ α₁) → ρ α₁ ≤ ρ α₂) ∧
+      ((∀ i ∈ s, ∀ j ∈ s, i ≠ j →
+        Z_alpha (W i) (N i) (max (0 : ℝ) (min (1 : ℝ) α_star)) ≠
+          Z_alpha (W j) (N j) (max (0 : ℝ) (min (1 : ℝ) α_star))) →
+        α₁ ∈ Icc (0 : ℝ) 1 → ρ α₁ ≤ ρ (max (0 : ℝ) (min (1 : ℝ) α_star))) := by
+  intro Ybar ρ α₁ α₂ hinj₁ hinj₂
+  obtain ⟨i0, hi0, j0, hj0, hne0⟩ := hY_nontriv
+  have hcard_ge2 : 2 ≤ s.card := by
+    by_contra hlt
+    have hle1 : s.card ≤ 1 := by omega
+    rw [Finset.card_le_one] at hle1
+    exact hne0 (congrArg Y (hle1 i0 hi0 j0 hj0))
+  have hcard_gt1 : (1 : ℝ) < s.card := by exact_mod_cast (by omega : 1 < s.card)
+  have hvarR_pos : 0 < (s.card : ℝ) * ((s.card : ℝ) ^ 2 - 1) / 12 := by
+    have h1 : 0 < (s.card : ℝ) ^ 2 - 1 := by nlinarith
+    positivity
+  have hvarY_pos : 0 < ∑ i ∈ s, (Y i - Ybar) ^ 2 := by
+    have hnn : ∀ i ∈ s, 0 ≤ (Y i - Ybar) ^ 2 := fun i _ => sq_nonneg _
+    by_cases h1 : Y i0 = Ybar
+    · have hj_ne : Y j0 - Ybar ≠ 0 := by intro h; apply hne0; linarith
+      exact (sq_pos_of_ne_zero hj_ne).trans_le (Finset.single_le_sum hnn hj0)
+    · exact (sq_pos_of_ne_zero (sub_ne_zero.mpr h1)).trans_le (Finset.single_le_sum hnn hi0)
+  have hden_eq : ∀ α : ℝ,
+      (∀ i ∈ s, ∀ j ∈ s, i ≠ j → Z_alpha (W i) (N i) α ≠ Z_alpha (W j) (N j) α) →
+      Real.sqrt ((∑ i ∈ s, (midRankZ W N s α i - (s.card : ℝ) / 2) ^ 2) *
+        (∑ i ∈ s, (Y i - Ybar) ^ 2)) =
+      Real.sqrt (((s.card : ℝ) * ((s.card : ℝ) ^ 2 - 1) / 12) *
+        (∑ i ∈ s, (Y i - Ybar) ^ 2)) := by
+    intro α hinj
+    rw [midRankZ_var_of_inj W N s α hinj]
+  set D : ℝ := Real.sqrt (((s.card : ℝ) * ((s.card : ℝ) ^ 2 - 1) / 12) *
+    (∑ i ∈ s, (Y i - Ybar) ^ 2))
+  have hD_pos : 0 < D := Real.sqrt_pos.mpr (mul_pos hvarR_pos hvarY_pos)
+  obtain ⟨hmono, hanti, _, hclip_mem, hclip_max⟩ :=
+    prop_target_spearman_cov_unimodal_clipped_max s W N Y α_star hW hN hord
+  refine ⟨fun hdir => ?_, fun hinj_clip hα1_mem => ?_⟩
+  · have hcov_le :
+        ∑ i ∈ s, (midRankZ W N s α₁ i - (s.card : ℝ) / 2) * (Y i - Ybar) ≤
+        ∑ i ∈ s, (midRankZ W N s α₂ i - (s.card : ℝ) / 2) * (Y i - Ybar) := by
+      rcases hdir with ⟨h12, h2s⟩ | ⟨hs2, h21⟩
+      · exact hmono (h12.trans h2s) h2s h12
+      · exact hanti hs2 (hs2.trans h21) h21
+    dsimp [ρ]
+    rw [hden_eq α₁ hinj₁, hden_eq α₂ hinj₂]
+    exact div_le_div_of_nonneg_right hcov_le hD_pos.le
+  · have hcov_le := hclip_max α₁ hα1_mem
+    dsimp [ρ]
+    rw [hden_eq α₁ hinj₁, hden_eq (max (0 : ℝ) (min (1 : ℝ) α_star)) hinj_clip]
+    exact div_le_div_of_nonneg_right hcov_le hD_pos.le
+
+end TargetSpearman
+
+section LILRunningMax
+
+private noncomputable def lilBound (σ : ℝ) (n : ℕ) : ℝ :=
+  σ * Real.sqrt (2 * Real.log (Real.log n))
+
+private lemma log_log_pos_of_three_le {n : ℕ} (hn : 3 ≤ n) :
+    0 < Real.log (Real.log n) := by
+  have hexp : Real.exp 1 < (3 : ℝ) := lt_trans Real.exp_one_lt_d9 (by norm_num)
+  have h3le : (3 : ℝ) ≤ n := by exact_mod_cast hn
+  have hgt : Real.exp 1 < (n : ℝ) := lt_of_lt_of_le hexp h3le
+  have hlog1 : 1 < Real.log (n : ℝ) := by
+    simpa [Real.log_exp] using Real.log_lt_log (Real.exp_pos 1) hgt
+  exact Real.log_pos hlog1
+
+private lemma lilBound_pos {σ : ℝ} (hσ : 0 < σ) {n : ℕ} (hn : 3 ≤ n) :
+    0 < lilBound σ n := by
+  unfold lilBound
+  exact mul_pos hσ (Real.sqrt_pos.mpr (mul_pos (by norm_num) (log_log_pos_of_three_le hn)))
+
+private lemma lilBound_mono {σ : ℝ} (hσ : 0 < σ) {m n : ℕ} (hm : 3 ≤ m) (hmn : m ≤ n) :
+    lilBound σ m ≤ lilBound σ n := by
+  unfold lilBound
+  have hm_pos : (0 : ℝ) < m := by positivity
+  have hmn_r : (m : ℝ) ≤ n := by exact_mod_cast hmn
+  have hexp3 : Real.exp 1 < (3 : ℝ) := lt_trans Real.exp_one_lt_d9 (by norm_num)
+  have hm_ge3 : (3 : ℝ) ≤ m := by exact_mod_cast hm
+  have hexp : Real.exp 1 < (m : ℝ) := lt_of_lt_of_le hexp3 hm_ge3
+  have hm_log1 : 1 < Real.log (m : ℝ) := by
+    simpa [Real.log_exp] using Real.log_lt_log (Real.exp_pos 1) hexp
+  have hlog1 : Real.log (m : ℝ) ≤ Real.log (n : ℝ) := Real.log_le_log hm_pos hmn_r
+  have hlog2 : Real.log (Real.log (m : ℝ)) ≤ Real.log (Real.log (n : ℝ)) :=
+    Real.log_le_log (by linarith) hlog1
+  exact mul_le_mul_of_nonneg_left (Real.sqrt_le_sqrt (by linarith)) hσ.le
+
+private lemma tendsto_lilBound_atTop {σ : ℝ} (hσ : 0 < σ) :
+    Tendsto (lilBound σ) atTop atTop := by
+  unfold lilBound
+  have hcast : Tendsto (fun n : ℕ => (n : ℝ)) atTop atTop := tendsto_natCast_atTop_atTop
+  have hlog1 : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp hcast
+  have hlog2 : Tendsto (fun n : ℕ => Real.log (Real.log (n : ℝ))) atTop atTop :=
+    Real.tendsto_log_atTop.comp hlog1
+  have h2log2 : Tendsto (fun n : ℕ => 2 * Real.log (Real.log (n : ℝ))) atTop atTop :=
+    hlog2.const_mul_atTop (by norm_num)
+  have hsqrt' : Tendsto (fun n : ℕ => Real.sqrt (2 * Real.log (Real.log (n : ℝ)))) atTop atTop := by
+    rw [Filter.tendsto_atTop_atTop] at h2log2 ⊢
+    intro b
+    obtain ⟨N, hN⟩ := h2log2 (max b 0 ^ 2)
+    refine ⟨N, fun n hn => ?_⟩
+    have h1 := Real.sqrt_le_sqrt (hN n hn)
+    rw [Real.sqrt_sq (le_max_right b 0)] at h1
+    exact (le_max_left b 0).trans h1
+  exact hsqrt'.const_mul_atTop hσ
+
+/-- Remark 2 (`rem:envelope`, L188): analytical running-maximum envelope bridge.
+For any sequence `X : ℕ → ℝ` (representing `W(k)/√k`) satisfying the LIL upper bound and
+attaining the LIL lower envelope along a sequence `k_m → ∞` with `b(k_{m+1})/b(k_m) → 1`,
+the running maximum `M_n = max_{1 ≤ k ≤ n} X_k` grows asymptotically like
+`b(n) = σ √(2 log log n)` (`M_n / b(n) → 1`). -/
+theorem rem_envelope_lil_running_max_growth {σ : ℝ} (hσ : 0 < σ) (X : ℕ → ℝ)
+    (h_upper : ∀ ε : ℝ, 0 < ε → ∀ᶠ k : ℕ in atTop, X k ≤ (1 + ε) * lilBound σ k)
+    (h_lower : ∀ ε : ℝ, 0 < ε →
+      ∃ k : ℕ → ℕ, Tendsto k atTop atTop ∧
+        Tendsto (fun m => lilBound σ (k (m + 1)) / lilBound σ (k m)) atTop (𝓝 1) ∧
+        ∀ᶠ m : ℕ in atTop, (1 - ε) * lilBound σ (k m) ≤ X (k m)) :
+    let M : ℕ → ℝ := fun n => (Finset.Icc 1 (max n 1)).sup' (by simp) X
+    Tendsto (fun n => M n / lilBound σ n) atTop (𝓝 1) := by
+  intro M
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  let δ : ℝ := min (ε / 5) (1 / 2)
+  have hδ_pos : 0 < δ := lt_min (by linarith) (by norm_num)
+  have hδ_le_half : δ ≤ 1 / 2 := min_le_right _ _
+  have hδ_le_eps : δ ≤ ε / 5 := min_le_left _ _
+  -- Upper bound: eventually M n ≤ (1 + δ) * lilBound σ n
+  have h_up : ∃ N₁ : ℕ, ∀ n ≥ N₁, M n ≤ (1 + δ) * lilBound σ n := by
+    obtain ⟨K, hK⟩ := eventually_atTop.mp (h_upper δ hδ_pos)
+    let K₀ : ℕ := max K 3
+    have hK₀_ge3 : 3 ≤ K₀ := le_max_right K 3
+    have hK₀_ge1 : 1 ≤ K₀ := by omega
+    have hdom := (tendsto_lilBound_atTop hσ).eventually_ge_atTop (M K₀ / (1 + δ))
+    obtain ⟨N₁, hN₁⟩ := eventually_atTop.mp hdom
+    refine ⟨max K₀ N₁, fun n hn => ?_⟩
+    have hn_ge_K₀ : K₀ ≤ n := (le_max_left K₀ N₁).trans hn
+    have hn_ge_1 : 1 ≤ n := hK₀_ge1.trans hn_ge_K₀
+    dsimp [M]
+    rw [Finset.sup'_le_iff]
+    intro j hj
+    rw [Finset.mem_Icc, max_eq_left hn_ge_1] at hj
+    by_cases hjK : j ≤ K₀
+    · have hj_mem : j ∈ Finset.Icc 1 (max K₀ 1) :=
+        Finset.mem_Icc.mpr ⟨hj.1, hjK.trans (le_max_left K₀ 1)⟩
+      have hle_MK : X j ≤ M K₀ := Finset.le_sup' X hj_mem
+      have hMK_le : M K₀ ≤ (1 + δ) * lilBound σ n := by
+        have h1 := hN₁ n ((le_max_right K₀ N₁).trans hn)
+        exact (div_le_iff₀ (by linarith : 0 < 1 + δ)).mp h1 |>.trans_eq (mul_comm _ _)
+      exact hle_MK.trans hMK_le
+    · have hj_ge_K : K ≤ j := (le_max_left K 3).trans (by omega)
+      have hj_le_n : j ≤ n := hj.2
+      have hXj := hK j hj_ge_K
+      have hj_ge3 : 3 ≤ j := hK₀_ge3.trans (by omega)
+      have hmono := lilBound_mono hσ hj_ge3 hj_le_n
+      exact hXj.trans (mul_le_mul_of_nonneg_left hmono (by linarith))
+  -- Lower bound: eventually (1 - ε / 2) * lilBound σ n ≤ M n
+  have h_dn : ∃ N₂ : ℕ, ∀ n ≥ N₂, (1 - ε / 2) * lilBound σ n ≤ M n := by
+    obtain ⟨k, hk_tend, hk_ratio, hk_low⟩ := h_lower δ hδ_pos
+    obtain ⟨M₀, hM₀⟩ := eventually_atTop.mp hk_low
+    have hk_ge3 := hk_tend.eventually_ge_atTop 3
+    obtain ⟨M₁, hM₁⟩ := eventually_atTop.mp hk_ge3
+    have h_ratio_close := hk_ratio.eventually (Ioo_mem_nhds (by linarith : 1 - δ < 1) (by linarith : 1 < 1 + δ))
+    obtain ⟨M₂, hM₂⟩ := eventually_atTop.mp h_ratio_close
+    let m₀ : ℕ := max M₀ (max M₁ M₂)
+    refine ⟨max (k m₀) 3, fun n hn => ?_⟩
+    have hn_ge_km0 : k m₀ ≤ n := (le_max_left (k m₀) 3).trans hn
+    have hn_ge3 : 3 ≤ n := (le_max_right (k m₀) 3).trans hn
+    have hex_gt : ∃ j : ℕ, m₀ ≤ j ∧ n < k j := by
+      obtain ⟨J, hJ⟩ := eventually_atTop.mp (hk_tend.eventually_gt_atTop n)
+      exact ⟨max m₀ J, le_max_left m₀ J, hJ _ (le_max_right m₀ J)⟩
+    classical
+    let j_gt : ℕ := Nat.find hex_gt
+    have hj_spec : m₀ ≤ j_gt ∧ n < k j_gt := Nat.find_spec hex_gt
+    have hj_pos : m₀ < j_gt := by
+      rcases eq_or_lt_of_le hj_spec.1 with heq | hlt
+      · exfalso; rw [← heq] at hj_spec; exact (not_lt_of_ge hn_ge_km0) hj_spec.2
+      · exact hlt
+    let m : ℕ := j_gt - 1
+    have hm_ge_m0 : m₀ ≤ m := by omega
+    have hm_lt : m < j_gt := by omega
+    have hkm_le_n : k m ≤ n := by
+      by_contra hnot
+      have hgt : n < k m := lt_of_not_ge hnot
+      exact Nat.find_min hex_gt hm_lt ⟨hm_ge_m0, hgt⟩
+    have hn_lt_km1 : n < k (m + 1) := by
+      have : m + 1 = j_gt := by omega
+      rw [this]; exact hj_spec.2
+    have hm_ge_M0 : M₀ ≤ m := (le_max_left M₀ _).trans hm_ge_m0
+    have hm_ge_M1 : M₁ ≤ m := ((le_max_left M₁ M₂).trans (le_max_right M₀ _)).trans hm_ge_m0
+    have hm_ge_M2 : M₂ ≤ m := ((le_max_right M₁ M₂).trans (le_max_right M₀ _)).trans hm_ge_m0
+    have hkm_ge3 : 3 ≤ k m := hM₁ m hm_ge_M1
+    have hkm_ge1 : 1 ≤ k m := by omega
+    have hkm_mem : k m ∈ Finset.Icc 1 (max n 1) :=
+      Finset.mem_Icc.mpr ⟨hkm_ge1, hkm_le_n.trans (le_max_left n 1)⟩
+    have hX_le_M : X (k m) ≤ M n := Finset.le_sup' X hkm_mem
+    have hX_low : (1 - δ) * lilBound σ (k m) ≤ X (k m) := hM₀ m hm_ge_M0
+    have hrat_hi : lilBound σ (k (m + 1)) / lilBound σ (k m) < 1 + δ := (hM₂ m hm_ge_M2).2
+    have hb_km_pos : 0 < lilBound σ (k m) := lilBound_pos hσ hkm_ge3
+    have hb_km1_le : lilBound σ (k (m + 1)) ≤ (1 + δ) * lilBound σ (k m) :=
+      (div_lt_iff₀ hb_km_pos).mp hrat_hi |>.le
+    have hb_n_le : lilBound σ n ≤ lilBound σ (k (m + 1)) :=
+      lilBound_mono hσ hn_ge3 hn_lt_km1.le
+    have hb_n_le2 : lilBound σ n ≤ (1 + δ) * lilBound σ (k m) := hb_n_le.trans hb_km1_le
+    have h_ratio_scale : 1 - ε / 2 ≤ (1 - δ) / (1 + δ) := by
+      rw [le_div_iff₀ (by linarith : 0 < 1 + δ)]
+      nlinarith [hδ_le_eps, hδ_le_half, hε]
+    calc (1 - ε / 2) * lilBound σ n
+        ≤ ((1 - δ) / (1 + δ)) * ((1 + δ) * lilBound σ (k m)) := by
+          apply mul_le_mul h_ratio_scale hb_n_le2 (lilBound_pos hσ hn_ge3).le
+          exact div_nonneg (by linarith) (by linarith)
+      _ = (1 - δ) * lilBound σ (k m) := by field_simp [(by linarith : (1 + δ) ≠ 0)]
+      _ ≤ X (k m) := hX_low
+      _ ≤ M n := hX_le_M
+  obtain ⟨N₁, hN₁⟩ := h_up
+  obtain ⟨N₂, hN₂⟩ := h_dn
+  refine ⟨max (max N₁ N₂) 3, fun n hn => ?_⟩
+  have hn1 : N₁ ≤ n := (le_max_left N₁ N₂).trans ((le_max_left _ 3).trans hn)
+  have hn2 : N₂ ≤ n := (le_max_right N₁ N₂).trans ((le_max_left _ 3).trans hn)
+  have hn3 : 3 ≤ n := (le_max_right _ 3).trans hn
+  have hb_pos : 0 < lilBound σ n := lilBound_pos hσ hn3
+  have hup := hN₁ n hn1
+  have hdn := hN₂ n hn2
+  rw [Real.dist_eq, abs_lt]
+  have h1 : 1 - ε / 2 ≤ M n / lilBound σ n := (le_div_iff₀ hb_pos).mpr hdn
+  have h2 : M n / lilBound σ n ≤ 1 + δ := (div_le_iff₀ hb_pos).mpr hup
+  constructor <;> linarith [hδ_le_eps, hε]
+
+end LILRunningMax
+
+/-- Definition 1 (`def:twoway`): exact sign effect of adding a second role (`W_pitch < 0`
+strictly lowers the score below `Z_alpha W_pos PA α`, `W_pitch = 0` leaves it equal, and
+`W_pitch > 0` strictly raises it). -/
+theorem Z_twoway_secondary_sign_effect {W_pos PA W_pitch BF α : ℝ}
+    (hPA : 0 < PA) (hBF : 0 < BF) (hα : α < 1) :
+    (W_pitch < 0 → Z_twoway W_pos PA W_pitch BF α < Z_alpha W_pos PA α) ∧
+    (W_pitch = 0 → Z_twoway W_pos PA W_pitch BF α = Z_alpha W_pos PA α) ∧
+    (0 < W_pitch → Z_alpha W_pos PA α < Z_twoway W_pos PA W_pitch BF α) := by
+  have hs := Z_twoway_strictMono_right (PA := PA) hBF hα W_pos
+  have h0 : Z_twoway W_pos PA 0 BF α = Z_alpha W_pos PA α :=
+    twoway_single_role_right hPA hα
+  refine ⟨fun hneg => ?_, fun heq => by rw [heq, h0], fun hpos => ?_⟩
+  · calc Z_twoway W_pos PA W_pitch BF α < Z_twoway W_pos PA 0 BF α := hs hneg
+      _ = Z_alpha W_pos PA α := h0
+  · calc Z_alpha W_pos PA α = Z_twoway W_pos PA 0 BF α := h0.symm
+      _ < Z_twoway W_pos PA W_pitch BF α := hs hpos
+
+/-- Definition 1 (`def:twoway`): with floored exposures `max PA 1` and `max BF 1`,
+a single-role player (`W_pitch = 0` or `W_pos = 0`) reduces to `Z_alpha_floored`. -/
+theorem Z_twoway_floored_single_role {W₁ PA W₂ BF α : ℝ} (hα : α < 1) :
+    Z_twoway W₁ (max PA 1) 0 (max BF 1) α = Z_alpha_floored W₁ PA α ∧
+    Z_twoway 0 (max PA 1) W₂ (max BF 1) α = Z_alpha_floored W₂ BF α := by
+  have hPA : 0 < max PA 1 := lt_of_lt_of_le zero_lt_one (le_max_right PA 1)
+  have hBF : 0 < max BF 1 := lt_of_lt_of_le zero_lt_one (le_max_right BF 1)
+  exact ⟨twoway_single_role_right hPA hα, twoway_single_role_left hBF hα⟩
+
+/-- Appendix B (`app:twoway`): for `α ∈ (1/2, 1)` (`γ > 2`), `I_{α}` is everywhere `C^2` on `ℝ²`. -/
+theorem I_twoway_contDiff_two {PA BF α : ℝ} (hhalf : 1 / 2 < α) (h1 : α < 1) :
+    ContDiff ℝ 2 (fun w : ℝ × ℝ => I_twoway w.1 PA w.2 BF α) := by
+  have hg2 : 2 < gamma α := by
+    unfold gamma
+    rw [lt_div_iff₀ (sub_pos.mpr h1)]
+    linarith
+  unfold I_twoway
+  exact (((signedPow_contDiff_two_of_two_lt hg2).comp contDiff_fst).div_const _).add
+    (((signedPow_contDiff_two_of_two_lt hg2).comp contDiff_snd).div_const _)
+
+/-- Appendix B (`app:twoway`): symmetric opposite-sign formula at `α = 1/2` when
+`W₁ < 0` and `0 ≤ W₂` (`Z₂ ≥ 0 > Z₁`). -/
+theorem Z_twoway_half_opposite_sign_symm {W₁ N₁ W₂ N₂ : ℝ} (hN₁ : 0 < N₁) (hN₂ : 0 < N₂)
+    (h1 : W₁ < 0) (h2 : 0 ≤ W₂) :
+    let Z₁ := Z_alpha W₁ N₁ (1 / 2)
+    let Z₂ := Z_alpha W₂ N₂ (1 / 2)
+    Z_twoway W₁ N₁ W₂ N₂ (1 / 2) =
+      Real.sign (Z₂ ^ 2 - Z₁ ^ 2) * Real.sqrt |Z₂ ^ 2 - Z₁ ^ 2| := by
+  have hcomm : Z_twoway W₁ N₁ W₂ N₂ (1 / 2) = Z_twoway W₂ N₂ W₁ N₁ (1 / 2) := by
+    unfold Z_twoway I_twoway; rw [add_comm]
+  rw [hcomm]
+  exact Z_twoway_half_opposite_sign hN₂ hN₁ h2 h1
+
+/-- Appendix B (`app:twoway`): matching a positive `χ²_2` threshold `t > 0` forces the
+calibrated `χ²_1` threshold `t_cal` to be strictly positive (`0 < t_cal`). -/
+theorem chi2_two_sided_threshold_pos (v : ℝ≥0) (hv : v ≠ 0) {σ t t_cal : ℝ}
+    (hσ : 0 < σ) (ht : 0 < t)
+    (hmatch : (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t_cal ≤ p.1 ^ 2 / σ ^ 2} =
+      (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2}) :
+    0 < t_cal := by
+  by_contra hle
+  have htcal_le : t_cal ≤ 0 := le_of_not_gt hle
+  let μp : Measure (ℝ × ℝ) := (gaussianReal 0 v).prod (gaussianReal 0 v)
+  have hE1_univ : {p : ℝ × ℝ | t_cal ≤ p.1 ^ 2 / σ ^ 2} = Set.univ := by
+    ext p; simp only [Set.mem_setOf_eq, Set.mem_univ, iff_true]
+    exact htcal_le.trans (div_nonneg (sq_nonneg _) (sq_nonneg _))
+  have hμ_E1 : μp {p | t_cal ≤ p.1 ^ 2 / σ ^ 2} = 1 := by
+    rw [hE1_univ, measure_univ]
+  let E₂ : Set (ℝ × ℝ) := {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2}
+  let C : Set (ℝ × ℝ) := {p | (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2 < t}
+  have hC_meas : MeasurableSet C :=
+    measurableSet_lt
+      (((measurable_fst.pow_const 2).add (measurable_snd.pow_const 2)).div_const _) measurable_const
+  have hdisj : Disjoint E₂ C := Set.disjoint_left.mpr fun p h1 h2 => by
+    dsimp [E₂, C] at h1 h2
+    linarith
+  have hunion : E₂ ∪ C = Set.univ := by
+    ext p; simp only [Set.mem_union, Set.mem_setOf_eq, Set.mem_univ, iff_true, E₂, C]
+    exact le_or_gt t ((p.1 ^ 2 + p.2 ^ 2) / σ ^ 2)
+  let r : ℝ := Real.sqrt (t / 2) * σ
+  have hr : 0 < r := mul_pos (Real.sqrt_pos.mpr (half_pos ht)) hσ
+  let A : Set ℝ := Ioo (-r) r
+  have hrect_sub : A ×ˢ A ⊆ C := by
+    intro ⟨x, y⟩ ⟨hx, hy⟩
+    have hx_sq : x ^ 2 < r ^ 2 := by
+      have : |x| < r := abs_lt.mpr hx
+      nlinarith [sq_abs x, abs_nonneg x, hr]
+    have hy_sq : y ^ 2 < r ^ 2 := by
+      have : |y| < r := abs_lt.mpr hy
+      nlinarith [sq_abs y, abs_nonneg y, hr]
+    have hr_sq : r ^ 2 = (t / 2) * σ ^ 2 := by
+      dsimp [r]; rw [mul_pow, Real.sq_sqrt (half_pos ht).le]
+    dsimp [C]
+    rw [div_lt_iff₀ (sq_pos_of_pos hσ)]
+    linarith
+  have hvol_ac : volume ≪ gaussianReal 0 v := gaussianReal_absolutelyContinuous' 0 hv
+  have hA_pos : 0 < gaussianReal 0 v A := by
+    rw [pos_iff_ne_zero]
+    intro h0
+    have hv0 := hvol_ac h0
+    have hvolA : ENNReal.ofReal (r - (-r)) = 0 := by
+      rw [← Real.volume_Ioo (a := -r) (b := r)]
+      exact hv0
+    rw [ENNReal.ofReal_eq_zero] at hvolA
+    linarith
+  have hrect_pos : 0 < μp (A ×ˢ A) := by
+    dsimp [μp]; rw [Measure.prod_prod]
+    exact ENNReal.mul_pos hA_pos.ne' hA_pos.ne'
+  have hC_pos : 0 < μp C := hrect_pos.trans_le (measure_mono hrect_sub)
+  have hsum1 : μp E₂ + μp C = 1 := by
+    rw [← measure_union hdisj hC_meas, hunion, measure_univ]
+  have hE2_lt1 : μp E₂ < 1 := by
+    rw [← hsum1]
+    exact ENNReal.lt_add_right (measure_ne_top μp E₂) hC_pos.ne'
+  have heq : μp E₂ = 1 := by rw [← hmatch, hμ_E1]
+  exact hE2_lt1.ne heq
+
+/-- Appendix B (`app:twoway`): unconditional ordering `z_1s < √t_2s < √t` for one-sided and
+two-sided `χ²_1` calibration of a `χ²_2` tail at `t > 0` (`0 < t_2s` is deduced automatically). -/
+theorem chi2_one_sided_calibration_shrinks_uncond (v : ℝ≥0) (hv : v ≠ 0) {σ t t_2s z_1s : ℝ}
+    (hσ : 0 < σ) (ht : 0 < t)
+    (hmatch_2s : (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t_2s ≤ p.1 ^ 2 / σ ^ 2} =
+      (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2})
+    (hmatch_1s : gaussianReal 0 v {z | z_1s * σ ≤ z} =
+      (gaussianReal 0 v).prod (gaussianReal 0 v) {p | t ≤ (p.1 ^ 2 + p.2 ^ 2) / σ ^ 2}) :
+    0 < t_2s ∧ z_1s < Real.sqrt t_2s ∧ Real.sqrt t_2s < Real.sqrt t := by
+  have ht2s : 0 < t_2s := chi2_two_sided_threshold_pos v hv hσ ht hmatch_2s
+  obtain ⟨_, h2⟩ := chi2_one_sided_calibration_shrinks v hv hσ ht hmatch_2s hmatch_1s
+  exact ⟨ht2s, h2 ht2s⟩
+
+/-- Proposition 4 (`prop:gamma`): bidirectional parameter equivalence `γ = 1 / (1 - α) ↔ α = 1 - 1 / γ`
+for `α < 1` and `γ > 0`. -/
+theorem prop_gamma_iff {α γ : ℝ} (hα : α < 1) (hγ : 0 < γ) :
+    gamma α = γ ↔ α = 1 - 1 / γ := by
+  unfold gamma
+  have h1α : 1 - α ≠ 0 := sub_ne_zero.mpr hα.ne'
+  have hγne : γ ≠ 0 := hγ.ne'
+  constructor <;> intro h
+  · rw [← h, one_div_one_div]; ring
+  · rw [h]
+    field_simp [h1α, hγne]
+    ring
+
+/-- Section 3.2 (`sec:target`): upper clipping boundary `1 ≤ 1 - β / κ ↔ β ≤ 0` when `κ > 0`. -/
+theorem prop_target_forecast_clip_upper {κ β : ℝ} (hκ : 0 < κ) :
+    1 ≤ 1 - β / κ ↔ β ≤ 0 := by
+  constructor <;> intro h
+  · have hnonpos : β / κ ≤ 0 := by linarith
+    exact (div_nonpos_iff.mp hnonpos).elim (fun h1 => absurd hκ h1.2.not_gt) (fun h2 => h2.1)
+  · have hnonpos : β / κ ≤ 0 := div_nonpos_of_nonpos_of_nonneg h hκ.le
+    linarith
+
+/-- Section 3.2 (`sec:target`): under conditional independence with `κ > 0`, ranking by
+expected cumulative outcome `E[r_f N_f]` is strictly equivalent to ranking by `Z_{1 - β/κ}`. -/
+theorem prop_target_forecast_indep_order_equiv {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    (r_f₁ N_f₁ r_f₂ N_f₂ : Ω → ℝ) {W₁ N₁ W₂ N₂ c₁ c₂ κ β : ℝ}
+    (hW₁ : 0 < W₁) (hN₁ : 0 < N₁) (hW₂ : 0 < W₂) (hN₂ : 0 < N₂)
+    (hc₁ : 0 < c₁) (hc₂ : 0 < c₂) (hκ : 0 < κ)
+    (hindep₁ : IndepFun r_f₁ N_f₁ μ) (hr₁ : AEStronglyMeasurable r_f₁ μ) (hN₁m : AEStronglyMeasurable N_f₁ μ)
+    (hr₁_mean : ∫ ω, r_f₁ ω ∂μ = c₁ * (W₁ / N₁) ^ κ) (hN₁_mean : ∫ ω, N_f₁ ω ∂μ = c₂ * N₁ ^ β)
+    (hindep₂ : IndepFun r_f₂ N_f₂ μ) (hr₂ : AEStronglyMeasurable r_f₂ μ) (hN₂m : AEStronglyMeasurable N_f₂ μ)
+    (hr₂_mean : ∫ ω, r_f₂ ω ∂μ = c₁ * (W₂ / N₂) ^ κ) (hN₂_mean : ∫ ω, N_f₂ ω ∂μ = c₂ * N₂ ^ β) :
+    ∫ ω, r_f₁ ω * N_f₁ ω ∂μ < ∫ ω, r_f₂ ω * N_f₂ ω ∂μ ↔
+      Z_alpha W₁ N₁ (1 - β / κ) < Z_alpha W₂ N₂ (1 - β / κ) := by
+  have he1 : ∫ ω, r_f₁ ω * N_f₁ ω ∂μ = (c₁ * c₂) * (W₁ / N₁) ^ κ * N₁ ^ β := by
+    rw [(prop_target_forecast_indep_expectation r_f₁ N_f₁ hW₁ hN₁ hc₁ hc₂
+      hindep₁ hr₁ hN₁m hr₁_mean hN₁_mean).1]
+    ring
+  have he2 : ∫ ω, r_f₂ ω * N_f₂ ω ∂μ = (c₁ * c₂) * (W₂ / N₂) ^ κ * N₂ ^ β := by
+    rw [(prop_target_forecast_indep_expectation r_f₂ N_f₂ hW₂ hN₂ hc₁ hc₂
+      hindep₂ hr₂ hN₂m hr₂_mean hN₂_mean).1]
+    ring
+  rw [he1, he2]
+  exact prop_target_order_equiv (mul_pos hc₁ hc₂) hκ hW₁ hN₁ hW₂ hN₂
+
+/-- Appendix A (`app:benchmarks`, L879): a negative exponent `α < 0` rewards exposure even
+more than career `WAR` (`α = 0`): for `0 < W₁ ≤ W₂` and `0 < N₁ < N₂`, `Z_α(W₁, N₁) < Z_α(W₂, N₂)`. -/
+theorem z_alpha_neg_alpha_rewards_exposure {W₁ N₁ W₂ N₂ α : ℝ}
+    (hα : α < 0) (hW₁ : 0 < W₁) (hWle : W₁ ≤ W₂) (hN₁ : 0 < N₁) (hNlt : N₁ < N₂) :
+    Z_alpha W₁ N₁ α < Z_alpha W₂ N₂ α := by
+  unfold Z_alpha
+  have hN₂ : 0 < N₂ := hN₁.trans hNlt
+  have hW₂ : 0 < W₂ := lt_of_lt_of_le hW₁ hWle
+  have hpos_exp : 0 < -α := neg_pos.mpr hα
+  have hpow_lt : N₁ ^ (-α) < N₂ ^ (-α) := Real.rpow_lt_rpow hN₁.le hNlt hpos_exp
+  rw [div_eq_mul_inv, div_eq_mul_inv, ← Real.rpow_neg hN₁.le, ← Real.rpow_neg hN₂.le]
+  exact mul_lt_mul' hWle hpow_lt (Real.rpow_pos_of_pos hN₁ _).le hW₂
+
+/-- Appendix C (`app:null`, L1008): when `0 ≤ r₀ < r̄` and `0 ≤ α < 1`, the marginal-rate
+threshold `(1 - α) r₀ + α r̄` lies in `[r₀, r̄)` and the effective exponent `α_eff` lies in `[α, 1)`. -/
+theorem prop_null_threshold_and_alpha_eff_bounds {r_bar r₀ α : ℝ}
+    (hr : 0 < r_bar) (hr₀_nn : 0 ≤ r₀) (hr₀_lt : r₀ < r_bar) (hα0 : 0 ≤ α) (hα1 : α < 1) :
+    r₀ ≤ (1 - α) * r₀ + α * r_bar ∧ (1 - α) * r₀ + α * r_bar < r_bar ∧
+    α ≤ α + (1 - α) * (r₀ / r_bar) ∧ α + (1 - α) * (r₀ / r_bar) < 1 := by
+  have h1α : 0 < 1 - α := sub_pos.mpr hα1
+  have hdiff_pos : 0 < r_bar - r₀ := sub_pos.mpr hr₀_lt
+  have hratio_nn : 0 ≤ r₀ / r_bar := div_nonneg hr₀_nn hr.le
+  have hratio_lt : r₀ / r_bar < 1 := (div_lt_one hr).mpr hr₀_lt
+  refine ⟨by nlinarith, by nlinarith, ?_, ?_⟩
+  · linarith [mul_nonneg h1α.le hratio_nn]
+  · nlinarith
+
+/-- Sections 3.3, 4, 6, & Appendix H: remaining numerical brackets cited in the paper:
+- `2^1.17 ∈ (2.25, 2.26)` and `2^1.30 ∈ (2.46, 2.47)` (Sec. 4, `2^{1.17}` to `2^{1.30}` ≈ `2.25–2.5`);
+- `1 / 0.065 ∈ (15.38, 15.39)` (Sec. 3.3, `Z_WAR = 1.00` is ≈ `15` standard errors above replacement);
+- `0.062 √650 ∈ (1.58, 1.59)` and `0.066 √650 ∈ (1.68, 1.69)` (Sec. 3.3, `1.6–1.7 WAR` per 650 events);
+- `0.05 / 2683^0.2 ∈ (0.0102, 0.0104)` and `0.05 / 29565^0.2 ∈ (0.0063, 0.0065)` (Sec. 6, `0.006–0.010`);
+- pairwise rounding tolerance ratio `0.10 / (0.10 / 5000^0.2) ∈ (5.4, 5.6)` and
+  `0.10 / (0.10 / 30000^0.2) ∈ (7.8, 7.9)` (App. H, `5` to `8` times the pairwise rounding bound);
+- `2.667 / 2.294 ∈ (1.16, 1.17)` (App. H, leverage ratio ≈ `1.16`);
+- `590 / 410 ∈ (1.43, 1.44)` (Remark 4, league bWAR pool ratio ≈ `1.44`). -/
+theorem paper_pennant_and_uncertainty_extra_bounds :
+    ((225 / 100 : ℝ) < (2 : ℝ) ^ (117 / 100 : ℝ) ∧ (2 : ℝ) ^ (117 / 100 : ℝ) < (226 / 100 : ℝ)) ∧
+    ((246 / 100 : ℝ) < (2 : ℝ) ^ (13 / 10 : ℝ) ∧ (2 : ℝ) ^ (13 / 10 : ℝ) < (247 / 100 : ℝ)) ∧
+    ((1538 / 100 : ℝ) < (1 : ℝ) / (65 / 1000 : ℝ) ∧ (1 : ℝ) / (65 / 1000 : ℝ) < (1539 / 100 : ℝ)) ∧
+    ((158 / 100 : ℝ) < (62 / 1000 : ℝ) * Real.sqrt 650 ∧
+      (62 / 1000 : ℝ) * Real.sqrt 650 < (159 / 100 : ℝ)) ∧
+    ((168 / 100 : ℝ) < (66 / 1000 : ℝ) * Real.sqrt 650 ∧
+      (66 / 1000 : ℝ) * Real.sqrt 650 < (169 / 100 : ℝ)) ∧
+    ((102 / 10000 : ℝ) < (5 / 100 : ℝ) / (2683 : ℝ) ^ (1 / 5 : ℝ) ∧
+      (5 / 100 : ℝ) / (2683 : ℝ) ^ (1 / 5 : ℝ) < (104 / 10000 : ℝ)) ∧
+    ((63 / 10000 : ℝ) < (5 / 100 : ℝ) / (29565 : ℝ) ^ (1 / 5 : ℝ) ∧
+      (5 / 100 : ℝ) / (29565 : ℝ) ^ (1 / 5 : ℝ) < (65 / 10000 : ℝ)) ∧
+    ((54 / 10 : ℝ) < (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (5000 : ℝ) ^ (1 / 5 : ℝ)) ∧
+      (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (5000 : ℝ) ^ (1 / 5 : ℝ)) < (56 / 10 : ℝ)) ∧
+    ((78 / 10 : ℝ) < (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (30000 : ℝ) ^ (1 / 5 : ℝ)) ∧
+      (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (30000 : ℝ) ^ (1 / 5 : ℝ)) < (79 / 10 : ℝ)) ∧
+    ((116 / 100 : ℝ) < (2667 / 1000 : ℝ) / (2294 / 1000 : ℝ) ∧
+      (2667 / 1000 : ℝ) / (2294 / 1000 : ℝ) < (117 / 100 : ℝ)) ∧
+    ((143 / 100 : ℝ) < (590 : ℝ) / 410 ∧ (590 : ℝ) / 410 < (144 / 100 : ℝ)) := by
+  have h117_lo : (225 / 100 : ℝ) < (2 : ℝ) ^ (((117 : ℕ) : ℝ) / (100 : ℕ)) :=
+    lt_rpow_div_nat 117 100 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h117_hi : (2 : ℝ) ^ (((117 : ℕ) : ℝ) / (100 : ℕ)) < (226 / 100 : ℝ) :=
+    rpow_div_nat_lt 117 100 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h130_lo : (246 / 100 : ℝ) < (2 : ℝ) ^ (((13 : ℕ) : ℝ) / (10 : ℕ)) :=
+    lt_rpow_div_nat 13 10 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h130_hi : (2 : ℝ) ^ (((13 : ℕ) : ℝ) / (10 : ℕ)) < (247 / 100 : ℝ) :=
+    rpow_div_nat_lt 13 10 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h650_lo : (15800 / 620 : ℝ) < Real.sqrt 650 := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : ((15800 / 620 : ℝ) ^ 2) < 650)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have h650_hi : Real.sqrt 650 < (15900 / 620 : ℝ) := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : (650 : ℝ) < (15900 / 620 : ℝ) ^ 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have h650_lo2 : (16800 / 660 : ℝ) < Real.sqrt 650 := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : ((16800 / 660 : ℝ) ^ 2) < 650)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have h650_hi2 : Real.sqrt 650 < (16900 / 660 : ℝ) := by
+    have hlt := Real.sqrt_lt_sqrt (by norm_num) (by norm_num : (650 : ℝ) < (16900 / 660 : ℝ) ^ 2)
+    rwa [Real.sqrt_sq (by norm_num)] at hlt
+  have h2683_lo : (500 / 104 : ℝ) < (2683 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) :=
+    lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h2683_hi : (2683 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) < (500 / 102 : ℝ) :=
+    rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h29565_lo : (500 / 65 : ℝ) < (29565 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) :=
+    lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h29565_hi : (29565 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) < (500 / 63 : ℝ) :=
+    rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h5k_lo : (54 / 10 : ℝ) < (5000 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) :=
+    lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h5k_hi : (5000 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) < (56 / 10 : ℝ) :=
+    rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h30k_lo : (78 / 10 : ℝ) < (30000 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) :=
+    lt_rpow_div_nat 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h30k_hi : (30000 : ℝ) ^ (((1 : ℕ) : ℝ) / (5 : ℕ)) < (79 / 10 : ℝ) :=
+    rpow_div_nat_lt 1 5 (by norm_num) (by norm_num) (by omega) (by norm_num)
+  have h2683_pos : 0 < (2683 : ℝ) ^ (1 / 5 : ℝ) := Real.rpow_pos_of_pos (by norm_num) _
+  have h29565_pos : 0 < (29565 : ℝ) ^ (1 / 5 : ℝ) := Real.rpow_pos_of_pos (by norm_num) _
+  have h5k_eq : (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (5000 : ℝ) ^ (1 / 5 : ℝ)) = (5000 : ℝ) ^ (1 / 5 : ℝ) := by
+    have hne : (5000 : ℝ) ^ (1 / 5 : ℝ) ≠ 0 := (Real.rpow_pos_of_pos (by norm_num) _).ne'
+    field_simp [hne]
+  have h30k_eq : (1 / 10 : ℝ) / ((1 / 10 : ℝ) / (30000 : ℝ) ^ (1 / 5 : ℝ)) = (30000 : ℝ) ^ (1 / 5 : ℝ) := by
+    have hne : (30000 : ℝ) ^ (1 / 5 : ℝ) ≠ 0 := (Real.rpow_pos_of_pos (by norm_num) _).ne'
+    field_simp [hne]
+  norm_num at h2683_lo h2683_hi h29565_lo h29565_hi
+  rw [show (((117 : ℕ) : ℝ) / (100 : ℕ)) = 117 / 100 by norm_num] at h117_lo h117_hi
+  rw [show (((13 : ℕ) : ℝ) / (10 : ℕ)) = 13 / 10 by norm_num] at h130_lo h130_hi
+  rw [show (((1 : ℕ) : ℝ) / (5 : ℕ)) = 1 / 5 by norm_num] at h5k_lo h5k_hi h30k_lo h30k_hi
+  refine ⟨⟨h117_lo, h117_hi⟩, ⟨h130_lo, h130_hi⟩, ⟨by norm_num, by norm_num⟩,
+    ⟨by linarith, by linarith⟩, ⟨by linarith, by linarith⟩,
+    ⟨(lt_div_iff₀ h2683_pos).mpr (by linarith), (div_lt_iff₀ h2683_pos).mpr (by linarith)⟩,
+    ⟨(lt_div_iff₀ h29565_pos).mpr (by linarith), (div_lt_iff₀ h29565_pos).mpr (by linarith)⟩,
+    ⟨by rw [h5k_eq]; exact h5k_lo, by rw [h5k_eq]; exact h5k_hi⟩,
+    ⟨by rw [h30k_eq]; exact h30k_lo, by rw [h30k_eq]; exact h30k_hi⟩,
+    ⟨by norm_num, by norm_num⟩, ⟨by norm_num, by norm_num⟩⟩
+
 end ZwarProofs
 

@@ -285,12 +285,37 @@ def z2d_lgamma(w_pos, pa, w_pitch, bf, alpha=0.5):
         I = sum_k sgn(W_k) |W_k|^gamma / max(N_k, 1)^(gamma - 1)
           = sum_k sgn(Z_k) |Z_k|^gamma   (Z_k = W_k / N_k^alpha, since alpha*gamma = gamma - 1)
         Z = sgn(I) |I|^(1/gamma).
-    alpha = 0 gives total WAR, alpha = 1/2 reproduces z2d (signed quadrature).
-    Requires 0 <= alpha < 1."""
+    alpha = 0 gives total WAR, alpha = 1/2 reproduces z2d (signed quadrature),
+    and alpha >= 1 - 1e-12 evaluates the exact alpha -> 1^- limit (larger |Z_k|
+    with Z_k = W_k / max(N_k, 1), breaking exact opposite-sign ties by larger
+    floored exposure max(N_k, 1), returning 0.0 if exposures also coincide).
+    Factoring out m = max(|Z_k|) prevents float overflow for alpha near 1."""
+    if alpha == 0.0:
+        return float(w_pos + w_pitch)
+    n1 = max(pa, 1.0)
+    n2 = max(bf, 1.0)
+    if alpha >= 1.0 - 1e-12:
+        z1 = w_pos / n1
+        z2 = w_pitch / n2
+        az1, az2 = abs(z1), abs(z2)
+        if az1 != az2:
+            return z1 if az1 > az2 else z2
+        if z1 == z2:
+            return z1
+        if n1 != n2:
+            return z1 if n1 > n2 else z2
+        return 0.0
     g = 1.0 / (1.0 - alpha)
-    i = sum(math.copysign(abs(w) ** g / max(n, 1) ** (g - 1), w)
-            for w, n in ((w_pos, pa), (w_pitch, bf)) if w != 0)
-    return math.copysign(abs(i) ** (1.0 / g), i)
+    z1 = w_pos / (n1 ** alpha)
+    z2 = w_pitch / (n2 ** alpha)
+    m = max(abs(z1), abs(z2))
+    if m == 0.0:
+        return 0.0
+    i = sum(math.copysign((abs(z) / m) ** g, z)
+            for z in (z1, z2) if z != 0.0)
+    if i == 0.0:
+        return 0.0
+    return m * math.copysign(abs(i) ** (1.0 / g), i)
 
 
 def auc(scores, labels):
@@ -349,11 +374,12 @@ def spw(seasons, threshold, unit):
     interpolating within the season that crosses it. Players whose career
     exposure is below the threshold get their career WAR.
     """
-    seasons = [(w, n) for w, n in seasons if n > 0]
-    total_n = sum(n for _, n in seasons)
+    seasons = list(seasons)
+    total_n = sum(n for _, n in seasons if n > 0)
     total_w = sum(w for w, _ in seasons)
     if total_n < threshold:
         return total_w
+    seasons = [(w, n) for w, n in seasons if n > 0]
     seasons.sort(key=lambda t: t[0] / t[1] * unit, reverse=True)
     cum_w = cum_n = 0.0
     for w, n in seasons:

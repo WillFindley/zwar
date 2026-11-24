@@ -231,6 +231,31 @@ chk("WAA alpha_eff at r0 = rbar / 2", 0.0 + 1.0 * 0.5, 0.50, 1e-12)
 chk("WAA/sqrt(N) alpha_eff at r0 = rbar / 2", 0.5 + 0.5 * 0.5, 0.75, 0.015)
 chk("Pairwise ZWAR diff SE sqrt(2)*0.065", s(2) * 0.065, 0.092, 0.002)
 
+print("== Shared common.py edge-case checks")
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from common import spw as common_spw, z2d_lgamma as common_z2d_lgamma
+
+# High-alpha scaling without float64 overflow (e.g. N >= 1,230 at alpha=0.99)
+z_oht_99 = common_z2d_lgamma(38.4, 4947, 19.4, 2479, 0.99)
+z_oht_1 = common_z2d_lgamma(38.4, 4947, 19.4, 2479, 1.0)
+assert abs(z_oht_1 - max(38.4 / 4947, 19.4 / 2479)) < 1e-12
+assert abs(common_z2d_lgamma(162.3, 10628, 20.4, 4896, 0.99) - 162.3 / (10628 ** 0.99)) < 1e-5
+assert math.isfinite(z_oht_99) and z_oht_99 > z_oht_1
+
+# Exact alpha = 0 identity (no m-scaling rounding drift relative to w_pos + w_pitch)
+chk("common.z2d_lgamma alpha=0 exact sum", common_z2d_lgamma(55.4, 2326, 2.25, 6063, 0.0), 55.4 + 2.25, 0.0)
+
+# Exact alpha -> 1^- limit and opposite-sign tiebreak by floored exposure max(N_k, 1)
+chk("common.z2d_lgamma alpha=1 opp-sign (N1>N2)", common_z2d_lgamma(10.0, 100, -2.0, 20, 1.0), 0.1, 1e-12)
+chk("common.z2d_lgamma alpha=1 opp-sign neg (N1>N2)", common_z2d_lgamma(-10.0, 100, 2.0, 20, 1.0), -0.1, 1e-12)
+chk("common.z2d_lgamma alpha=1 opp-sign equal N", common_z2d_lgamma(5.0, 50, -5.0, 50, 1.0), 0.0, 1e-12)
+chk("common.z2d_lgamma alpha=1 same-sign equal Z", common_z2d_lgamma(5.0, 50, 5.0, 50, 1.0), 0.1, 1e-12)
+
+# SPW retains 0-exposure seasons for players below career threshold
+chk("common.spw below-threshold retains 0-exp WAR", common_spw([(1.2, 100), (-0.3, 0)], 3250, 650), 0.9, 1e-12)
+chk("common.spw above-threshold ignores 0-exp WAR", common_spw([(10.0, 3250), (-0.3, 0)], 3250, 650), 10.0, 1e-12)
+
 print()
 print("ALL CHECKS PASSED" if not FAILS else f"{len(FAILS)} MISMATCHES: {FAILS}")
 sys.exit(1 if FAILS else 0)

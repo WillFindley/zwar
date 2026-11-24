@@ -9,7 +9,7 @@ Repository: <https://github.com/WillFindley/zwar>
 
 | Path | Purpose |
 |---|---|
-| `fetch_data.py` | **Only networked step.** Rate-limited (15 req/min) download of the Baseball-Reference inputs into `data/raw/` |
+| `fetch_data.py` | **Only networked step.** Rate-limited (15 req/min) download of the Baseball-Reference, FanGraphs, and Baseball Databank inputs into `data/raw/` |
 | `run_all.py` | Runs every analysis step below, offline |
 | `zwar/common.py` | Loaders (season WAR files, JAWS pages, player pages) and statistics (AUC, stratified bootstrap, Spearman, SPW); two-coordinate combinations (`z2d_lgamma`: the paper's signed ℓ_γ rule, γ = 1/(1−α); `z2d_alpha`: signed quadrature) |
 | `zwar/universe.py` | All-time universes (position play, pitching, unified) shared by 07 and 17 |
