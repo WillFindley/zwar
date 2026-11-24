@@ -252,12 +252,13 @@ def main():
     Hi, SPi, RPi = (hof_eligible(hitters(), exclude=False), hof_eligible(pitchers("SP"), exclude=False),
                     hof_eligible(pitchers("RP"), exclude=False))
     max_change = 0.0
-    for (a, b) in [(H, Hi), (SP, SPi), (RP, RPi), (HSP, Hi + SPi)]:
+    for (a, b) in [(H, Hi), (SP, SPi), (RP, RPi), (HSP, Hi + SPi), (SPRP, SPi + RPi)]:
         for k in ["WAR", "WAR7", "JAWS", "WAA", "SPW", "Z"]:
             d = abs(auc(metric(a, k), labels(a)) - auc(metric(b, k), labels(b)))
             max_change = max(max_change, d)
     log(f"Including banned/PED players changes AUCs by at most {max_change:.4f} "
         f"(main pools; WAR, WAR7, JAWS, WAA, SPW, Z)")
+    assert max_change <= 0.003, f"Unexpected 5-pool benchmark sensitivity: {max_change}"
 
     def max_z_delta(alt_pools):
         best_main = (0.0, None, None)

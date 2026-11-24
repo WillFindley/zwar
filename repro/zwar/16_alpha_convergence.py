@@ -332,7 +332,7 @@ def figure(bench, band):
              "forecast": "forecasts"}
     a = ab.ALPHAS
     fig, axes = plt.subplots(1, 2, figsize=(6.5, 3.6), sharey=True)
-    panels = [(axes[0], ("judgment", "concurrent"), "(a) Career judgments"),
+    panels = [(axes[0], ("judgment", "concurrent"), "(a) Career judgments & honors"),
               (axes[1], ("forecast",), "(b) Forecasts")]
     for ax, cats, title in panels:
         B = [b for b in bench if b["category"] in cats]

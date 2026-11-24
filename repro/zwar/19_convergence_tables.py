@@ -135,7 +135,7 @@ rows = []
 for role, rl in (("Hitters", "H"), ("Pitchers", "P")):
     aw = "MVP" if rl == "H" else "MVP+CY"
     for design, lab, cut in (("checkpoint k=3", "3 seasons", "2023"), ("checkpoint k=5", "5 seasons", "2023"),
-                             ("midpoint", "Midpoint", "2016")):
+                             ("midpoint", "midpoint", "2016")):
         if design.startswith("checkpoint"):
             war = f"{role}, {design} (careers to 2023): future WAR"
             hof = f"{role}, {design} (careers to 2023): Hall of Fame"
