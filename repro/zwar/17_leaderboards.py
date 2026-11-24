@@ -413,7 +413,7 @@ def main():
            "total career $\\WAR$ at $\\alpha = 0$ ($\\WAR$ \\textbf{Rk}; tied totals share the better rank) and "
            "Equation~\\eqref{eq:universal_zwar} at $\\alpha = \\tfrac12$ ($Z_{1/2}$ \\textbf{Rk}). Totals are sums "
            "of the rounded components shown and can differ by $0.1$ from Baseball-Reference's published career "
-           "totals (e.g., Ruth, Young, Randy Johnson).")
+           "totals (e.g., Ruth, Young, Randy Johnson). Pitchers and featured two-way players are shown in bold.")
     hdr = ["\\textbf{All-Time Rk} & \\textbf{Player} & \\textbf{Positions (Coord.\\ Rk)} & "
            "\\textbf{Pos / Pitch $\\WAR$ (Tot)} & \\textbf{Exposure ($\\PA$ / $\\BF$)} & "
            "$Z_{1/5,\\mathrm{pos}}$ & $Z_{1/5,\\mathrm{pitch}}$ & "
