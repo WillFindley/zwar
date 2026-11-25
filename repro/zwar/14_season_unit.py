@@ -12,12 +12,11 @@ external benchmarks:
   * Hall of Fame AUC in the pools of Table 4 (S = seasons with any exposure in
     the role, and S_100 = seasons with at least 100 PA / BF, minimum 1);
   * the two expert top-100 lists of Section 5.4 (two-way records combined by
-    the signed quadrature of Equation (10) with S_k in place of N_k).
+    the signed l_gamma rule of Definition 1 / Equation (10) with S_k in place of N_k).
 
 Outputs: outputs/season_unit.csv, outputs/season_unit_summary.txt
 """
 import importlib.util
-import math
 import os
 import sys
 
@@ -26,7 +25,7 @@ from scipy.stats import spearmanr
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpha_bench import argmax_idx  # noqa: E402
-from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, OUT  # noqa: E402
+from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, z2d_lgamma, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -156,12 +155,10 @@ def main():
         lp = [pid for _, pid, _ in entries]
 
         def z_season(p, a):
-            i = (p["w_pos"] * abs(p["w_pos"]) / max(p["s_pos"], 1) ** (2 * a)
-                 + p["w_pit"] * abs(p["w_pit"]) / max(p["s_pit"], 1) ** (2 * a))
-            return math.copysign(math.sqrt(abs(i)), i)
+            return z2d_lgamma(p["w_pos"], p["s_pos"], p["w_pit"], p["s_pit"], a)
 
         res = {}
-        for unit, f in (("events", ex.z_unified), ("seasons", z_season)):
+        for unit, f in (("events", ex.z_two_way), ("seasons", z_season)):
             curve = []
             for a in ALPHAS:
                 su = np.array([f(car[pid], a) for pid in uni])

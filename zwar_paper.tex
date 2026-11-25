@@ -327,7 +327,7 @@ Proposition~\ref{prop:gamma} turns the exponent into a claim about how much more
 
 \begin{table}[htbp]
 \centering
-\caption{Convexity of season value estimated from pennant races (Proposition~\ref{prop:gamma}), with 95\% bootstrap intervals and the implied exponent $\alpha = 1 - 1/\gamma$. The last column refits the win--probability curves with a quadratic term in wins. For comparison, $\alpha = \tfrac12$ would require $\gamma = 2$.}
+\caption{Convexity of season value estimated from pennant races (Proposition~\ref{prop:gamma}), with 95\% bootstrap intervals and the implied exponent $\alpha = 1 - 1/\gamma$ (computed from unrounded $\gamma$). The last column refits the win--probability curves with a quadratic term in wins. For comparison, $\alpha = \tfrac12$ would require $\gamma = 2$.}
 \label{tab:gamma}
 \footnotesize
 \begin{tabular}{@{}lccccc@{}}
@@ -529,7 +529,7 @@ The hypothesis $H_{1/2}$ is not without support. $\alpha = \tfrac12$ scores abov
 \section{All-Time Leaderboards at \texorpdfstring{$\alpha = \tfrac15$}{alpha = 1/5}}
 \label{sec:empirical}
 
-All values use Baseball-Reference $\WAR$ ($\mathrm{bWAR}$) \cite{bbref2026}, accessed 16 October 2026. Ranks are among all players in Baseball-Reference's MLB and Negro Leagues season files. Career $\BF$ comes from the JAWS pages or player pages where available; for the remaining pitchers it is estimated as $4.2\,\BF$ per inning, which affects no pitcher ranked in the top $370$ at $\alpha = \tfrac15$. Every table is sorted by $Z_{1/5}$ and also shows the career-$\WAR$ rank ($\alpha = 0$) and the $Z_{1/2}$ rank, so that the reader can see what the exponent does at both ends. A $\pm 0.05$ change in published $\WAR$ moves $Z_{1/5}$ by $0.05/N^{0.2}$, about $0.006$--$0.010$ for the single-role players shown (and up to $0.021$ for two-coordinate scores); we treat gaps in $Z_{1/5}$ below $0.10$ (about $0.5\%$ of a top score, the same relative tolerance as $0.005$ on the $Z_{1/2}$ scale) as ties. Below the top fifty the boards are dense, and ranks there are resolved only to within a few places (Appendix~\ref{app:uncert}).
+All values use Baseball-Reference $\WAR$ ($\mathrm{bWAR}$) \cite{bbref2026}, accessed October 16, 2026. Ranks are among all players in Baseball-Reference's MLB and Negro Leagues season files. Career $\BF$ comes from the JAWS pages or player pages where available; for the remaining pitchers it is estimated as $4.2\,\BF$ per inning, which affects no pitcher ranked in the top $370$ at $\alpha = \tfrac15$. Every table is sorted by $Z_{1/5}$ and also shows the career-$\WAR$ rank ($\alpha = 0$) and the $Z_{1/2}$ rank, so that the reader can see what the exponent does at both ends. A $\pm 0.05$ change in published $\WAR$ moves $Z_{1/5}$ by $0.05/N^{0.2}$, about $0.006$--$0.010$ for the single-role players shown (and up to $0.021$ for two-coordinate scores); we treat gaps in $Z_{1/5}$ below $0.10$ (about $0.5\%$ of a top score, the same relative tolerance as $0.005$ on the $Z_{1/2}$ scale) as ties. Below the top fifty the boards are dense, and ranks there are resolved only to within a few places (Appendix~\ref{app:uncert}).
 
 \subsection{Position play}
 \label{sec:hitters}
@@ -812,7 +812,7 @@ Table~\ref{tab:alpha} follows selected players across the dial. The pool is Base
 
 \begin{table}[htbp]
 \centering
-\caption{Ranks under $W/N^\alpha$ in the JAWS-page pools (16 Oct.\ 2026; ranking within the JAWS pools using unrounded summed season $\WAR$, which shifts Gibson at $\alpha=0$, Rose at $\alpha=0.5$ and Billy Wagner at $\alpha=0$ by one place relative to the all-time rounded career-table ranks in Tables~\ref{tab:hitters} and~\ref{tab:relievers}). $\alpha=0$: $\WAR$; $\alpha=0.2$: the value point ($\gamma = 1.25$, Section~\ref{sec:gamma}); $\alpha=0.25$: near the Hall of Fame AUC optimum (Section~\ref{sec:hof}); $\alpha=0.5$: $\ZWAR$, the $z$-statistic hypothesis; $\alpha=1$: pure rate.}
+\caption{Ranks under $W/N^\alpha$ in the JAWS-page pools (Oct.\ 16, 2026; ranking within the JAWS pools using unrounded summed season $\WAR$, which shifts Gibson at $\alpha=0$, Rose at $\alpha=0.5$ and Billy Wagner at $\alpha=0$ by one place relative to the all-time rounded career-table ranks in Tables~\ref{tab:hitters} and~\ref{tab:relievers}). $\alpha=0$: $\WAR$; $\alpha=0.2$: the value point ($\gamma = 1.25$, Section~\ref{sec:gamma}); $\alpha=0.25$: near the Hall of Fame AUC optimum (Section~\ref{sec:hof}); $\alpha=0.5$: $\ZWAR$, the $z$-statistic hypothesis; $\alpha=1$: pure rate.}
 \label{tab:alpha}
 \footnotesize
 \begin{tabular}{@{}lrrrrrrrrr@{}}
@@ -869,7 +869,7 @@ At that exponent, Babe Ruth ranks first, Walter Johnson and Cy Young fifth and s
 
 \section*{Data and Code Availability}
 
-Career statistics are from Baseball-Reference's career and JAWS leaderboards \cite{bbref2026} (accessed 16 October 2026) and FanGraphs' career leaderboards \cite{fangraphs2026} (accessed 17 October 2026; active players' values will change). Team standings and postseason results are from Baseball-Reference's franchise histories \cite{bbrefteams}, accessed 17 October 2026. All-Star selections and award voting are from the Baseball Databank \cite{lahman}, accessed 23 October 2026. The two expert lists \cite{tsn1998,espn2022} (accessed 17 October 2026) are not redistributed in the repository; the reproduction README documents the CSV schema needed to recreate the local file from those published lists. The accompanying reproduction pipeline (\url{https://github.com/WillFindley/zwar}) includes a rate-limited download script that caches dated inputs locally (raw third-party data, third-party editorial rankings, and generated output tables are not redistributed, per Sports Reference's and third-party publishers' terms) and scripts that verify every Baseball-Reference input and derived value, rebuild every table and the figure, and reproduce the $\alpha$-sensitivity, Hall of Fame, SPW, variance, expert-ranking, forecasting, regression-implied exponent, season-value convexity, meaningful-null, seasons-versus-events and FanGraphs $\mathrm{fWAR}$ analyses. Formal Lean~4 proofs verifying all propositions, identities, and inequalities in the paper (built against Mathlib with zero \texttt{sorry}s) are included in \texttt{lean/ZwarProofs.lean}.
+Career statistics are from Baseball-Reference's career and JAWS leaderboards \cite{bbref2026} (accessed October 16, 2026) and FanGraphs' career leaderboards \cite{fangraphs2026} (accessed October 17, 2026; active players' values will change). Team standings and postseason results are from Baseball-Reference's franchise histories \cite{bbrefteams}, accessed October 17, 2026. All-Star selections and award voting are from the Baseball Databank \cite{lahman}, accessed October 23, 2026. The two expert lists \cite{tsn1998,espn2022} (accessed October 17, 2026) are not redistributed in the repository; the reproduction README documents the CSV schema needed to recreate the local file from those published lists. The accompanying reproduction pipeline (\url{https://github.com/WillFindley/zwar}) includes a rate-limited download script that caches dated inputs locally (raw third-party data, third-party editorial rankings, and generated output tables are not redistributed, per Sports Reference's and third-party publishers' terms) and scripts that verify every Baseball-Reference input and derived value, rebuild every table and the figure, and reproduce the $\alpha$-sensitivity, Hall of Fame, SPW, variance, expert-ranking, forecasting, regression-implied exponent, season-value convexity, meaningful-null, seasons-versus-events and FanGraphs $\mathrm{fWAR}$ analyses. Formal Lean~4 proofs verifying all propositions, identities, and inequalities in the paper (built against Mathlib with zero \texttt{sorry}s) are included in \texttt{lean/ZwarProofs.lean}.
 
 \appendix
 
@@ -1014,7 +1014,7 @@ The evidence reading of Proposition~\ref{prop:frequentist} tests against replace
 \begin{equation}
     Z_{\alpha,\lambda} = \frac{\WAR - \lambda D}{N^{\alpha}},
 \end{equation}
-which is Proposition~\ref{prop:null} with a player-specific null $r_0 = \lambda D/N$. Here $\lambda = 0$ is the replacement-level family, $\lambda = 1$ tests against league average ($Z_{1/2,1} = \WAA/\sqrt N$), and $\lambda = 2$ against a rate twice as far above replacement as average (about $4.3\,\WAR$ per $650\,\PA$, an All-Star pace). We repeat the Hall of Fame analysis of Section~\ref{sec:hof} over $\alpha \in [0,1]$ and $\lambda \in \{0, 0.25, \ldots, 2\}$, and the expert-list analysis of Section~\ref{sec:expert} with the null applied to each coordinate (two-way records combined by signed quadrature, which coincides with Definition~\ref{def:twoway} at $\alpha = \tfrac12$).
+which is Proposition~\ref{prop:null} with a player-specific null $r_0 = \lambda D/N$. Here $\lambda = 0$ is the replacement-level family, $\lambda = 1$ tests against league average ($Z_{1/2,1} = \WAA/\sqrt N$), and $\lambda = 2$ against a rate twice as far above replacement as average (about $4.3\,\WAR$ per $650\,\PA$, an All-Star pace). We repeat the Hall of Fame analysis of Section~\ref{sec:hof} over $\alpha \in [0,1]$ and $\lambda \in \{0, 0.25, \ldots, 2\}$, and the expert-list analysis of Section~\ref{sec:expert} with the null applied to each coordinate (two-way records combined by Definition~\ref{def:twoway}, using its $\alpha \to 1^-$ limit at $\alpha = 1$).
 
 \begin{table}[htbp]
 \centering
@@ -1022,21 +1022,21 @@ which is Proposition~\ref{prop:null} with a player-specific null $r_0 = \lambda 
 \label{tab:null}
 \footnotesize
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lccccccccc@{}}
+\begin{tabular}{@{}lcccccccc@{}}
 \toprule
-& \multicolumn{4}{c}{\textbf{AUC at $\alpha = \tfrac12$}} & & \multicolumn{3}{c}{\textbf{Best $\alpha$ (AUC)}} & \\
-\cmidrule(lr){2-5} \cmidrule(lr){7-9}
-\textbf{Pool} & $\lambda = 0$ & $\lambda = \tfrac12$ & $\lambda = 1$ & $\lambda = 2$ & & $\lambda = 0$ & $\lambda = \tfrac12$ & $\lambda = 1$ & $\WAA/\sqrt N$ minus $\ZWAR$ \\
+& \multicolumn{4}{c}{\textbf{AUC at $\alpha = \tfrac12$}} & \multicolumn{3}{c}{\textbf{Best $\alpha$ (AUC)}} & \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-8}
+\textbf{Pool} & $\lambda = 0$ & $\lambda = \tfrac12$ & $\lambda = 1$ & $\lambda = 2$ & $\lambda = 0$ & $\lambda = \tfrac12$ & $\lambda = 1$ & $\WAA/\sqrt N$ minus $\ZWAR$ \\
 \midrule
-Hitters (8 positions pooled) & 0.935 & 0.931 & 0.920 & 0.841 & & 0.25 (0.936) & 0.20 (0.933) & 0.00 (0.925) & $[-0.024, -0.005]$ \\
-Starting pitchers            & 0.904 & 0.888 & 0.858 & 0.751 & & 0.25 (0.914) & 0.00 (0.913) & 0.00 (0.890) & $[-0.073, -0.021]$ \\
-Relief pitchers              & 0.985 & 0.979 & 0.954 & 0.735 & & 0.35 (0.988) & 0.30 (0.983) & 0.00 (0.975) & $[-0.088, -0.000]$ \\
-Hitters + SP pooled          & 0.935 & 0.931 & 0.920 & 0.840 & & 0.25 (0.938) & 0.15 (0.936) & 0.00 (0.928) & $[-0.022, -0.007]$ \\
-SP + RP pooled               & 0.939 & 0.928 & 0.899 & 0.755 & & 0.40 (0.941) & 0.15 (0.937) & 0.00 (0.923) & $[-0.063, -0.020]$ \\
+Hitters (8 positions pooled) & 0.935 & 0.931 & 0.920 & 0.841 & 0.25 (0.936) & 0.20 (0.933) & 0.00 (0.925) & $[-0.024, -0.005]$ \\
+Starting pitchers            & 0.904 & 0.888 & 0.858 & 0.751 & 0.25 (0.914) & 0.00 (0.913) & 0.00 (0.890) & $[-0.073, -0.021]$ \\
+Relief pitchers              & 0.985 & 0.979 & 0.954 & 0.735 & 0.35 (0.988) & 0.30 (0.983) & 0.00 (0.975) & $[-0.088, -0.000]$ \\
+Hitters + SP pooled          & 0.935 & 0.931 & 0.920 & 0.840 & 0.25 (0.938) & 0.15 (0.936) & 0.00 (0.928) & $[-0.022, -0.007]$ \\
+SP + RP pooled               & 0.939 & 0.928 & 0.899 & 0.755 & 0.40 (0.941) & 0.15 (0.937) & 0.00 (0.923) & $[-0.063, -0.020]$ \\
 \midrule
-Contested hitters            & 0.821 & 0.801 & 0.776 & 0.719 & & 0.20 (0.836) & 0.00 (0.827) & 0.00 (0.808) & --- \\
-Contested SP                 & 0.808 & 0.780 & 0.744 & 0.643 & & 0.05 (0.833) & 0.00 (0.817) & 0.00 (0.788) & --- \\
-Contested hitters + SP       & 0.807 & 0.795 & 0.771 & 0.694 & & 0.25 (0.839) & 0.15 (0.826) & 0.00 (0.798) & --- \\
+Contested hitters            & 0.821 & 0.801 & 0.776 & 0.719 & 0.20 (0.836) & 0.00 (0.827) & 0.00 (0.808) & --- \\
+Contested SP                 & 0.808 & 0.780 & 0.744 & 0.643 & 0.05 (0.833) & 0.00 (0.817) & 0.00 (0.788) & --- \\
+Contested hitters + SP       & 0.807 & 0.795 & 0.771 & 0.694 & 0.25 (0.839) & 0.15 (0.826) & 0.00 (0.798) & --- \\
 \bottomrule
 \end{tabular}%
 }
@@ -1046,14 +1046,14 @@ Contested hitters + SP       & 0.807 & 0.795 & 0.771 & 0.694 & & 0.25 (0.839) & 
     \item \emph{The evidence question is now open.} With $\sigma = 0.065$, every relief and starting Hall of Famer and $96\%$ of hitters clear $z > 1.96$ against replacement level (median $z$ $6.8$--$9.5$). Against league average the share falls to $85$--$88\%$ (median $z$ $3.0$--$4.8$); against $\lambda = 1.5$ to $60$--$61\%$ for hitters and starters and $25\%$ for relievers; and against the All-Star null ($\lambda = 2$) to $22$--$27\%$ for hitters and starters and none of the eight relievers (median $z$ from $-0.3$ to $0.4$).
     \item \emph{Higher nulls make $\alpha = \tfrac12$ worse, not better.} At $\alpha = \tfrac12$, AUC falls monotonically as $\lambda$ rises, in every pool (Table~\ref{tab:null}), and the bootstrap interval for the league-average null minus the replacement-level null excludes zero in four of the five main pools and just touches it for relievers. The overall best point of the $(\alpha, \lambda)$ grid is $\lambda = 0$ in all eight pools, at the same exponents as in Table~\ref{tab:hof}.
     \item \emph{The best exponent falls as the null rises, but cannot hold the effective threshold at one-quarter.} The AUC-maximizing $\alpha$ drops from $0.20$--$0.40$ at $\lambda = 0$ (except contested starters, $0.05$) to $0$ at $\lambda = 1$ in every pool (plain $\WAA$, which itself trails career $\WAR$; Table~\ref{tab:hof}). By Proposition~\ref{prop:null}, the relevant quantity is the effective exponent $\alpha_{\mathrm{eff}} = \alpha + (1-\alpha)\lambda D/\WAR$. For Hall of Fame hitters, along the per-$\lambda$ optimum its median rises from $0.25$ ($\lambda = 0$) to $0.30$, $0.40$ and $0.49$ ($\lambda = 0.25$, $0.5$, $1$), while the best attainable AUC falls from $0.936$ to $0.935$, $0.933$ and $0.925$. The higher null cannot be offset by a lower exponent once $\alpha$ reaches zero, so classification degrades as the implied dilution threshold rises above about one-quarter of the career rate. $\WAA/\sqrt N$ has $\alpha_{\mathrm{eff}} \approx 0.74$ (10--90\%: $0.67$--$0.88$) for Hall of Fame hitters. For $\lambda \ge 1.5$ many Hall of Famers have negative numerators, and dividing a negative score by $N^{\alpha}$ reverses the role of the exponent, so the nominal optima there ($\alpha = 1$ at $\lambda = 2$) are artifacts.
-    \item \emph{Expert lists: list order rewards a higher null, but not $\alpha = \tfrac12$.} Membership AUC behaves like the Hall of Fame: the best point is at $\lambda \le 0.25$ with $\alpha = 0.20$--$0.25$ ($0.960$ and $0.981$, the same as at $\lambda = 0$). The order of the $100$ listed players, which weights peaks most, does improve with the null: at $\alpha = \tfrac12$ the Spearman correlation rises from $0.558$ and $0.551$ ($\lambda = 0$) to $0.601$ and $0.580$ ($\lambda = 1$). Even there, though, the best exponent is $0.20$ and $0.35$ at $\lambda = 1$ ($0.625$ and $0.602$), and the best points overall are $\alpha = 0.20$--$0.25$ at $\lambda = 1.5$--$2$ ($0.635$ and $0.610$). These are in-sample optima without intervals.
+    \item \emph{Expert lists: list order rewards a higher null, but not $\alpha = \tfrac12$.} Membership AUC behaves like the Hall of Fame: the best point is at $\lambda = 0.25$ with $\alpha = 0.25$ ($0.961$ and $0.981$, within $0.001$ of $\lambda = 0$). The order of the $100$ listed players, which weights peaks most, does improve with the null: at $\alpha = \tfrac12$ the Spearman correlation rises from $0.558$ and $0.551$ ($\lambda = 0$) to $0.601$ and $0.580$ ($\lambda = 1$). Even there, though, the best exponent is $0.30$ and $0.25$ at $\lambda = 1$ ($0.627$ and $0.604$), and the best points overall are $\alpha = 0.05$ and $0.10$ at $\lambda = 1.5$ ($0.641$ and $0.614$). These are in-sample optima without intervals.
 \end{itemize}
-A meaningful null therefore gives no support to $\alpha = \tfrac12$ as a summary of career value. It confirms instead, from a different direction, that Hall of Fame membership and expert-list membership prefer a dilution threshold of roughly one-quarter of a great player's career rate. Within the replacement-level family that is $\alpha \approx 0.25$; with a higher null it requires a smaller exponent, and with a null as high as league average no exponent in $[0,1]$ reaches it. Expert-list \emph{order} is the exception: it improves with the null up to $\lambda = 1.5$--$2$, where the implied threshold is far above one-quarter (in-sample, without intervals), consistent with lists that rank their very top by peak. The evidence reading of $\ZWAR$ remains a justification for the event unit (Section~\ref{sec:zstat}), not a better summary of career value.
+A meaningful null therefore gives no support to $\alpha = \tfrac12$ as a summary of career value. It confirms instead, from a different direction, that Hall of Fame membership and expert-list membership prefer a dilution threshold of roughly one-quarter of a great player's career rate. Within the replacement-level family that is $\alpha \approx 0.25$; with a higher null it requires a smaller exponent, and with a null as high as league average no exponent in $[0,1]$ reaches it. Expert-list \emph{order} is the exception: it improves with the null up to $\lambda = 1.5$, where the implied threshold is far above one-quarter (in-sample, without intervals), consistent with lists that rank their very top by peak. The evidence reading of $\ZWAR$ remains a justification for the event unit (Section~\ref{sec:zstat}), not a better summary of career value.
 
 \section{Seasons or events?}
 \label{app:seasons}
 
-In its general form, Proposition~\ref{prop:gamma} divides by the number of seasons, not events (Section~\ref{sec:value}). We compare the season form $W/S^{\alpha}$ with the event form $W/N^{\alpha}$ on both judgment-based benchmarks, counting $S$ as the seasons in which a player appeared in the role or, as a check, the seasons with at least $100$ events in it ($S_{100}$). Two-way records on the expert lists are combined by signed quadrature with $S_k$ in place of $N_k$. Table~\ref{tab:seasons} reports the Hall of Fame results.
+In its general form, Proposition~\ref{prop:gamma} divides by the number of seasons, not events (Section~\ref{sec:value}). We compare the season form $W/S^{\alpha}$ with the event form $W/N^{\alpha}$ on both judgment-based benchmarks, counting $S$ as the seasons in which a player appeared in the role or, as a check, the seasons with at least $100$ events in it ($S_{100}$). Two-way records on the expert lists are combined by Definition~\ref{def:twoway} (using its $\alpha \to 1^-$ limit at $\alpha = 1$), with floored season counts $S_k$ in place of $N_k$. Table~\ref{tab:seasons} reports the Hall of Fame results.
 
 \begin{table}[htbp]
 \centering
@@ -1061,21 +1061,21 @@ In its general form, Proposition~\ref{prop:gamma} divides by the number of seaso
 \label{tab:seasons}
 \footnotesize
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lccccccc@{}}
+\begin{tabular}{@{}lcccccc@{}}
 \toprule
-& \multicolumn{3}{c}{\textbf{AUC at $\alpha = 0.2$}} & & \multicolumn{2}{c}{\textbf{Best $\alpha$ (AUC)}} & \\
-\cmidrule(lr){2-4} \cmidrule(lr){6-7}
-\textbf{Pool} & Events & Seasons & $S_{100}$ & & Events & Seasons & Seasons minus events \\
+& \multicolumn{3}{c}{\textbf{AUC at $\alpha = 0.2$}} & \multicolumn{2}{c}{\textbf{Best $\alpha$ (AUC)}} & \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-6}
+\textbf{Pool} & Events & Seasons & $S_{100}$ & Events & Seasons & Seasons minus events \\
 \midrule
-Hitters (8 positions pooled) & 0.936 & 0.934 & 0.934 & & 0.25 (0.936) & 0.00 (0.935) & $[-0.005, -0.001]$ \\
-Starting pitchers            & 0.914 & 0.905 & 0.906 & & 0.25 (0.914) & 0.00 (0.910) & $[-0.018, -0.000]$ \\
-Relief pitchers              & 0.984 & 0.977 & 0.977 & & 0.35 (0.988) & 0.20 (0.977) & $[-0.017, -0.001]$ \\
-Hitters + SP pooled          & 0.938 & 0.934 & 0.934 & & 0.25 (0.938) & 0.00 (0.936) & $[-0.006, -0.002]$ \\
-SP + RP pooled               & 0.938 & 0.924 & 0.924 & & 0.40 (0.941) & 0.00 (0.929) & $[-0.023, -0.006]$ \\
+Hitters (8 positions pooled) & 0.936 & 0.934 & 0.934 & 0.25 (0.936) & 0.00 (0.935) & $[-0.005, -0.001]$ \\
+Starting pitchers            & 0.914 & 0.905 & 0.906 & 0.25 (0.914) & 0.00 (0.910) & $[-0.018, -0.000]$ \\
+Relief pitchers              & 0.984 & 0.977 & 0.977 & 0.35 (0.988) & 0.20 (0.977) & $[-0.017, -0.001]$ \\
+Hitters + SP pooled          & 0.938 & 0.934 & 0.934 & 0.25 (0.938) & 0.00 (0.936) & $[-0.006, -0.002]$ \\
+SP + RP pooled               & 0.938 & 0.924 & 0.924 & 0.40 (0.941) & 0.00 (0.929) & $[-0.023, -0.006]$ \\
 \midrule
-Contested hitters            & 0.836 & 0.818 & 0.825 & & 0.20 (0.836) & 0.00 (0.825) & $[-0.033, -0.004]$ \\
-Contested SP                 & 0.830 & 0.813 & 0.816 & & 0.05 (0.833) & 0.00 (0.832) & $[-0.044, +0.006]$ \\
-Contested hitters + SP       & 0.838 & 0.809 & 0.815 & & 0.25 (0.839) & 0.00 (0.822) & $[-0.049, -0.013]$ \\
+Contested hitters            & 0.836 & 0.818 & 0.825 & 0.20 (0.836) & 0.00 (0.825) & $[-0.033, -0.004]$ \\
+Contested SP                 & 0.830 & 0.813 & 0.816 & 0.05 (0.833) & 0.00 (0.832) & $[-0.044, +0.006]$ \\
+Contested hitters + SP       & 0.838 & 0.809 & 0.815 & 0.25 (0.839) & 0.00 (0.822) & $[-0.049, -0.013]$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -1084,7 +1084,7 @@ Contested hitters + SP       & 0.838 & 0.809 & 0.815 & & 0.25 (0.839) & 0.00 (0.
 \begin{itemize}
     \item \emph{Events classify Hall of Famers better in every pool.} At $\alpha = 0.2$ the season form loses $0.002$--$0.029$ in AUC, and the interval for the difference excludes zero in six pools and barely does so in a seventh (starting pitchers, $[-0.018, -0.000]$, unrounded upper bound $-0.0001$).
     \item \emph{With seasons, no discount helps.} The best season exponent is $0$ (career $\WAR$) in seven of eight pools, whereas with events every pool prefers a positive exponent. A season count treats a partial season like a full one and a $400$-inning season like a $200$-inning one, so dividing by it penalizes the wrong careers; requiring $100$ events per season barely changes this.
-    \item \emph{Expert lists split} (two-way records combined by signed quadrature here, so the event-form numbers differ slightly from Table~\ref{tab:expert}). Membership favors events (AUC $0.959$ vs.\ $0.953$ for The Sporting News and $0.981$ vs.\ $0.976$ for ESPN at $\alpha = 0.2$). List order slightly favors seasons ($0.573$ vs.\ $0.571$ and $0.579$ vs.\ $0.570$; in-sample best $0.581$ and $0.601$ against $0.579$ and $0.574$), and the season form puts more pitchers in its top $100$ ($35$ and $34$, against the lists' $28$ and $27$), because it credits heavy early-era workloads in full.
+    \item \emph{Expert lists split.} Membership favors events (AUC $0.960$ vs.\ $0.952$ for The Sporting News and $0.980$ vs.\ $0.975$ for ESPN at $\alpha = 0.2$). List order ties for The Sporting News ($0.577$ vs.\ $0.577$) and slightly favors seasons for ESPN ($0.579$ vs.\ $0.573$; in-sample best $0.584$ and $0.602$ against $0.578$ and $0.575$), and the season form puts more pitchers in its top $100$ ($37$ and $35$, against the lists' $28$ and $27$), because it credits heavy early-era workloads in full.
 \end{itemize}
 The benchmarks therefore support the choice of events made in Section~\ref{sec:value} on grounds of fairness across eras and roles.
 
@@ -1188,27 +1188,27 @@ D.~Appelman.
 \bibitem{bbref2026}
 {Baseball-Reference.com}.
 \newblock Career leaders and records for Wins Above Replacement; JAWS position leaderboards (including $\SJAWS$ and $\RJAWS$).
-\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/WAR_career.shtml}, accessed 16 October 2026.
+\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/WAR_career.shtml}, accessed October 16, 2026.
 
 \bibitem{bbrefteams}
 {Baseball-Reference.com}.
 \newblock Franchise histories (season records and postseason results), e.g., \url{https://www.baseball-reference.com/teams/NYY/}.
-\newblock Sports Reference LLC, accessed 17 October 2026.
+\newblock Sports Reference LLC, accessed October 17, 2026.
 
 \bibitem{bbrefjawsrp}
 {Baseball-Reference.com}.
 \newblock Relief Pitcher JAWS leaders (R-JAWS: ``the average of WAR, WPA, and WPA/LI'').
-\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/jaws_RP.shtml}, accessed 16 October 2026.
+\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/jaws_RP.shtml}, accessed October 16, 2026.
 
 \bibitem{bbrefwar}
 {Baseball-Reference.com}.
 \newblock WAR explained (including the unified replacement level adopted with FanGraphs in 2013).
-\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/about/war_explained.shtml} and \url{https://www.baseball-reference.com/about/war_explained_comparison.shtml}, accessed 16 October 2026.
+\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/about/war_explained.shtml} and \url{https://www.baseball-reference.com/about/war_explained_comparison.shtml}, accessed October 16, 2026.
 
 \bibitem{bbrefwarpitch}
 {Baseball-Reference.com}.
 \newblock WAR for pitchers (including the leverage adjustment $\mathrm{WAA}\times(1+\mathrm{gmLI})/2$ for relief innings).
-\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/about/war_explained_pitch.shtml}, accessed 17 October 2026.
+\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/about/war_explained_pitch.shtml}, accessed October 17, 2026.
 
 \bibitem{berry1999}
 S.~M. Berry, C.~S. Reese, and P.~D. Larkey.
@@ -1222,7 +1222,7 @@ D.~Cameron.
 
 \bibitem{hallofstats}
 A.~Darowski.
-\newblock Hall of Stats (\url{http://www.hallofstats.com}), archived snapshot accessed 16 October 2026 (live site closed December 2023).
+\newblock Hall of Stats (\url{http://www.hallofstats.com}), archived snapshot accessed October 16, 2026 (live site closed December 2023).
 
 \bibitem{efron1975}
 B.~Efron and C.~Morris.
@@ -1231,13 +1231,13 @@ B.~Efron and C.~Morris.
 
 \bibitem{espn2022}
 {ESPN}.
-\newblock ESPN's top 100 MLB players of all time (Nos.\ 100--51, 50--26 and 25--1), 1--3 February 2022.
-\newblock As republished by TSN, \url{https://www.tsn.ca/mlb/espn-s-top-100-mlb-players-of-all-time-100-51-19.27288}, \url{https://www.tsn.ca/mlb/espn-s-top-100-mlb-players-of-all-time-50-26-19.27339} and \url{https://www.tsn.ca/mlb/espn-top-100-mlb-players-of-all-time-25-1-19.27399}, accessed 17 October 2026.
+\newblock ESPN's top 100 MLB players of all time (Nos.\ 100--51, 50--26 and 25--1), February 1--3, 2022.
+\newblock As republished by TSN, \url{https://www.tsn.ca/mlb/espn-s-top-100-mlb-players-of-all-time-100-51-19.27288}, \url{https://www.tsn.ca/mlb/espn-s-top-100-mlb-players-of-all-time-50-26-19.27339} and \url{https://www.tsn.ca/mlb/espn-top-100-mlb-players-of-all-time-25-1-19.27399}, accessed October 17, 2026.
 
 \bibitem{fangraphs2026}
 {FanGraphs}.
 \newblock Major League career leaderboards (batting and pitching WAR).
-\newblock \url{https://www.fangraphs.com/leaders/major-league}, accessed 17 October 2026.
+\newblock \url{https://www.fangraphs.com/leaders/major-league}, accessed October 17, 2026.
 
 \bibitem{gassko2007}
 D.~Gassko.
@@ -1282,7 +1282,7 @@ S.~Kullback and R.~A. Leibler.
 \bibitem{lahman}
 S.~Lahman and the Chadwick Baseball Bureau.
 \newblock The Baseball Databank (award voting, All-Star rosters and player identifiers; release of January 2020, award voting through 2016 and All-Star rosters through 2019).
-\newblock As mirrored in the source data of the \texttt{Lahman} R package, \url{https://github.com/cdalzell/Lahman}, accessed 23 October 2026.
+\newblock As mirrored in the source data of the \texttt{Lahman} R package, \url{https://github.com/cdalzell/Lahman}, accessed October 23, 2026.
 
 \bibitem{levitt2005}
 D.~Levitt.
@@ -1307,7 +1307,7 @@ N.~Silver.
 \bibitem{tsn1998}
 {The Sporting News}.
 \newblock Baseball's 100 greatest players, 1998.
-\newblock As listed by Baseball Almanac, \url{https://www.baseball-almanac.com/legendary/lisn100.shtml}, accessed 17 October 2026.
+\newblock As listed by Baseball Almanac, \url{https://www.baseball-almanac.com/legendary/lisn100.shtml}, accessed October 17, 2026.
 
 \bibitem{stouffer1949}
 S.~A. Stouffer, E.~A. Suchman, L.~C. DeVinney, S.~A. Star, and R.~M. Williams~Jr.

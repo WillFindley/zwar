@@ -27,7 +27,6 @@ Analyses:
 Outputs: outputs/null_baseline.csv, outputs/null_baseline_summary.txt
 """
 import importlib.util
-import math
 import os
 import sys
 
@@ -35,7 +34,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from alpha_bench import argmax_idx  # noqa: E402
-from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, OUT  # noqa: E402
+from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, z2d_lgamma, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -180,7 +179,7 @@ def expert_part():
     bat, pit = load_war_daily("bat"), load_war_daily("pitch")
     rows = []
     log("")
-    log("Expert top-100 lists: coordinate-wise Z_{a,l}, signed quadrature (Spearman / AUC)")
+    log("Expert top-100 lists: coordinate-wise Z_{a,l}, l_gamma (Definition 1) (Spearman / AUC)")
     for lst, cutoff in m11.LISTS.items():
         car = m11.careers_through(cutoff)
         # add coordinate WAA through the cutoff
@@ -197,10 +196,9 @@ def expert_part():
         lp = [pid for _, pid, _ in entries]
 
         def zz(p, a, lam):
-            sp = (p["w_pos"] - lam * (p["w_pos"] - p["a_pos"])) / max(p["pa"], 1.0) ** a
-            st = (p["w_pit"] - lam * (p["w_pit"] - p["a_pit"])) / max(p["bf"], 1.0) ** a
-            i = sp * abs(sp) + st * abs(st)
-            return math.copysign(math.sqrt(abs(i)), i)
+            wp = p["w_pos"] - lam * (p["w_pos"] - p["a_pos"])
+            wt = p["w_pit"] - lam * (p["w_pit"] - p["a_pit"])
+            return z2d_lgamma(wp, p["pa"], wt, p["bf"], a)
 
         grid = {}
         for a in ALPHAS:
