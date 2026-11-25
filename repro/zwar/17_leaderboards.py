@@ -386,14 +386,12 @@ def main():
         lab = POSLAB.get(p) or j.get("pos", "")
         if p in rrp[0.2]:
             crk = f"\\#{rpit[0.2][p]} Pitch / \\#{rrp[0.2][p]} RP"
-        elif p == "ohtansh01":
-            crk = "Active"
-        elif p == "roganbu99":
-            crk = "NgL"
-        elif is_p:
-            crk = f"\\#{rpit[0.2][p]} Pitch"
         else:
-            crk = f"\\#{rpos[0.2][p]} Pos" + (", NgL" if p in NGL else "")
+            crk = f"\\#{rpit[0.2][p]} Pitch" if is_p else f"\\#{rpos[0.2][p]} Pos"
+        if p in NGL:
+            crk += ", NgL"
+        if p in {"troutmi01", "ohtansh01"}:
+            crk += ", Active"
         zp, zt = zpos[A].get(p, 0.0), zpit[A].get(p, 0.0)
         name = bold(nm(p)) if (is_p or p in two_pool) else nm(p)
         if p == "ruthba01":

@@ -238,8 +238,7 @@ def main():
     log("SP + RP pooled: ranks of relief Hall of Famers in the combined pitcher list")
     for label, s in [("WAR", metric(SPRP, "WAR")), ("JAWS", metric(SPRP, "JAWS")),
                      ("Z_0.2", metric(SPRP, "Z", A_VALUE)), ("Z", metric(SPRP, "Z"))]:
-        order = (-s).argsort(kind="mergesort").argsort(kind="mergesort")
-        ranks = sorted(int(order[i]) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
+        ranks = sorted(int(np.sum(s > s[i])) + 1 for i, p in enumerate(SPRP) if p["hof"] and p["role"] == "RP")
         log(f"  {label:5s} {ranks}")
         if label == "WAR":
             assert ranks[0] == 47 and ranks[-1] == 356, f"Unexpected RP WAR ranks: {ranks}"

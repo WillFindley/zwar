@@ -138,7 +138,7 @@ Every modeling choice is listed in Table~\ref{tab:choices}.
 
 \paragraph{Opportunity-standardized peaks.} Gordon's Standardized Peak WAR (SPW) \cite{gordon2023} is the closest precedent for our choice of exposure units. It replaces the season as the unit of a peak window with a fixed amount of opportunity, $\PA$ for hitters and $\BF$ for pitchers, by accumulating a player's highest-rate seasons until a standard exposure is reached, so that early-era workhorses, modern starters and relievers can be compared. The family $Z_\alpha$ shares the $\PA$/$\BF$ exposure units but differs in three ways: it is a career-level statistic computed from totals $(W, N)$ rather than from a selected subset of seasons; it has a single parameter $\alpha$ with the marginal-rate interpretation of Proposition~\ref{prop:alpha}; and it places hitters and pitchers on one scale through $\PA \equiv \BF$.
 
-\paragraph{Nonlinear seasonal value.} Jaffe justifies $\JAWS$'s effective double counting of peak seasons by appeal to ``research into pennants added and the premium value of star talent,'' since individual greatness can have a nonlinear effect on team results \cite{jaffe2017si}. That line of work, which goes back to Bill James's proposal in \emph{The Politics of Glory} \cite{james1994} and was implemented by Wolverton \cite{wolverton2002}, Levitt \cite{levitt2004} and Gassko \cite{gassko2007}, maps each season's value into a nonlinear contribution to playoff, pennant or championship probability at the cost of a season-level model (Gassko~\cite{gassko2007} found that wild-card playoff odds flatten at high $\WAR$ and favor longevity, consistent with our nearly linear postseason-berth estimate in Table~\ref{tab:gamma}, whereas pennants and championships remain convex). We do not propose a new pennants-added measure. Our contribution is to summarize the win--pennant curve by a single power-law exponent $\gamma$ and to show that, for constant-rate careers with a common season length, it fixes the exponent of a career-total statistic, $\alpha = 1 - 1/\gamma$ (Proposition~\ref{prop:gamma}, Section~\ref{sec:gamma}). Silver's analysis of the marginal value of a win \cite{silver2006} makes the related point that wins are worth more to contenders, which is the source of the convexity we estimate. A counterpoint comes from the free-agent market, where Swartz finds that cost per $\WAR$ is close to linear in a player's $\WAR$ \cite{swartz2017}; the market prices a player's wins for one team in one season, whereas pennant convexity concerns how one season's wins change a team's championship probability, so the two need not agree.
+\paragraph{Nonlinear seasonal value.} Jaffe justifies $\JAWS$'s effective double counting of peak seasons by appeal to ``research into pennants added and the premium value of star talent,'' since individual greatness can have a nonlinear effect on team results \cite{jaffe2017si}. That line of work, which goes back to Bill James's proposal in \emph{The Politics of Glory} \cite{james1994} and was implemented by Wolverton \cite{wolverton2002}, Levitt \cite{levitt2005} and Gassko \cite{gassko2007}, maps each season's value into a nonlinear contribution to playoff, pennant or championship probability at the cost of a season-level model (Gassko~\cite{gassko2007} found that wild-card playoff odds flatten at high $\WAR$ and favor longevity, consistent with our nearly linear postseason-berth estimate in Table~\ref{tab:gamma}, whereas pennants and championships remain convex). We do not propose a new pennants-added measure. Our contribution is to summarize the win--pennant curve by a single power-law exponent $\gamma$ and to show that, for constant-rate careers with a common season length, it fixes the exponent of a career-total statistic, $\alpha = 1 - 1/\gamma$ (Proposition~\ref{prop:gamma}, Section~\ref{sec:gamma}). Silver's analysis of the marginal value of a win \cite{silver2006} makes the related point that wins are worth more to contenders, which is the source of the convexity we estimate. A counterpoint comes from the free-agent market, where Swartz finds that cost per $\WAR$ is close to linear in a player's $\WAR$ \cite{swartz2017}; the market prices a player's wins for one team in one season, whereas pennant convexity concerns how one season's wins change a team's championship probability, so the two need not agree.
 
 \paragraph{Statistical analogs.} Outside baseball, $W/\sqrt N$ is the familiar one-sample $t$- or $z$-statistic for a mean, and in finance the same quantity appears as a Sharpe ratio scaled by the square root of the sample length \cite{lo2002}. The statistic itself is therefore not new. This work began from it, and we treat it as a hypothesis about the best exponent rather than as the answer; our contributions are the family built around it, the competing value reading, the cross-role calibration under $\PA \equiv \BF$, and the empirical tests that decide between the two readings.
 
@@ -161,7 +161,7 @@ so that $Z_0 = \WAR$, and for $N \ge 1$, $Z_1 = \WAR/N$ is the pure rate, $Z_{1/
 
 \begin{proposition}[Marginal-rate threshold]
 \label{prop:alpha}
-Let $W(N) > 0$ and $N > 0$ with career rate $\bar r = W/N$. If playing time increases by $dN$ at marginal rate $r_{\mathrm{marg}} = dW/dN$, then
+Let $W(N) > 0$ and $N \ge 1$ with career rate $\bar r = W/N$. If playing time increases by $dN$ at marginal rate $r_{\mathrm{marg}} = dW/dN$, then
 \begin{equation}
     \frac{dZ_\alpha}{dN} > 0 \iff r_{\mathrm{marg}} > \alpha\,\bar r .
 \end{equation}
@@ -323,7 +323,7 @@ League split & $59/41$ ($\mathrm{bWAR}$) & $57/43$ ($\mathrm{fWAR}$), other allo
 \section{How Much Is a Great Season Worth? Evidence from Pennant Races}
 \label{sec:gamma}
 
-Proposition~\ref{prop:gamma} turns the exponent into a claim about how much more a great season is worth than a good one, which can be estimated without Hall of Fame votes, expert opinion or player outcomes of any kind. This section supplies the value of $\gamma$ that the proposition leaves open, and with it the value reading's prediction for $\alpha$. Like earlier pennants-added studies \cite{wolverton2002,levitt2004,gassko2007}, we map wins to postseason probability; unlike them, we summarize the resulting season-value curve by a single exponent. Baseball-Reference's franchise histories \cite{bbrefteams} give wins, losses and postseason results for all $2{,}622$ AL and NL team-seasons from 1901 to 2025 (excluding the split 1981 season, 1994 and the 60-game 2020 season, plus 1901, 1902 and 1904 for the World Series outcome, when none was played; the 2026 postseason was incomplete at the snapshot). Wins are scaled to $162$ games. For each postseason format (1901--1968, two berths; 1969--1993, four; 1995--2011, eight; 2012--2021, ten; 2022--2025, twelve) we fit a logistic regression on wins for three outcomes: reaching the postseason, winning the pennant, and winning the World Series. The value of a season of $s$ $\WAR$ is the resulting gain in probability, measured two ways: \emph{context-neutral}, $v(s) = \E[P(w + s) - P(w)]$, the gain from adding $s$ wins to a randomly drawn team of its era; and in \emph{actual context}, $P(w_{\mathrm{team}}) - P(w_{\mathrm{team}} - s)$ averaged within $1$-$\WAR$ bins over the $24{,}400$ player seasons worth $1.5$--$10.5$ $\WAR$ (combined batting and pitching $\WAR$ for one team, scaled to $162$ games; $23{,}997$ in World Series years). Then $\gamma$ is the log-log slope of $v(s)$ over $s \in [2, 10]$, the range from All-Star to MVP seasons, and $\alpha = 1 - 1/\gamma$. Intervals come from $1{,}000$ bootstrap resamples of team-seasons within each era, refitting the curves each time. Table~\ref{tab:gamma} reports the results.
+Proposition~\ref{prop:gamma} turns the exponent into a claim about how much more a great season is worth than a good one, which can be estimated without Hall of Fame votes, expert opinion or player outcomes of any kind. This section supplies the value of $\gamma$ that the proposition leaves open, and with it the value reading's prediction for $\alpha$. Like earlier pennants-added studies \cite{wolverton2002,levitt2005,gassko2007}, we map wins to postseason probability; unlike them, we summarize the resulting season-value curve by a single exponent. Baseball-Reference's franchise histories \cite{bbrefteams} give wins, losses and postseason results for all $2{,}622$ AL and NL team-seasons from 1901 to 2025 (excluding the split 1981 season, 1994 and the 60-game 2020 season, plus 1901, 1902 and 1904 for the World Series outcome, when none was played; the 2026 postseason was incomplete at the snapshot). Wins are scaled to $162$ games. For each postseason format (1901--1968, two berths; 1969--1993, four; 1995--2011, eight; 2012--2021, ten; 2022--2025, twelve) we fit a logistic regression on wins for three outcomes: reaching the postseason, winning the pennant, and winning the World Series. The value of a season of $s$ $\WAR$ is the resulting gain in probability, measured two ways: \emph{context-neutral}, $v(s) = \E[P(w + s) - P(w)]$, the gain from adding $s$ wins to a randomly drawn team of its era; and in \emph{actual context}, $P(w_{\mathrm{team}}) - P(w_{\mathrm{team}} - s)$ averaged within $1$-$\WAR$ bins over the $24{,}400$ player seasons worth $1.5$--$10.5$ $\WAR$ (combined batting and pitching $\WAR$ for one team, scaled to $162$ games; $23{,}997$ in World Series years). Then $\gamma$ is the log-log slope of $v(s)$ over $s \in [2, 10]$, the range from All-Star to MVP seasons, and $\alpha = 1 - 1/\gamma$. Intervals come from $1{,}000$ bootstrap resamples of team-seasons within each era, refitting the curves each time. Table~\ref{tab:gamma} reports the results.
 
 \begin{table}[htbp]
 \centering
@@ -775,7 +775,7 @@ Table~\ref{tab:unified} ranks all players by Equation~\eqref{eq:universal_zwar} 
 \textbf{25} & Joe Morgan & 2B (\#20 Pos) & 100.6 / 0.0 (100.6) & 11,329 / 0 & \textbf{15.55} & 0.00 & 31 & 25 & \textbf{15.55} \\
 \midrule
 \textbf{26} & \textbf{Lefty Grove} & SP (\#5 Pitch) & $-6.5$ / 113.2 (106.7) & 1,580 / 16,622 & $-1.49$ & \textbf{16.21} & 27 & 37 & \textbf{15.55} \\
-\textbf{27} & Mike Trout & CF (\#21 Pos) & 91.7 / 0.0 (91.7) & 7,837 / 0 & \textbf{15.26} & 0.00 & 43 & 19 & \textbf{15.26} \\
+\textbf{27} & Mike Trout & CF (\#21 Pos, Active) & 91.7 / 0.0 (91.7) & 7,837 / 0 & \textbf{15.26} & 0.00 & 43 & 19 & \textbf{15.26} \\
 \textbf{30} & \textbf{Tom Seaver} & SP (\#8 Pitch) & 3.9 / 106.0 (109.9) & 1,552 / 19,369 & 0.90 & \textbf{14.72} & 22 & 63 & \textbf{15.07} \\
 \textbf{33} & \textbf{Christy Mathewson} & SP (\#10 Pitch) & 6.6 / 100.6 (107.2) & 1,900 / 18,929 & 1.46 & \textbf{14.03} & 24 & 72 & \textbf{14.69} \\
 \textbf{35} & \textbf{Greg Maddux} & SP (\#9 Pitch) & 1.8 / 104.8 (106.6) & 1,812 / 20,421 & 0.40 & \textbf{14.40} & 28 & 79 & \textbf{14.53} \\
@@ -786,8 +786,8 @@ Table~\ref{tab:unified} ranks all players by Equation~\eqref{eq:universal_zwar} 
 \textbf{99} & Jackie Robinson & 2B (\#70 Pos) & 64.1 / 0.0 (64.1) & 5,955 / 0 & \textbf{11.27} & 0.00 & 153 & 44 & \textbf{11.27} \\
 \textbf{144} & Turkey Stearnes & CF (\#109 Pos, NgL) & 55.2 / $-0.4$ (54.8) & 4,378 / 37 & \textbf{10.32} & $-0.19$ & 262 & 43 & \textbf{10.26} \\
 \textbf{148} & \textbf{Mariano Rivera} & RP (\#34 Pitch / \#1 RP) & 0.0 / 56.3 (56.3) & 4 / 5,103 & 0.00 & \textbf{10.21} & 238 & 60 & \textbf{10.21} \\
-\textbf{175} & \textbf{Shohei Ohtani} & DH / SP (Active) & 38.4 / 19.4 (57.8) & 4,947 / 2,479 & \textbf{7.01} & 4.06 & 222 & 131 & \textbf{9.72} \\
-\textbf{192} & \textbf{Bullet Rogan} & SP / OF (NgL) & 20.5 / 37.3 (57.8) & 2,326 / 6,063 & 4.35 & \textbf{6.53} & 222 & 161 & \textbf{9.52} \\
+\textbf{175} & \textbf{Shohei Ohtani} & DH / SP (\#344 Pos, Active) & 38.4 / 19.4 (57.8) & 4,947 / 2,479 & \textbf{7.01} & 4.06 & 222 & 131 & \textbf{9.72} \\
+\textbf{192} & \textbf{Bullet Rogan} & SP / OF (\#161 Pitch, NgL) & 20.5 / 37.3 (57.8) & 2,326 / 6,063 & 4.35 & \textbf{6.53} & 222 & 161 & \textbf{9.52} \\
 \textbf{286} & Josh Gibson & C (\#197 Pos, NgL) & 41.1 / $-0.2$ (40.9) & 2,683 / 10 & \textbf{8.47} & $-0.13$ & 531 & 57 & \textbf{8.44} \\
 \bottomrule
 \end{tabular}%
@@ -869,7 +869,7 @@ At that exponent, Babe Ruth ranks first, Walter Johnson and Cy Young fifth and s
 
 \section*{Data and Code Availability}
 
-Career statistics are from Baseball-Reference's career and JAWS leaderboards \cite{bbref2026} and FanGraphs' career leaderboards \cite{fangraphs2026}, accessed 16 October 2026 (active players' values will change). Team standings and postseason results are from Baseball-Reference's franchise histories \cite{bbrefteams}, accessed 17 October 2026. All-Star selections and award voting are from the Baseball Databank \cite{lahman}, accessed 23 October 2026. The two expert lists \cite{tsn1998,espn2022} (accessed 17 October 2026) are not redistributed in the repository; the reproduction README documents the CSV schema needed to recreate the local file from those published lists. The accompanying reproduction pipeline (\url{https://github.com/WillFindley/zwar}) includes a rate-limited download script that caches dated inputs locally (raw third-party data, third-party editorial rankings, and generated output tables are not redistributed, per Sports Reference's and third-party publishers' terms) and scripts that verify every Baseball-Reference input and derived value, rebuild every table and the figure, and reproduce the $\alpha$-sensitivity, Hall of Fame, SPW, variance, expert-ranking, forecasting, regression-implied exponent, season-value convexity, meaningful-null, seasons-versus-events and FanGraphs $\mathrm{fWAR}$ analyses. Formal Lean~4 proofs verifying all propositions, identities, and inequalities in the paper (built against Mathlib with zero \texttt{sorry}s) are included in \texttt{lean/ZwarProofs.lean}.
+Career statistics are from Baseball-Reference's career and JAWS leaderboards \cite{bbref2026} (accessed 16 October 2026) and FanGraphs' career leaderboards \cite{fangraphs2026} (accessed 17 October 2026; active players' values will change). Team standings and postseason results are from Baseball-Reference's franchise histories \cite{bbrefteams}, accessed 17 October 2026. All-Star selections and award voting are from the Baseball Databank \cite{lahman}, accessed 23 October 2026. The two expert lists \cite{tsn1998,espn2022} (accessed 17 October 2026) are not redistributed in the repository; the reproduction README documents the CSV schema needed to recreate the local file from those published lists. The accompanying reproduction pipeline (\url{https://github.com/WillFindley/zwar}) includes a rate-limited download script that caches dated inputs locally (raw third-party data, third-party editorial rankings, and generated output tables are not redistributed, per Sports Reference's and third-party publishers' terms) and scripts that verify every Baseball-Reference input and derived value, rebuild every table and the figure, and reproduce the $\alpha$-sensitivity, Hall of Fame, SPW, variance, expert-ranking, forecasting, regression-implied exponent, season-value convexity, meaningful-null, seasons-versus-events and FanGraphs $\mathrm{fWAR}$ analyses. Formal Lean~4 proofs verifying all propositions, identities, and inequalities in the paper (built against Mathlib with zero \texttt{sorry}s) are included in \texttt{lean/ZwarProofs.lean}.
 
 \appendix
 
@@ -955,7 +955,7 @@ This appendix collects the properties of the two-coordinate rule of Definition~\
     \Zpool \equiv \frac{\WAR_{\mathrm{pos}} + \WAR_{\mathrm{pitch}}}{\sqrt{\max(\PA + \BF, 1)}}.
 \end{equation}
 
-Equation~\eqref{eq:universal_zwar} is continuously differentiable away from the cancellation locus $\Ical_{\alpha,\mathrm{pos}} + \Ical_{\alpha,\mathrm{pitch}} = 0$. (For $\alpha \in (0, \tfrac12]$ it is not twice differentiable at $\WAR_k = 0$: the second derivative of $\Ical_{\alpha,k}$ diverges as $\WAR_k \to 0$ for $\alpha < \tfrac12$ and has a jump discontinuity at $\alpha = \tfrac12$. For $\alpha \in (\tfrac12, 1)$, where $\gamma > 2$, $\Ical_{\alpha,k}$ is twice continuously differentiable at $\WAR_k = 0$ with second derivative $0$, so $Z_{\alpha,\mathrm{2D}}$ is $C^2$ away from the cancellation locus; at $\alpha = 0$ it is linear and smooth.) When the signs differ, the negative coordinate is subtracted in quadrature ($\sgn(\Ical_{1/2})\sqrt{|\Ical_{1/2}|}$ with $\Ical_{1/2} = |\Zpos|\Zpos + |\Zpitch|\Zpitch$, i.e., $\sgn(Z_+^2 - Z_-^2)\sqrt{|Z_+^2 - Z_-^2|}$ for coordinates $Z_+ > 0 > Z_-$); when both are negative, the result is $-\sqrt{\Zpos^2 + \Zpitch^2}$. The sign rule is a convention chosen so that below-replacement play always lowers the score; it is not implied by Proposition~\ref{prop:frequentist}. With $\sigma^2 = 1$ and $\alpha = \tfrac12$, $\Ical_{\alpha,k}$ equals $\sgn(\WAR_k)\,2\DKL$ in the Gaussian reading of Remark~\ref{rem:interp}. When both coordinates are positive, the two-coordinate score equals the larger coordinate score times $\sqrt{1+\rho^2}$, where $\rho \le 1$ is the ratio of the smaller coordinate score to the larger, so the gain from a second role (at most $\sqrt2 - 1 \approx 41\%$) depends only on how comparable the two records are. A negative secondary coordinate costs less when spread over more events: Cy Young ($-2.2\,\WAR$ in $3{,}107\,\PA$) loses almost nothing, whereas pooling would cut his $\ZWAR$ from $0.965$ to $0.906$.
+For $\alpha \in (0, 1)$, Equation~\eqref{eq:universal_zwar} is continuously differentiable away from the cancellation locus $\Ical_{\alpha,\mathrm{pos}} + \Ical_{\alpha,\mathrm{pitch}} = 0$. (For $\alpha \in (0, \tfrac12]$ it is not twice differentiable at $\WAR_k = 0$: the second derivative of $\Ical_{\alpha,k}$ diverges as $\WAR_k \to 0$ for $\alpha < \tfrac12$ and has a jump discontinuity at $\alpha = \tfrac12$. For $\alpha \in (\tfrac12, 1)$, where $\gamma > 2$, $\Ical_{\alpha,k}$ is twice continuously differentiable at $\WAR_k = 0$ with second derivative $0$, so $Z_{\alpha,\mathrm{2D}}$ is $C^2$ away from the cancellation locus; at $\alpha = 0$ it is linear and smooth.) When the signs differ, the negative coordinate is subtracted in quadrature ($\sgn(\Ical_{1/2})\sqrt{|\Ical_{1/2}|}$ with $\Ical_{1/2} = |\Zpos|\Zpos + |\Zpitch|\Zpitch$, i.e., $\sgn(Z_+^2 - Z_-^2)\sqrt{|Z_+^2 - Z_-^2|}$ for coordinates $Z_+ > 0 > Z_-$); when both are negative, the result is $-\sqrt{\Zpos^2 + \Zpitch^2}$. The sign rule is a convention chosen so that below-replacement play always lowers the score; it is not implied by Proposition~\ref{prop:frequentist}. With $\sigma^2 = 1$ and $\alpha = \tfrac12$, $\Ical_{\alpha,k}$ equals $\sgn(\WAR_k)\,2\DKL$ in the Gaussian reading of Remark~\ref{rem:interp}. When both coordinates are positive, the two-coordinate score equals the larger coordinate score times $\sqrt{1+\rho^2}$, where $\rho \le 1$ is the ratio of the smaller coordinate score to the larger, so the gain from a second role (at most $\sqrt2 - 1 \approx 41\%$) depends only on how comparable the two records are. A negative secondary coordinate costs less when spread over more events: Cy Young ($-2.2\,\WAR$ in $3{,}107\,\PA$) loses almost nothing, whereas pooling would cut his $\ZWAR$ from $0.965$ to $0.906$.
 
 \paragraph{Relation to standard combinations of $z$-scores.} The two combinations correspond to two standard ways of combining independent $z$-scores. The Euclidean norm is the square root of the $\chi^2_2$ statistic $\Zpos^2 + \Zpitch^2$, an \emph{omnibus} test of the joint null that has power against departures in either coordinate and allows the two rates to differ. For the \emph{one-sided} null $r = 0$ against $r > 0$, the standard combination is instead Stouffer's weighted $z$ \cite{stouffer1949,liptak1958,whitlock2005}, and with weights $\sqrt{N_k}$ it is exactly pooled exposure:
 \begin{equation}
@@ -1190,15 +1190,15 @@ D.~Appelman.
 \newblock Career leaders and records for Wins Above Replacement; JAWS position leaderboards (including $\SJAWS$ and $\RJAWS$).
 \newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/WAR_career.shtml}, accessed 16 October 2026.
 
-\bibitem{bbrefjawsrp}
-{Baseball-Reference.com}.
-\newblock Relief Pitcher JAWS leaders (R-JAWS: ``the average of WAR, WPA, and WPA/LI'').
-\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/jaws_RP.shtml}, accessed 16 October 2026.
-
 \bibitem{bbrefteams}
 {Baseball-Reference.com}.
 \newblock Franchise histories (season records and postseason results), e.g., \url{https://www.baseball-reference.com/teams/NYY/}.
 \newblock Sports Reference LLC, accessed 17 October 2026.
+
+\bibitem{bbrefjawsrp}
+{Baseball-Reference.com}.
+\newblock Relief Pitcher JAWS leaders (R-JAWS: ``the average of WAR, WPA, and WPA/LI'').
+\newblock Sports Reference LLC, \url{https://www.baseball-reference.com/leaders/jaws_RP.shtml}, accessed 16 October 2026.
 
 \bibitem{bbrefwar}
 {Baseball-Reference.com}.
@@ -1237,7 +1237,7 @@ B.~Efron and C.~Morris.
 \bibitem{fangraphs2026}
 {FanGraphs}.
 \newblock Major League career leaderboards (batting and pitching WAR).
-\newblock \url{https://www.fangraphs.com/leaders/major-league}, accessed 16 October 2026.
+\newblock \url{https://www.fangraphs.com/leaders/major-league}, accessed 17 October 2026.
 
 \bibitem{gassko2007}
 D.~Gassko.
@@ -1277,14 +1277,14 @@ B.~James.
 \bibitem{kullback1951}
 S.~Kullback and R.~A. Leibler.
 \newblock On information and sufficiency.
-\newblock \emph{Annals of Mathematical Statistics}, 22(1):79--86, 1951.
+\newblock \emph{The Annals of Mathematical Statistics}, 22(1):79--86, 1951.
 
 \bibitem{lahman}
 S.~Lahman and the Chadwick Baseball Bureau.
 \newblock The Baseball Databank (award voting, All-Star rosters and player identifiers; release of January 2020, award voting through 2016).
 \newblock As mirrored in the source data of the \texttt{Lahman} R package, \url{https://github.com/cdalzell/Lahman}, accessed 23 October 2026.
 
-\bibitem{levitt2004}
+\bibitem{levitt2005}
 D.~Levitt.
 \newblock Beyond player wins---calculating individual player pennants added.
 \newblock \emph{By the Numbers} (SABR Statistical Analysis Committee), 15(1):15--20, February 2005.
@@ -1304,6 +1304,11 @@ N.~Silver.
 \newblock Is Alex Rodriguez overpaid?
 \newblock In J.~Keri, editor, \emph{Baseball Between the Numbers: Why Everything You Know About the Game Is Wrong}, pages 174--198. Basic Books, New York, 2006.
 
+\bibitem{tsn1998}
+{The Sporting News}.
+\newblock Baseball's 100 greatest players, 1998.
+\newblock As listed by Baseball Almanac, \url{https://www.baseball-almanac.com/legendary/lisn100.shtml}, accessed 17 October 2026.
+
 \bibitem{stouffer1949}
 S.~A. Stouffer, E.~A. Suchman, L.~C. DeVinney, S.~A. Star, and R.~M. Williams~Jr.
 \newblock \emph{The American Soldier, Vol.~1: Adjustment During Army Life}.
@@ -1318,11 +1323,6 @@ M.~Swartz.
 T.~M. Tango, M.~G. Lichtman, and A.~E. Dolphin.
 \newblock \emph{The Book: Playing the Percentages in Baseball}.
 \newblock Potomac Books, Washington, DC, 2007.
-
-\bibitem{tsn1998}
-{The Sporting News}.
-\newblock Baseball's 100 greatest players, 1998.
-\newblock As listed by Baseball Almanac, \url{https://www.baseball-almanac.com/legendary/lisn100.shtml}, accessed 17 October 2026.
 
 \bibitem{whitlock2005}
 M.~C. Whitlock.
