@@ -212,6 +212,7 @@ def short(name):
     s = s.replace("career award shares (MVP+CY)", "MVP+CY shares").replace("career award shares (MVP)", "MVP shares")
     s = s.replace("career All-Star selections", "All-Star selections").replace(", concurrent", "")
     s = s.replace("future All-Star selections", "future All-Star")
+    s = s.replace("future WAR", "future $\\WAR$")
     return s.replace("+", "\\,+\\,") if "HOF:" in s else s
 
 

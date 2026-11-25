@@ -229,17 +229,7 @@ def main():
     pids, bat, pitch = u["pids"], u["bat"], u["pitch"]
     pos_w, pos_n, pit_w, pit_n, approx = u["pos_w"], u["pos_n"], u["pit_w"], u["pit_n"], u["approx"]
 
-    def ranking(score):
-        # Break ties by player ID so the output does not depend on set
-        # iteration order (which varies with PYTHONHASHSEED).
-        order = sorted(score, key=lambda p: (-score[p], p))
-        return {p: i + 1 for i, p in enumerate(order)}, order
-
-    def tie_range(score, pid):
-        v = score[pid]
-        better = sum(1 for x in score.values() if x > v + 1e-9)
-        same = sum(1 for x in score.values() if abs(x - v) <= 1e-9)
-        return better + 1, better + same
+    ranking, tie_range = universe.ranking, universe.tie_range
 
     zpos = {p: pos_w[p] / np.sqrt(max(pos_n[p], 1)) for p in pids if p in bat}
     zpit = {p: pit_w[p] / np.sqrt(max(pit_n[p], 1)) for p in pids if p in pitch}

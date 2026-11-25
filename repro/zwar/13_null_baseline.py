@@ -34,6 +34,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from alpha_bench import argmax_idx  # noqa: E402
 from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
@@ -129,7 +130,7 @@ def hof_part():
             f"{name}: AUC(0.5, lambda) not strictly decreasing: {auc_half}")
         per_l = []
         for lam in LAMBDAS:
-            a_b = max(ALPHAS, key=lambda a: grid[(a, lam)])
+            a_b = ALPHAS[argmax_idx([grid[(a, lam)] for a in ALPHAS])]
             if lam == 1.0:
                 assert a_b == 0.0, f"{name}: expected best alpha=0 at lambda=1, got {a_b}"
             per_l.append(f"l={lam:g}: a*={a_b:.2f} ({grid[(a_b, lam)]:.3f}), a=.5 {grid[(0.5, lam)]:.3f}")
@@ -161,7 +162,7 @@ def hof_part():
         hof = [p for p in ps if p["hof"] and p["W"] > 0]
         parts = []
         for lam in LAMBDAS:
-            a_b = max(ALPHAS, key=lambda a: auc(scores(ps, a, lam), y))
+            a_b = ALPHAS[argmax_idx([auc(scores(ps, a, lam), y) for a in ALPHAS])]
             eff = [a_b + (1 - a_b) * lam * (p["W"] - p["WAA"]) / p["W"] for p in hof]
             parts.append(f"l={lam:g}: a*={a_b:.2f} a_eff median {np.median(eff):.2f}")
         log(f"  {name:30s} " + " | ".join(parts))
@@ -211,8 +212,8 @@ def expert_part():
                 rows.append(["expert", lst, a, lam, round(rho, 4), round(grid[(a, lam)][1], 4)])
         log(f"  {lst}:")
         for lam in LAMBDAS:
-            a_r = max(ALPHAS, key=lambda a: grid[(a, lam)][0])
-            a_u = max(ALPHAS, key=lambda a: grid[(a, lam)][1])
+            a_r = ALPHAS[argmax_idx([grid[(a, lam)][0] for a in ALPHAS])]
+            a_u = ALPHAS[argmax_idx([grid[(a, lam)][1] for a in ALPHAS])]
             log(f"    l={lam:<4g} a=.5: {grid[(0.5, lam)][0]:.3f} / {grid[(0.5, lam)][1]:.3f}   "
                 f"best a (rho) {a_r:.2f} ({grid[(a_r, lam)][0]:.3f})   best a (AUC) {a_u:.2f} "
                 f"({grid[(a_u, lam)][1]:.3f})")

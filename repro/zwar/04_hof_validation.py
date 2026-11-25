@@ -18,6 +18,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from alpha_bench import argmax_idx  # noqa: E402
 from common import auc, bootstrap_auc_diff, bootstrap_auc_ci, career, load_war_daily, z_alpha, z2d, write_csv, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
@@ -98,7 +99,7 @@ def cv_alpha(players, seed=2026):
         for k in range(CV_FOLDS):
             test = np.concatenate([fp[k], fn[k]])
             train = np.setdiff1d(np.arange(len(y)), test)
-            a_best = max(ALPHAS, key=lambda a: auc(scores[a][train], y[train]))
+            a_best = ALPHAS[argmax_idx([auc(scores[a][train], y[train]) for a in ALPHAS])]
             chosen.append(float(a_best))
             cv.append(auc(scores[a_best][test], y[test]))
             fixed05.append(auc(scores[0.5][test], y[test]))
@@ -166,7 +167,7 @@ def main():
     log("Hitters (mean of 8 positions): " + ", ".join(
         f"{k}={np.mean(v):.3f}" for k, v in means.items()))
     a_curve = {a: float(np.mean(v)) for a, v in alpha_curve.items()}
-    a_best = max(a_curve, key=a_curve.get)
+    a_best = ALPHAS[argmax_idx([a_curve[a] for a in ALPHAS])]
     log(f"  mean-over-positions alpha curve: best alpha={a_best:.2f} ({a_curve[a_best]:.3f}); "
         + " ".join(f"{a:.2f}:{a_curve[a]:.3f}" for a in [0, .2, .25, .3, .4, .5, .7, 1.0]))
     log("  by position (Z vs JAWS): " + ", ".join(f"{p} {z:.3f}/{j:.3f}" for p, z, j in pos_detail))

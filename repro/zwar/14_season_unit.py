@@ -25,6 +25,7 @@ import numpy as np
 from scipy.stats import spearmanr
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from alpha_bench import argmax_idx  # noqa: E402
 from common import auc, bootstrap_auc_diff, load_war_daily, write_csv, OUT  # noqa: E402
 from pools import hitters, pitchers, hof_eligible  # noqa: E402
 
@@ -78,8 +79,9 @@ def score(ps, unit, alpha):
 
 
 def best(ps, y, unit):
-    vals = [(a, auc(score(ps, unit, a), y)) for a in ALPHAS]
-    return max(vals, key=lambda t: (t[1], -t[0]))
+    vals = [auc(score(ps, unit, a), y) for a in ALPHAS]
+    j = argmax_idx(vals)
+    return ALPHAS[j], vals[j]
 
 
 def main():
@@ -170,8 +172,8 @@ def main():
             res[unit] = curve
         for unit, curve in res.items():
             at = next(c for c in curve if abs(c[0] - A_VALUE) < 1e-9)
-            br = max(curve, key=lambda c: c[1])
-            ba = max(curve, key=lambda c: c[2])
+            br = curve[argmax_idx([c[1] for c in curve])]
+            ba = curve[argmax_idx([c[2] for c in curve])]
             log(f"  {lst} {unit:8s} a=0.2: {at[1]:.3f} / {at[2]:.3f} (pitchers in top 100: {at[3]}); "
                 f"best a (rho) {br[0]:.2f} ({br[1]:.3f}); best a (AUC) {ba[0]:.2f} ({ba[2]:.3f})")
             rows.append([f"{lst} ({unit})", len(uni), len(listed), round(at[1], 4), round(at[2], 4), at[3],

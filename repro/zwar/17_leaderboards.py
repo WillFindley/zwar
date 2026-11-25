@@ -55,8 +55,8 @@ RP_SET = ["riverma01", "eckerde01", "wilheho01", "gossari01", "wagnebi02", "chap
           "janseke01", "kimbrcr01", "suttebr01"]
 N_TOP_RP = 3            # plus the top relievers by Z_0.2 not already listed
 # Roles as labelled in the paper; others by rp_role() (starts / IP per relief game)
-RP_ROLE = {"riverma01": "Pure RP", "eckerde01": "SP/RP Hybrid", "wilheho01": "Multi-IP RP",
-           "gossari01": "Multi-IP RP", "hillejo01": "Multi-IP RP"}
+RP_ROLE = {"riverma01": "Pure RP", "eckerde01": "SP/RP Hybrid", "wilheho01": "Multi-$\\IP$ RP",
+           "gossari01": "Multi-$\\IP$ RP", "hillejo01": "Multi-$\\IP$ RP"}
 RP_BENCH = {"johnsra05": "HOF SP", "seaveto01": "HOF SP", "ryanno01": "HOF SP",
             "fellebo01": "HOF SP", "suttodo01": "300-Win HOF SP", "maricju01": "HOF SP",
             "bunniji01": "HOF SP", "koufasa01": "HOF SP", "fordwh01": "HOF SP",
@@ -250,7 +250,7 @@ def main():
            "position-play ranks: $\\WAR$ \\textbf{Rk} is the career-$\\WAR$ rank ($\\alpha = 0$; tied totals share "
            "the better rank) and $Z_{1/2}$ \\textbf{Rk} the rank under $\\Zpos = \\WAR_{\\mathrm{pos}}/\\sqrt{\\PA}$. "
            "$\\JAWS$ ranks are across all eight fielding positions combined. The full two-coordinate valuation "
-           "appears in Tables~\\ref{tab:twoway}--\\ref{tab:unified}.")
+           "appears in Tables~\\ref{tab:twoway}--\\ref{tab:unified}. The top two $\\WAR/650\\,\\PA$ rates shown are in bold.")
     hdr = ["$Z_{1/5}$ \\textbf{Rk} & \\textbf{Player} & \\textbf{Pos $\\WAR$} & \\textbf{Career $\\PA$} & "
            "$\\WAR / 650\\text{ }\\PA$ & $\\JAWS$ \\textbf{(Rk)} & $\\WAR$ \\textbf{Rk} & $Z_{1/2}$ \\textbf{Rk} & "
            "$Z_{1/5} = \\dfrac{\\WAR_{\\mathrm{pos}}}{\\PA^{1/5}}$"]
@@ -279,7 +279,7 @@ def main():
            "10 give the rank among these starters with the rank among \\emph{all} pitchers in parentheses; "
            "$\\WAR$ \\textbf{Rk} ($\\alpha = 0$; tied totals share the better rank) is also among all pitchers, and "
            "$Z_{1/2}$ is $\\Zpitch = \\WAR_{\\mathrm{pitch}}/\\sqrt{\\BF}$. Baseball-Reference $\\JAWS$ and "
-           "$\\SJAWS$ include pitcher batting.")
+           "$\\SJAWS$ include pitcher batting. The top two $\\WAR/820\\,\\BF$ rates shown are in bold.")
     hdr = ["$Z_{1/5}$ \\textbf{SP Rk} & & \\textbf{Pitch} & \\textbf{Career} & \\textbf{Career $\\IP$} & "
            "$\\WAR\\,/$ & $\\JAWS$ & $\\SJAWS$ & $\\WAR$ & $Z_{1/2}$ \\textbf{SP Rk} & "
            "$Z_{1/5} = $",
@@ -304,7 +304,7 @@ def main():
         if d["GS"] >= 100:
             return "SP/RP Hybrid"
         relief_ip = d["IPouts"] / 3 - d["GS"] * 6.0   # rough: ~6 IP per start
-        return "Multi-IP RP" if relief_ip / relief_g >= 1.7 else "Pure RP"
+        return "Multi-$\\IP$ RP" if relief_ip / relief_g >= 1.7 else "Pure RP"
     rows = []
     for p in sel:
         rec("pitch", p)
@@ -366,7 +366,7 @@ def main():
            "Equation~\\eqref{eq:universal_zwar} ($\\gamma = 2$). Total $\\WAR$ is the sum of the rounded components "
            "and can differ by $0.1$ from Baseball-Reference's published career totals (e.g., Ruth $182.6$, Ruffing $68.6$)"
            + (f"; $^{{*}}$$\\BF$ estimated at $4.2$ per inning ({', '.join(approx_names)})" if approx_names else "")
-           + ".")
+           + ". In each row, the larger single-coordinate score ($Z_{1/5,\\mathrm{pos}}$ vs.\\ $Z_{1/5,\\mathrm{pitch}}$) is in bold.")
     hdr = ["& \\textbf{Player} & \\textbf{Pos $\\WAR$} & \\textbf{Pitch $\\WAR$} & \\textbf{Total} & & & $Z_{1/5,\\mathrm{pool}}$ & "
            "$Z_{1/2}$ & $Z_{1/5,\\mathrm{2D}}$",
            "\\textbf{Rk (All)} & \\textbf{(Role Profile)} & \\textbf{($\\PA$)} & \\textbf{($\\BF$ / $\\IP$)} & "

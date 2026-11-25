@@ -42,6 +42,7 @@ import numpy as np
 from scipy.stats import spearmanr
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from alpha_bench import argmax_idx  # noqa: E402
 from common import (ROOT, auc, bootstrap_auc_diff, has_season_bf, load_player_page,  # noqa: E402
                     load_war_daily, write_csv, z2d_lgamma, OUT)
 
@@ -196,9 +197,9 @@ def main():
             rho, a_, ov, npt, _, _ = res[name]
             log(f"  {name:14s} Spearman(list order) {rho:.3f}   membership AUC {a_:.3f}   "
                 f"top-100 overlap {ov:3d}   pitchers in top 100 {npt:2d} (list: {n_pitch_list})")
-        zs = [k for k in res if k.startswith("Z") and "_" not in k]
-        best_rho = max(zs, key=lambda k: res[k][0])
-        best_auc = max(zs, key=lambda k: res[k][1])
+        zs = [f"Z{a:.2f}" for a in ALPHAS]
+        best_rho = zs[argmax_idx([res[k][0] for k in zs])]
+        best_auc = zs[argmax_idx([res[k][1] for k in zs])]
         best_ov = max(zs, key=lambda k: (res[k][2], -abs(float(k[1:]) - 0.5)))
         log(f"  best alpha: Spearman {best_rho[1:]} ({res[best_rho][0]:.3f}); "
             f"AUC {best_auc[1:]} ({res[best_auc][1]:.3f}); overlap {best_ov[1:]} ({res[best_ov][2]})")
